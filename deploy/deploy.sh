@@ -10,8 +10,8 @@ cd "$REPO_DIR"
 exec 9>/var/lock/gsm-deploy.lock
 flock -n 9 || exit 0
 
-git fetch origin main
-git merge --ff-only origin/main
+git -c safe.directory="$REPO_DIR" fetch origin main
+git -c safe.directory="$REPO_DIR" merge --ff-only origin/main
 
 dotnet restore "$REPO_DIR/gsm/gsm.csproj"
 
