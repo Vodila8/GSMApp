@@ -8,6 +8,7 @@
 **/build-check/
 **/build-check-tunnel/
 **/wwwroot/downloads/
+/.deployed-commit
 
 # Local secrets and machine-specific settings
 **/appsettings.Development.json

@@ -8,6 +8,7 @@ REPO_DIR="/opt/gsm"
 PUBLISH_DIR="$REPO_DIR/publish"
 AGENT_DIR="$REPO_DIR/gsm-agent"
 AGENT_ZIP="$PUBLISH_DIR/wwwroot/downloads/gsm-agent.zip"
+DEPLOYED_COMMIT_FILE="$REPO_DIR/.deployed-commit"
 AGENT_STAGE="$(mktemp -d)"
 trap 'rm -rf "$AGENT_STAGE"' EXIT
 
@@ -15,11 +16,10 @@ cd "$REPO_DIR"
 exec 9>/var/lock/gsm-deploy.lock
 flock -n 9 || exit 0
 
-current_commit="$(git -c safe.directory="$REPO_DIR" rev-parse HEAD)"
 git -c safe.directory="$REPO_DIR" fetch origin main
 remote_commit="$(git -c safe.directory="$REPO_DIR" rev-parse origin/main)"
-if [[ "$current_commit" == "$remote_commit" ]]; then
-    printf 'No new commit; deployment skipped at %s\n' "$current_commit"
+if [[ -f "$DEPLOYED_COMMIT_FILE" ]] && [[ "$(cat "$DEPLOYED_COMMIT_FILE")" == "$remote_commit" ]]; then
+    printf 'No new commit; deployment skipped at %s\n' "$remote_commit"
     exit 0
 fi
 
@@ -64,4 +64,5 @@ chmod 700 "$PUBLISH_DIR/DataProtectionKeys"
 
 systemctl restart gsm
 systemctl is-active --quiet gsm
+printf '%s\n' "$remote_commit" > "$DEPLOYED_COMMIT_FILE"
 printf 'GSM deployment completed: %s\n' "$(git -c safe.directory="$REPO_DIR" rev-parse --short HEAD)"
