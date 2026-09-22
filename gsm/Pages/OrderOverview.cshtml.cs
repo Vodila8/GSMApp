@@ -44,7 +44,7 @@ public class OrderOverviewModel : PageModel
         Orders = await query.Select(order => new OrderListItem
         {
             Id = order.Id,
-            CustomerName = order.Customer.CustomerName ?? order.Customer.Email ?? "Unknown customer",
+            CustomerName = order.Customer == null ? "No customer" : order.Customer.CustomerName ?? order.Customer.Email ?? "Unknown customer",
             Device = order.Device ?? "Device",
             DeviceDetails = order.DeviceModelAndSerialNumber,
             CreatedAt = order.CreatedAt,

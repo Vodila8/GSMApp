@@ -327,25 +327,5 @@
         loadDevices();
         updateTotal();
 
-        document.getElementById('order-form').addEventListener('submit', event => {
-            if (event.submitter?.id === 'scan-adb-button') {
-                return;
-            }
-            const errors = [];
-            const hasCustomer = document.getElementById('customer-select').value !== '';
-            const hasDevice = deviceSelect.value !== '' || document.querySelector('[name="Input.NewDeviceType"]').value !== '';
-            if (!hasCustomer) errors.push('Select a customer.');
-            if (!hasDevice) errors.push('Select an existing device or choose a new device type.');
-
-            const errorBox = document.getElementById('order-client-error');
-            if (errors.length > 0) {
-                event.preventDefault();
-                errorBox.textContent = errors.join(' ');
-                errorBox.hidden = false;
-                errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
-            } else {
-                errorBox.hidden = true;
-            }
-        });
     </script>
 }

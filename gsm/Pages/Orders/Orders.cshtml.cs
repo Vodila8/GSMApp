@@ -91,10 +91,14 @@ public class OrdersModel : PageModel
             }
         }
 
-        var customer = await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == Input.CustomerId && user.CompanyId == _tenantContext.CompanyId);
-        if (customer == null || await IsEmployeeAsync(Input.CustomerId))
+        ApplicationUser? customer = null;
+        if (!string.IsNullOrWhiteSpace(Input.CustomerId))
         {
-            ModelState.AddModelError("Input.CustomerId", "Select a registered customer.");
+            customer = await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == Input.CustomerId && user.CompanyId == _tenantContext.CompanyId);
+            if (customer == null || await IsEmployeeAsync(Input.CustomerId))
+            {
+                ModelState.AddModelError("Input.CustomerId", "Select a registered customer.");
+            }
         }
 
         CustomerDevice? device = null;
@@ -106,10 +110,6 @@ public class OrdersModel : PageModel
             {
                 ModelState.AddModelError("Input.CustomerDeviceId", "Select one of this customer's devices or add a new device.");
             }
-        }
-        else if (string.IsNullOrWhiteSpace(Input.NewDeviceType))
-        {
-            ModelState.AddModelError("Input.NewDeviceType", "Select a device or enter a new device.");
         }
 
         var parts = Input.Parts.Where(part => part.WarehouseItemId.HasValue && part.WarehouseItemId.Value > 0).ToList();
@@ -131,7 +131,7 @@ public class OrdersModel : PageModel
             }
         }
 
-        if (!ModelState.IsValid || customer == null)
+        if (!ModelState.IsValid)
         {
             return Page();
         }
@@ -142,13 +142,13 @@ public class OrdersModel : PageModel
 
         await using var transaction = await _dbContext.Database.BeginTransactionAsync();
 
-        if (device == null)
+        if (device == null && customer != null && !string.IsNullOrWhiteSpace(Input.NewDeviceType))
         {
             device = new CustomerDevice
             {
                 CompanyId = _tenantContext.CompanyId,
                 CustomerId = customer.Id,
-                DeviceType = Input.NewDeviceType!.Trim(),
+                DeviceType = Input.NewDeviceType.Trim(),
                 ModelAndSerialNumber = Input.NewDeviceModelAndSerialNumber?.Trim()
             };
             _dbContext.CustomerDevices.Add(device);
@@ -201,10 +201,10 @@ public class OrdersModel : PageModel
         var order = new ServiceOrder
         {
             CompanyId = _tenantContext.CompanyId,
-            CustomerId = customer.Id,
+            CustomerId = customer?.Id,
             CustomerDevice = device,
-            Device = device.DeviceType,
-            DeviceModelAndSerialNumber = device.ModelAndSerialNumber,
+            Device = device?.DeviceType ?? Input.NewDeviceType?.Trim(),
+            DeviceModelAndSerialNumber = device?.ModelAndSerialNumber ?? Input.NewDeviceModelAndSerialNumber?.Trim(),
             ProblemOrRepair = Input.ProblemOrRepair?.Trim(),
             DeviceConditionAndNotes = Input.DeviceConditionAndNotes?.Trim(),
             Accessories = BuildAccessories(),
@@ -246,7 +246,7 @@ public class OrdersModel : PageModel
         await _dbContext.SaveChangesAsync();
 
         var deletedPhotoPaths = new List<string>();
-        if (Input.CustomerDeviceId.HasValue)
+        if (device != null && Input.CustomerDeviceId.HasValue)
         {
             var photosToDelete = await _dbContext.CustomerDevicePhotos
                 .Where(photo => photo.CustomerDeviceId == device.Id && Input.DeletedDevicePhotoIds.Contains(photo.Id))
@@ -257,7 +257,7 @@ public class OrdersModel : PageModel
                 deletedPhotoPaths.Add(Path.Combine(_environment.WebRootPath, "uploads", "customer-devices", photo.FileName));
             }
         }
-        if (Input.DevicePhotos.Count > 0)
+        if (device != null && Input.DevicePhotos.Count > 0)
         {
             await SaveDevicePhotosAsync(device, Input.DevicePhotos);
         }

@@ -6,9 +6,9 @@ public class ServiceOrder
 
     public int Id { get; set; }
 
-    public string CustomerId { get; set; } = string.Empty;
+    public string? CustomerId { get; set; }
 
-    public ApplicationUser Customer { get; set; } = null!;
+    public ApplicationUser? Customer { get; set; }
 
     public int? CustomerDeviceId { get; set; }
 

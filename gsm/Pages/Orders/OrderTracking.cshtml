@@ -9,7 +9,7 @@
         <h1 class="warehouse-title">Order Tracking</h1>
         <p class="tracking-order-details">
             <strong>Order #@Model.Order!.Id</strong><br />
-            Customer: @(Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)<br />
+            Customer: @(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)<br />
             Device: @Model.Order.Device @if (!string.IsNullOrWhiteSpace(Model.Order.DeviceModelAndSerialNumber)) { <span>— @Model.Order.DeviceModelAndSerialNumber</span> }
         </p>
 
