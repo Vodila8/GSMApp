@@ -38,6 +38,7 @@
                         <th>Quantity</th>
                         <th>Part name</th>
                         <th>Partner</th>
+                        <th>Photos</th>
                         <th>Barcode</th>
                         <th>Unit price (EUR)</th>
                         <th>Delivery price (EUR)</th>
@@ -52,6 +53,25 @@
                         <td>@Model.Items[index].Quantity</td>
                         <td>@Model.Items[index].PartName</td>
                         <td>@(Model.Items[index].PartnerName ?? "—")</td>
+                        <td>
+                            <div class="warehouse-photo-list">
+                            @foreach (var photo in Model.Items[index].Photos)
+                            {
+                                <div class="warehouse-photo-item">
+                                    <a href="/uploads/warehouse/@photo.FileName" target="_blank">
+                                        <img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" />
+                                    </a>
+                                    <form method="post" asp-page-handler="DeletePhoto" asp-route-id="@photo.Id">
+                                        <button type="submit" class="warehouse-photo-delete" title="Delete photo" aria-label="Delete photo">×</button>
+                                    </form>
+                                </div>
+                            }
+                            @if (Model.Items[index].Photos.Count == 0)
+                            {
+                                <span>—</span>
+                            }
+                            </div>
+                        </td>
                         <td>@(string.IsNullOrWhiteSpace(Model.Items[index].Barcode) ? "—" : Model.Items[index].Barcode)</td>
                         <td>@Model.Items[index].UnitPrice.ToString("0.00")</td>
                         <td>@Model.Items[index].DeliveryPrice.ToString("0.00")</td>
@@ -107,7 +127,7 @@
 </dialog>
 
 <dialog id="warehouse-item-dialog" class="create-user-dialog">
-    <form method="post" asp-page-handler="Save" class="create-user-modal-form">
+    <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="create-user-modal-form">
         <div class="create-user-modal-header">
             <h2>Add warehouse item</h2>
             <button type="button" class="create-user-close" data-close-warehouse-item aria-label="Close">×</button>
@@ -142,6 +162,11 @@
             <input asp-for="NewItem.NewPartnerName" placeholder="Partner name" />
         </div>
         <div class="user-form-row"><label asp-for="NewItem.PartName">Part name</label><input asp-for="NewItem.PartName" required /></div>
+        <div class="user-form-row">
+            <label asp-for="NewItem.Photos">Photos</label>
+            <input asp-for="NewItem.Photos" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple />
+            <small class="text-muted">You can select multiple photos. Maximum 10 files, 10 MB each.</small>
+        </div>
         <div class="user-form-row user-form-row-two-columns">
             <div><label asp-for="NewItem.Quantity">Quantity</label><input asp-for="NewItem.Quantity" type="number" min="0" step="1" /></div>
             <div><label asp-for="NewItem.Barcode">Barcode</label><input asp-for="NewItem.Barcode" /></div>

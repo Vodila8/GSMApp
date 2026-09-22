@@ -18,6 +18,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<WarehouseItem> WarehouseItems => Set<WarehouseItem>();
 
+    public DbSet<WarehouseItemPhoto> WarehouseItemPhotos => Set<WarehouseItemPhoto>();
+
     public DbSet<WarehousePartner> WarehousePartners => Set<WarehousePartner>();
 
     public DbSet<WarehouseSale> WarehouseSales => Set<WarehouseSale>();
@@ -40,6 +42,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
     {
         base.OnModelCreating(builder);
         builder.Entity<WarehouseItem>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
+        builder.Entity<WarehouseItemPhoto>().HasQueryFilter(photo => !_tenantContext.IsAuthenticated || photo.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehousePartner>().HasQueryFilter(partner => !_tenantContext.IsAuthenticated || partner.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehouseSale>().HasQueryFilter(sale => !_tenantContext.IsAuthenticated || sale.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehouseAuditEntry>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);

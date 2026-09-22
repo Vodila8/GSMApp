@@ -12,6 +12,8 @@ public class WarehouseItem
 
     public WarehousePartner? Partner { get; set; }
 
+    public ICollection<WarehouseItemPhoto> Photos { get; set; } = [];
+
     [Required]
     [MaxLength(200)]
     public string PartName { get; set; } = string.Empty;

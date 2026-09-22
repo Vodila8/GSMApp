@@ -249,6 +249,11 @@ body {
 .warehouse-add-button { font-size: 1.45rem; font-weight: 600; line-height: 1; }
 .warehouse-sale-button { color: #16a34a; border-color: #86efac; font-weight: 700; }
 .warehouse-items-table { min-width: 1100px; }
+.warehouse-photo-list { display: flex; flex-wrap: wrap; gap: .35rem; min-width: 120px; }
+.warehouse-photo-item { position: relative; width: 42px; height: 42px; }
+.warehouse-photo-item img { width: 42px; height: 42px; object-fit: cover; border: 1px solid var(--ops-border); border-radius: .3rem; }
+.warehouse-photo-item form { position: absolute; top: -7px; right: -7px; }
+.warehouse-photo-delete { display: grid; place-items: center; width: 17px; height: 17px; padding: 0; color: #fff; font-size: .75rem; line-height: 1; background: #dc2626; border: 0; border-radius: 50%; cursor: pointer; }
 .warehouse-edit-dialog { width: min(1400px, calc(100% - 2rem)); max-width: none; padding: 0; border: 0; border-radius: .75rem; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
 .warehouse-edit-dialog::backdrop { background: rgb(15 23 42 / 45%); }
 .warehouse-edit-form { padding: 1.5rem; }

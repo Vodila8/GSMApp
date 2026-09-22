@@ -2,6 +2,7 @@ using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
 using gsm.Data;
 using gsm.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -14,11 +15,13 @@ public class WarehouseModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly TenantContext _tenantContext;
+    private readonly IWebHostEnvironment _environment;
 
-    public WarehouseModel(ApplicationDbContext dbContext, TenantContext tenantContext)
+    public WarehouseModel(ApplicationDbContext dbContext, TenantContext tenantContext, IWebHostEnvironment environment)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
+        _environment = environment;
     }
 
     [BindProperty]
@@ -72,6 +75,18 @@ public class WarehouseModel : PageModel
         if (!string.IsNullOrWhiteSpace(newProductNumber) && !newProductNumber.All(char.IsDigit))
         {
             ModelState.AddModelError("NewItem.ProductNumber", "Product number must contain digits only.");
+        }
+
+        if (NewItem.Photos.Count > 10)
+        {
+            ModelState.AddModelError("NewItem.Photos", "You can upload up to 10 photos at a time.");
+        }
+        foreach (var photo in NewItem.Photos)
+        {
+            if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
+            {
+                ModelState.AddModelError("NewItem.Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
+            }
         }
 
         if (!string.IsNullOrWhiteSpace(NewItem.PartName))
@@ -143,6 +158,7 @@ public class WarehouseModel : PageModel
             }
         }
 
+        WarehouseItem? createdItem = null;
         if (!string.IsNullOrWhiteSpace(NewItem.PartName))
         {
             if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
@@ -163,7 +179,7 @@ public class WarehouseModel : PageModel
                 }
             }
 
-            var newItem = new WarehouseItem
+            createdItem = new WarehouseItem
             {
                 CompanyId = _tenantContext.CompanyId,
                 PartnerId = NewItem.PartnerId,
@@ -177,18 +193,18 @@ public class WarehouseModel : PageModel
                 DeliveryPrice = NewItem.DeliveryPrice ?? 0,
                 Quantity = NewItem.Quantity ?? 0
             };
-            _dbContext.WarehouseItems.Add(newItem);
+            _dbContext.WarehouseItems.Add(createdItem);
             auditEntries.Add(new WarehouseAuditEntry
             {
                 CompanyId = _tenantContext.CompanyId,
-                ItemName = newItem.PartName,
-                ProductNumber = newItem.ProductNumber,
-                Barcode = newItem.Barcode,
+                ItemName = createdItem.PartName,
+                ProductNumber = createdItem.ProductNumber,
+                Barcode = createdItem.Barcode,
                 Action = "Item added",
                 QuantityBefore = 0,
-                QuantityAfter = newItem.Quantity,
-                QuantityChange = newItem.Quantity,
-                UnitPrice = newItem.UnitPrice,
+                QuantityAfter = createdItem.Quantity,
+                QuantityChange = createdItem.Quantity,
+                UnitPrice = createdItem.UnitPrice,
                 UserId = userId,
                 UserEmail = userEmail
             });
@@ -196,6 +212,28 @@ public class WarehouseModel : PageModel
 
         _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
         await _dbContext.SaveChangesAsync();
+
+        if (createdItem != null && NewItem.Photos.Count > 0)
+        {
+            await SavePhotosAsync(createdItem, NewItem.Photos);
+            await _dbContext.SaveChangesAsync();
+        }
+
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostDeletePhotoAsync(int id)
+    {
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+
+        var photo = await _dbContext.WarehouseItemPhotos.FirstOrDefaultAsync(itemPhoto =>
+            itemPhoto.Id == id && itemPhoto.CompanyId == _tenantContext.CompanyId);
+        if (photo == null) return NotFound();
+
+        _dbContext.WarehouseItemPhotos.Remove(photo);
+        await _dbContext.SaveChangesAsync();
+        var path = Path.Combine(_environment.WebRootPath, "uploads", "warehouse", photo.FileName);
+        if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
 
         return RedirectToPage();
     }
@@ -298,10 +336,45 @@ public class WarehouseModel : PageModel
         return RedirectToPage();
     }
 
+    private async Task SavePhotosAsync(WarehouseItem item, IEnumerable<IFormFile> files)
+    {
+        var directory = Path.Combine(_environment.WebRootPath, "uploads", "warehouse");
+        Directory.CreateDirectory(directory);
+
+        foreach (var file in files)
+        {
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var path = Path.Combine(directory, fileName);
+            await using (var stream = System.IO.File.Create(path))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            _dbContext.WarehouseItemPhotos.Add(new WarehouseItemPhoto
+            {
+                CompanyId = item.CompanyId,
+                WarehouseItemId = item.Id,
+                FileName = fileName,
+                OriginalFileName = Path.GetFileName(file.FileName),
+                ContentType = file.ContentType
+            });
+        }
+    }
+
+    private static bool IsAllowedPhoto(IFormFile file)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        return file.Length > 0 &&
+            new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(extension) &&
+            file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
+    }
+
     private async Task LoadItemsAsync()
     {
         var warehouseItems = await _dbContext.WarehouseItems
             .Include(item => item.Partner)
+            .Include(item => item.Photos)
             .OrderBy(item => item.CreatedAt)
             .ThenBy(item => item.Id)
             .ToListAsync();
@@ -312,6 +385,12 @@ public class WarehouseModel : PageModel
             Id = item.Id,
             PartnerId = item.PartnerId,
             PartnerName = item.Partner?.Name,
+            Photos = item.Photos.Select(photo => new WarehousePhotoInput
+            {
+                Id = photo.Id,
+                FileName = photo.FileName,
+                OriginalFileName = photo.OriginalFileName
+            }).ToList(),
             PartName = item.PartName,
             ProductNumber = NormalizeProductNumber(item.ProductNumber) ?? item.Id.ToString(),
             Barcode = item.Barcode,
@@ -361,6 +440,7 @@ public class WarehouseModel : PageModel
         public int Id { get; set; }
         public int? PartnerId { get; set; }
         public string? PartnerName { get; set; }
+        public List<WarehousePhotoInput> Photos { get; set; } = [];
 
         [Display(Name = "Part Name")]
         public string PartName { get; set; } = string.Empty;
@@ -384,6 +464,13 @@ public class WarehouseModel : PageModel
         public int Quantity { get; set; }
     }
 
+    public class WarehousePhotoInput
+    {
+        public int Id { get; set; }
+        public string FileName { get; set; } = string.Empty;
+        public string? OriginalFileName { get; set; }
+    }
+
     public class WarehouseSaleInput
     {
         public int WarehouseItemId { get; set; }
@@ -397,6 +484,7 @@ public class WarehouseModel : PageModel
     {
         public int? PartnerId { get; set; }
         public string? NewPartnerName { get; set; }
+        public List<IFormFile> Photos { get; set; } = [];
 
         [Display(Name = "Part Name")]
         public string? PartName { get; set; }
