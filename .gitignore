@@ -11,6 +11,7 @@
 
 # Local secrets and machine-specific settings
 **/appsettings.Development.json
+**/appsettings.Development.example.json
 **/appsettings.Local.json
 **/DataProtectionKeys/
 *.user

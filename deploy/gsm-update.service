@@ -1,0 +1,9 @@
+[Unit]
+Description=Update and deploy GSM from GitHub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/gsm
+ExecStart=/opt/gsm/deploy/deploy.sh
