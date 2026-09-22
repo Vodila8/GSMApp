@@ -1,6 +1,9 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 
+export HOME=/root
+export DOTNET_CLI_HOME=/root
+
 REPO_DIR="/opt/gsm"
 PUBLISH_DIR="$REPO_DIR/publish"
 AGENT_DIR="$REPO_DIR/gsm-agent"
