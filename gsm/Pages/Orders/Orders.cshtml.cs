@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Hosting;
 using gsm.Data;
 using gsm.Services;
 using Microsoft.AspNetCore.Authorization;
@@ -14,12 +15,14 @@ public class OrdersModel : PageModel
     private readonly ApplicationDbContext _dbContext;
     private readonly TenantContext _tenantContext;
     private readonly AdbDiagnosticService _adbDiagnosticService;
+    private readonly IWebHostEnvironment _environment;
 
-    public OrdersModel(ApplicationDbContext dbContext, TenantContext tenantContext, AdbDiagnosticService adbDiagnosticService)
+    public OrdersModel(ApplicationDbContext dbContext, TenantContext tenantContext, AdbDiagnosticService adbDiagnosticService, IWebHostEnvironment environment)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _adbDiagnosticService = adbDiagnosticService;
+        _environment = environment;
     }
 
     [BindProperty]
@@ -75,6 +78,18 @@ public class OrdersModel : PageModel
     public async Task<IActionResult> OnPostCreateAsync()
     {
         await LoadOptionsAsync();
+
+        if (Input.DevicePhotos.Count > 10)
+        {
+            ModelState.AddModelError("Input.DevicePhotos", "You can upload up to 10 photos at a time.");
+        }
+        foreach (var photo in Input.DevicePhotos)
+        {
+            if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
+            {
+                ModelState.AddModelError("Input.DevicePhotos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
+            }
+        }
 
         var customer = await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == Input.CustomerId && user.CompanyId == _tenantContext.CompanyId);
         if (customer == null || await IsEmployeeAsync(Input.CustomerId))
@@ -234,7 +249,30 @@ public class OrdersModel : PageModel
 
         _dbContext.ServiceOrders.Add(order);
         await _dbContext.SaveChangesAsync();
+
+        var deletedPhotoPaths = new List<string>();
+        if (Input.CustomerDeviceId.HasValue)
+        {
+            var photosToDelete = await _dbContext.CustomerDevicePhotos
+                .Where(photo => photo.CustomerDeviceId == device.Id && Input.DeletedDevicePhotoIds.Contains(photo.Id))
+                .ToListAsync();
+            foreach (var photo in photosToDelete)
+            {
+                _dbContext.CustomerDevicePhotos.Remove(photo);
+                deletedPhotoPaths.Add(Path.Combine(_environment.WebRootPath, "uploads", "customer-devices", photo.FileName));
+            }
+        }
+        if (Input.DevicePhotos.Count > 0)
+        {
+            await SaveDevicePhotosAsync(device, Input.DevicePhotos);
+        }
+
+        await _dbContext.SaveChangesAsync();
         await transaction.CommitAsync();
+        foreach (var path in deletedPhotoPaths)
+        {
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
 
         return Redirect($"/OrderTracking/{order.Id}");
     }
@@ -278,7 +316,44 @@ public class OrdersModel : PageModel
             .OrderBy(user => user.CustomerName ?? user.Email)
             .ToListAsync();
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
-        CustomerDevices = await _dbContext.CustomerDevices.OrderBy(item => item.DeviceType).ToListAsync();
+        CustomerDevices = await _dbContext.CustomerDevices
+            .Include(item => item.Photos)
+            .OrderBy(item => item.DeviceType)
+            .ToListAsync();
+    }
+
+    private async Task SaveDevicePhotosAsync(CustomerDevice device, IEnumerable<IFormFile> files)
+    {
+        var directory = Path.Combine(_environment.WebRootPath, "uploads", "customer-devices");
+        Directory.CreateDirectory(directory);
+
+        foreach (var file in files)
+        {
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            var fileName = $"{Guid.NewGuid():N}{extension}";
+            var path = Path.Combine(directory, fileName);
+            await using (var stream = System.IO.File.Create(path))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            _dbContext.CustomerDevicePhotos.Add(new CustomerDevicePhoto
+            {
+                CompanyId = device.CompanyId,
+                CustomerDeviceId = device.Id,
+                FileName = fileName,
+                OriginalFileName = Path.GetFileName(file.FileName),
+                ContentType = file.ContentType
+            });
+        }
+    }
+
+    private static bool IsAllowedPhoto(IFormFile file)
+    {
+        var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+        return file.Length > 0 &&
+            new[] { ".jpg", ".jpeg", ".png", ".gif", ".webp" }.Contains(extension) &&
+            file.ContentType.StartsWith("image/", StringComparison.OrdinalIgnoreCase);
     }
 
     private string? BuildAccessories()
@@ -330,6 +405,8 @@ public class OrdersModel : PageModel
         public int? CustomerDeviceId { get; set; }
         public string? NewDeviceType { get; set; }
         public string? NewDeviceModelAndSerialNumber { get; set; }
+        public List<IFormFile> DevicePhotos { get; set; } = [];
+        public List<int> DeletedDevicePhotoIds { get; set; } = [];
         public string? ProblemOrRepair { get; set; }
         public string? DeviceConditionAndNotes { get; set; }
         public string? Accessories { get; set; }

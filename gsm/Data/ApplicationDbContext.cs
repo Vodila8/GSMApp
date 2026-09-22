@@ -32,6 +32,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<CustomerDevice> CustomerDevices => Set<CustomerDevice>();
 
+    public DbSet<CustomerDevicePhoto> CustomerDevicePhotos => Set<CustomerDevicePhoto>();
+
     public DbSet<OrderStage> OrderStages => Set<OrderStage>();
 
     public DbSet<OrderAdjustment> OrderAdjustments => Set<OrderAdjustment>();
@@ -47,6 +49,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<WarehouseSale>().HasQueryFilter(sale => !_tenantContext.IsAuthenticated || sale.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehouseAuditEntry>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<CustomerDevice>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
+        builder.Entity<CustomerDevicePhoto>().HasQueryFilter(photo => !_tenantContext.IsAuthenticated || photo.CompanyId == _tenantContext.CompanyId);
         builder.Entity<ServiceOrder>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<ServiceOrderLine>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<OrderStage>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);

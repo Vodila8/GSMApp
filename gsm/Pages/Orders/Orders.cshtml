@@ -5,7 +5,7 @@
 }
 
 <div class="user-form-page">
-    <form class="warehouse-list order-form repair-form" method="post" asp-page-handler="Create" id="order-form">
+    <form class="warehouse-list order-form repair-form" method="post" asp-page-handler="Create" enctype="multipart/form-data" id="order-form">
         <div class="repair-form-header">
             <div>
                 <span class="repair-form-kicker">SERVICE DESK</span>
@@ -56,6 +56,16 @@
                 <label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label>
                 <input asp-for="Input.NewDeviceModelAndSerialNumber" />
             </div>
+        </div>
+        <div class="user-form-row" id="device-photo-fields">
+            <label for="device-photos">Device photos</label>
+            <div class="warehouse-photo-picker" id="device-photo-picker">
+                <label class="warehouse-photo-add">Choose photos
+                    <input id="device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple />
+                </label>
+                <div class="warehouse-photo-list warehouse-edit-photo-list" id="device-photo-preview"></div>
+            </div>
+            <small class="text-muted">Add photos of the device. Maximum 10 files, 10 MB each.</small>
         </div>
 
         </section>
@@ -228,10 +238,49 @@
             }
         });
         const devices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
-            Model.CustomerDevices.Select(device => new { device.Id, device.CustomerId, device.DeviceType, device.ModelAndSerialNumber }),
+            Model.CustomerDevices.Select(device => new
+            {
+                device.Id,
+                device.CustomerId,
+                device.DeviceType,
+                device.ModelAndSerialNumber,
+                photos = device.Photos.Select(photo => new { photo.Id, photo.FileName, photo.OriginalFileName })
+            }),
             new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         const deviceSelect = document.getElementById('device-select');
         const newDeviceFields = document.getElementById('new-device-fields');
+        const devicePhotoPicker = document.getElementById('device-photo-picker');
+        const devicePhotoInput = document.getElementById('device-photos');
+        const devicePhotoPreview = document.getElementById('device-photo-preview');
+        let devicePhotoFiles = [];
+        const deletedDevicePhotoIds = new Set();
+
+        function syncDevicePhotoFiles() {
+            const dataTransfer = new DataTransfer();
+            devicePhotoFiles.forEach(file => dataTransfer.items.add(file));
+            devicePhotoInput.files = dataTransfer.files;
+        }
+
+        function renderDevicePhotos() {
+            devicePhotoPreview.innerHTML = '';
+            const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
+            (selectedDevice?.photos || []).forEach(photo => {
+                if (deletedDevicePhotoIds.has(photo.id)) return;
+                const item = document.createElement('div');
+                item.className = 'warehouse-photo-item';
+                item.dataset.existingPhotoId = photo.id;
+                item.innerHTML = `<a href="/uploads/customer-devices/${photo.fileName}" target="_blank"><img src="/uploads/customer-devices/${photo.fileName}" alt="${photo.originalFileName || 'Device photo'}"></a><button type="button" class="warehouse-photo-delete" data-remove-device-photo="${photo.id}" title="Remove photo" aria-label="Remove photo">×</button>`;
+                devicePhotoPreview.appendChild(item);
+            });
+            devicePhotoFiles.forEach((file, index) => {
+                const item = document.createElement('div');
+                item.className = 'warehouse-photo-item';
+                item.dataset.newPhoto = '';
+                item.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="${file.name}"><button type="button" class="warehouse-photo-delete" data-remove-new-device-photo="${index}" title="Remove photo" aria-label="Remove photo">×</button>`;
+                devicePhotoPreview.appendChild(item);
+            });
+        }
+
         function loadDevices() {
             const customerId = document.getElementById('customer-select').value;
             const selectedId = '@Model.Input.CustomerDeviceId';
@@ -243,9 +292,37 @@
                 deviceSelect.add(option);
             });
             newDeviceFields.hidden = deviceSelect.value !== '';
+            renderDevicePhotos();
         }
         document.getElementById('customer-select').addEventListener('change', loadDevices);
-        deviceSelect.addEventListener('change', () => { newDeviceFields.hidden = deviceSelect.value !== ''; });
+        deviceSelect.addEventListener('change', () => {
+            newDeviceFields.hidden = deviceSelect.value !== '';
+            renderDevicePhotos();
+        });
+        devicePhotoInput.addEventListener('change', () => {
+            devicePhotoFiles = Array.from(devicePhotoInput.files);
+            renderDevicePhotos();
+        });
+        devicePhotoPicker.addEventListener('click', event => {
+            const removeNewButton = event.target.closest('[data-remove-new-device-photo]');
+            if (removeNewButton) {
+                devicePhotoFiles.splice(Number(removeNewButton.dataset.removeNewDevicePhoto), 1);
+                syncDevicePhotoFiles();
+                renderDevicePhotos();
+                return;
+            }
+
+            const removeExistingButton = event.target.closest('[data-remove-device-photo]');
+            if (removeExistingButton) {
+                deletedDevicePhotoIds.add(Number(removeExistingButton.dataset.removeDevicePhoto));
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = 'Input.DeletedDevicePhotoIds';
+                input.value = removeExistingButton.dataset.removeDevicePhoto;
+                devicePhotoPicker.appendChild(input);
+                renderDevicePhotos();
+            }
+        });
         document.querySelectorAll('.part-select').forEach(select => { if (select.value) select.dispatchEvent(new Event('change')); });
         loadDevices();
         updateTotal();

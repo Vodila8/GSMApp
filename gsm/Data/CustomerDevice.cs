@@ -18,5 +18,7 @@ public class CustomerDevice
     [MaxLength(300)]
     public string? ModelAndSerialNumber { get; set; }
 
+    public ICollection<CustomerDevicePhoto> Photos { get; set; } = [];
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

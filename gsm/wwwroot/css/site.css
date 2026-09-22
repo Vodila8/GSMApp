@@ -260,7 +260,7 @@ body {
 .warehouse-edit-photo-list { min-width: 0; }
 .warehouse-edit-photo-list .warehouse-photo-item { width: 76px; height: 76px; }
 .warehouse-edit-photo-list .warehouse-photo-item img { width: 76px; height: 76px; border-radius: .45rem; }
-.warehouse-edit-dialog { width: min(1400px, calc(100% - 2rem)); max-width: none; padding: 0; border: 0; border-radius: .75rem; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
+.warehouse-edit-dialog { width: 60%; max-width: none; margin: auto; padding: 0; border: 0; border-radius: .75rem; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
 .warehouse-edit-dialog::backdrop { background: rgb(15 23 42 / 45%); }
 .warehouse-edit-form { padding: 1.5rem; }
 .warehouse-edit-table { min-width: 1050px; margin-bottom: 0; }
