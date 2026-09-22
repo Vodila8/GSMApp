@@ -116,17 +116,19 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="user-form-row"><label asp-for="NewItem.ProductNumber">Product number</label><input asp-for="NewItem.ProductNumber" list="warehouse-product-numbers" /></div>
         <div class="user-form-row">
-            <label asp-for="NewItem.PartnerId">Existing partner</label>
-            <select asp-for="NewItem.PartnerId">
+            <label for="new-item-partner-select">Partner</label>
+            <select id="new-item-partner-select">
                 <option value="">Select existing partner</option>
+                <option value="__new__">Add new partner</option>
                 @foreach (var partner in Model.Partners)
                 {
                     <option value="@partner.Id">@partner.Name</option>
                 }
             </select>
+            <input asp-for="NewItem.PartnerId" type="hidden" id="new-item-partner-id" />
         </div>
-        <div class="user-form-row">
-            <label asp-for="NewItem.NewPartnerName">Add partner</label>
+        <div class="user-form-row" id="new-item-partner-name-field" hidden>
+            <label asp-for="NewItem.NewPartnerName">New partner name</label>
             <input asp-for="NewItem.NewPartnerName" placeholder="Partner name" />
         </div>
         <div class="user-form-row"><label asp-for="NewItem.PartName">Part name</label><input asp-for="NewItem.PartName" required /></div>
@@ -163,17 +165,19 @@
             </select>
         </div>
         <div class="user-form-row">
-            <label asp-for="Sale.PartnerId">Existing partner</label>
-            <select asp-for="Sale.PartnerId">
+            <label for="sale-partner-select">Partner</label>
+            <select id="sale-partner-select">
                 <option value="">Select existing partner</option>
+                <option value="__new__">Add new partner</option>
                 @foreach (var partner in Model.Partners)
                 {
                     <option value="@partner.Id">@partner.Name</option>
                 }
             </select>
+            <input asp-for="Sale.PartnerId" type="hidden" id="sale-partner-id" />
         </div>
-        <div class="user-form-row">
-            <label asp-for="Sale.NewPartnerName">Add partner</label>
+        <div class="user-form-row" id="sale-partner-name-field" hidden>
+            <label asp-for="Sale.NewPartnerName">New partner name</label>
             <input asp-for="Sale.NewPartnerName" placeholder="Partner name" />
         </div>
         <div class="user-form-row user-form-row-two-columns">
@@ -193,6 +197,31 @@
         const warehouseEditDialog = document.getElementById('warehouse-edit-dialog');
         const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
         const warehouseSaleDialog = document.getElementById('warehouse-sale-dialog');
+
+        function setupPartnerChoice(selectId, partnerIdId, newNameId, newNameFieldId) {
+            const select = document.getElementById(selectId);
+            const partnerId = document.getElementById(partnerIdId);
+            const newName = document.getElementById(newNameId);
+            const newNameField = document.getElementById(newNameFieldId);
+            const useNewPartner = () => {
+                const isNew = select.value === '__new__';
+                newNameField.hidden = !isNew;
+                if (isNew) {
+                    partnerId.value = '';
+                    newName.focus();
+                } else {
+                    partnerId.value = select.value;
+                    newName.value = '';
+                }
+            };
+            if (newName.value.trim()) select.value = '__new__';
+            else if (partnerId.value) select.value = partnerId.value;
+            useNewPartner();
+            select.addEventListener('change', useNewPartner);
+        }
+
+        setupPartnerChoice('new-item-partner-select', 'new-item-partner-id', 'NewItem_NewPartnerName', 'new-item-partner-name-field');
+        setupPartnerChoice('sale-partner-select', 'sale-partner-id', 'Sale_NewPartnerName', 'sale-partner-name-field');
         document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
         document.querySelector('[data-open-warehouse-item]').addEventListener('click', () => warehouseItemDialog.showModal());
         document.querySelector('[data-open-warehouse-sale]').addEventListener('click', () => warehouseSaleDialog.showModal());
