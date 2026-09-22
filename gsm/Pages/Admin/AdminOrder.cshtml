@@ -5,7 +5,7 @@
 }
 
 <div class="user-form-page">
-    <section class="warehouse-list order-form admin-order-page">
+    <section class="warehouse-list order-form repair-form admin-order-page">
         <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
         <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
         <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
