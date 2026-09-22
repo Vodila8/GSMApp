@@ -74,17 +74,16 @@
 
         <div class="user-form-row user-form-row-two-columns">
             <div>
-                <label asp-for="Input.SelectedAccessories">Accessories</label>
+                <label asp-for="Input.Accessories">Accessories</label>
                 <input asp-for="Input.Accessories" type="hidden" id="accessories-value" />
-                <select asp-for="Input.SelectedAccessories" id="accessories-select" aria-label="Accessories" multiple size="6">
-                    <option value="SIM card">SIM card</option>
-                    <option value="Case">Case</option>
-                    <option value="Charger">Charger</option>
-                    <option value="Cable">Cable</option>
-                    <option value="Bag">Bag</option>
-                    <option value="Other">Other</option>
-                </select>
-                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple accessories.</small>
+                <div class="accessory-options" id="accessories-options">
+                    <button type="button" class="accessory-option" data-accessory="SIM card">SIM card</button>
+                    <button type="button" class="accessory-option" data-accessory="Case">Case</button>
+                    <button type="button" class="accessory-option" data-accessory="Charger">Charger</button>
+                    <button type="button" class="accessory-option" data-accessory="Cable">Cable</button>
+                    <button type="button" class="accessory-option" data-accessory="Bag">Bag</button>
+                    <button type="button" class="accessory-option" data-accessory="Other">Other</button>
+                </div>
                 <input asp-for="Input.OtherAccessory" id="accessories-other" type="text" placeholder="Write accessory" aria-label="Other accessory" hidden />
             </div>
             <div>
@@ -178,29 +177,31 @@
             target.insertAdjacentHTML('beforeend', template);
         }
 
-        const accessoriesSelect = document.getElementById('accessories-select');
+        const accessoriesOptions = document.getElementById('accessories-options');
         const accessoriesValue = document.getElementById('accessories-value');
         const accessoriesOther = document.getElementById('accessories-other');
         const selectedAccessories = new Set((accessoriesValue.value || '').split(',').map(value => value.trim()).filter(Boolean));
-        [...accessoriesSelect.options].forEach(option => {
-            option.selected = selectedAccessories.has(option.value);
+        accessoriesOptions.querySelectorAll('[data-accessory]').forEach(button => {
+            if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected');
         });
         accessoriesOther.hidden = !selectedAccessories.has('Other');
 
         function syncAccessories() {
-            const selected = [...accessoriesSelect.selectedOptions]
-                .map(option => option.value)
+            const selected = [...accessoriesOptions.querySelectorAll('.accessory-option.selected')]
+                .map(button => button.dataset.accessory)
                 .filter(value => value !== 'Other');
-            if (accessoriesSelect.selectedOptions.length > 0 && accessoriesSelect.selectedOptions[0].value === 'Other') {
-                selected.push(accessoriesOther.value.trim());
-            } else if ([...accessoriesSelect.selectedOptions].some(option => option.value === 'Other')) {
-                selected.push(accessoriesOther.value.trim());
-            }
+            const otherSelected = accessoriesOptions.querySelector('[data-accessory="Other"]').classList.contains('selected');
+            if (otherSelected && accessoriesOther.value.trim()) selected.push(accessoriesOther.value.trim());
             accessoriesValue.value = selected.filter(Boolean).join(', ');
-            accessoriesOther.hidden = ![...accessoriesSelect.selectedOptions].some(option => option.value === 'Other');
+            accessoriesOther.hidden = !otherSelected;
         }
 
-        accessoriesSelect.addEventListener('change', syncAccessories);
+        accessoriesOptions.addEventListener('click', event => {
+            const button = event.target.closest('[data-accessory]');
+            if (!button) return;
+            button.classList.toggle('selected');
+            syncAccessories();
+        });
         accessoriesOther.addEventListener('input', syncAccessories);
         document.getElementById('order-form').addEventListener('submit', syncAccessories);
 

@@ -283,16 +283,23 @@ public class OrdersModel : PageModel
 
     private string? BuildAccessories()
     {
-        var accessories = Input.SelectedAccessories
-            .Where(accessory => !string.Equals(accessory, "Other", StringComparison.OrdinalIgnoreCase))
-            .Select(accessory => accessory.Trim())
-            .Where(accessory => accessory.Length > 0)
+        var accessories = (Input.Accessories ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .ToList();
 
-        if (Input.SelectedAccessories.Any(accessory => string.Equals(accessory, "Other", StringComparison.OrdinalIgnoreCase)) &&
-            !string.IsNullOrWhiteSpace(Input.OtherAccessory))
+        if (accessories.Count == 0)
         {
-            accessories.Add(Input.OtherAccessory.Trim());
+            accessories = Input.SelectedAccessories
+                .Where(accessory => !string.Equals(accessory, "Other", StringComparison.OrdinalIgnoreCase))
+                .Select(accessory => accessory.Trim())
+                .Where(accessory => accessory.Length > 0)
+                .ToList();
+
+            if (Input.SelectedAccessories.Any(accessory => string.Equals(accessory, "Other", StringComparison.OrdinalIgnoreCase)) &&
+                !string.IsNullOrWhiteSpace(Input.OtherAccessory))
+            {
+                accessories.Add(Input.OtherAccessory.Trim());
+            }
         }
 
         return accessories.Count == 0 ? null : string.Join(", ", accessories.Distinct(StringComparer.OrdinalIgnoreCase));

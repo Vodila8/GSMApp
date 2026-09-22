@@ -437,6 +437,9 @@ body {
 .order-card-number { font-weight: 700; }
 .order-card-date { color: #6c757d; font-size: .875rem; }
 .order-card-price, .order-total-price { font-weight: 700; }
+.accessory-options { display: flex; flex-wrap: wrap; gap: .45rem; margin-bottom: .5rem; }
+.accessory-option { padding: .45rem .7rem; color: #41546b; background: #fff; border: 1px solid #cbd5e1; border-radius: .4rem; cursor: pointer; }
+.accessory-option:hover, .accessory-option.selected { color: #fff; background: #087dae; border-color: #087dae; }
 .order-card-status { display: inline-flex; flex: 0 0 auto; align-items: center; width: max-content; min-width: max-content; min-height: 28px; padding: .35rem .65rem; font-size: .8rem; font-weight: 700; line-height: 1.25; white-space: nowrap; overflow: visible; border-radius: .45rem; }
 .order-card-status.completed { color: #166534; background: #dcfce7; }
 .order-card-status.progress { color: #92400e; background: #fef3c7; }
