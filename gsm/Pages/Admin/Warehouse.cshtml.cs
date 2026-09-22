@@ -88,6 +88,20 @@ public class WarehouseModel : PageModel
                 ModelState.AddModelError("NewItem.Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
             }
         }
+        for (var index = 0; index < Items.Count; index++)
+        {
+            if (Items[index].NewPhotos.Count > 10)
+            {
+                ModelState.AddModelError($"Items[{index}].NewPhotos", "You can upload up to 10 photos at a time.");
+            }
+            foreach (var photo in Items[index].NewPhotos)
+            {
+                if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
+                {
+                    ModelState.AddModelError($"Items[{index}].NewPhotos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
+                }
+            }
+        }
 
         if (!string.IsNullOrWhiteSpace(NewItem.PartName))
         {
@@ -208,6 +222,14 @@ public class WarehouseModel : PageModel
                 UserId = userId,
                 UserEmail = userEmail
             });
+        }
+
+        foreach (var input in Items)
+        {
+            if (existingItems.TryGetValue(input.Id, out var item) && input.NewPhotos.Count > 0)
+            {
+                await SavePhotosAsync(item, input.NewPhotos);
+            }
         }
 
         _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
@@ -441,6 +463,7 @@ public class WarehouseModel : PageModel
         public int? PartnerId { get; set; }
         public string? PartnerName { get; set; }
         public List<WarehousePhotoInput> Photos { get; set; } = [];
+        public List<IFormFile> NewPhotos { get; set; } = [];
 
         [Display(Name = "Part Name")]
         public string PartName { get; set; } = string.Empty;

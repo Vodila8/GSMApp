@@ -84,7 +84,7 @@
 </div>
 
 <dialog id="warehouse-edit-dialog" class="warehouse-edit-dialog">
-    <form method="post" asp-page-handler="Save" class="warehouse-edit-form">
+    <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="warehouse-edit-form">
         <div class="create-user-modal-header">
             <h2>Edit warehouse</h2>
             <button type="button" class="create-user-close" data-close-warehouse-edit aria-label="Close">×</button>
@@ -98,6 +98,7 @@
                         <th>Product number</th>
                         <th>Quantity</th>
                         <th>Part name</th>
+                        <th>Photos</th>
                         <th>Barcode</th>
                         <th>Unit price</th>
                         <th>Delivery price</th>
@@ -111,6 +112,7 @@
                         <td><input asp-for="Items[index].ProductNumber" list="warehouse-product-numbers" /></td>
                         <td><input asp-for="Items[index].Quantity" type="number" min="0" step="1" /></td>
                         <td><input asp-for="Items[index].PartName" /></td>
+                        <td><input asp-for="Items[index].NewPhotos" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></td>
                         <td><input asp-for="Items[index].Barcode" /></td>
                         <td><input asp-for="Items[index].UnitPrice" type="number" min="0" step="0.01" /></td>
                         <td><input asp-for="Items[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
