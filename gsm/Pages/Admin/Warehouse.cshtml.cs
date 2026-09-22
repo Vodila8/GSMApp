@@ -28,6 +28,7 @@ public class WarehouseModel : PageModel
     public NewWarehouseItemInput NewItem { get; set; } = new();
 
     public List<string> ProductNumbers { get; private set; } = [];
+    public List<WarehousePartner> Partners { get; private set; } = [];
 
     public async Task OnGetAsync()
     {
@@ -67,6 +68,22 @@ public class WarehouseModel : PageModel
         if (!string.IsNullOrWhiteSpace(newProductNumber) && !newProductNumber.All(char.IsDigit))
         {
             ModelState.AddModelError("NewItem.ProductNumber", "Product number must contain digits only.");
+        }
+
+        if (!string.IsNullOrWhiteSpace(NewItem.PartName))
+        {
+            if (NewItem.PartnerId.HasValue && !string.IsNullOrWhiteSpace(NewItem.NewPartnerName))
+            {
+                ModelState.AddModelError("NewItem.PartnerId", "Select an existing partner or enter a new partner, not both.");
+            }
+            else if (!NewItem.PartnerId.HasValue && string.IsNullOrWhiteSpace(NewItem.NewPartnerName))
+            {
+                ModelState.AddModelError("NewItem.PartnerId", "Select an existing partner or enter a new partner.");
+            }
+            else if (NewItem.PartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == NewItem.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
+            {
+                ModelState.AddModelError("NewItem.PartnerId", "Select a valid partner.");
+            }
         }
 
         if (!ModelState.IsValid)
@@ -125,9 +142,28 @@ public class WarehouseModel : PageModel
         if (!string.IsNullOrWhiteSpace(NewItem.PartName))
         {
             if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+
+            WarehousePartner? newPartner = null;
+            if (!string.IsNullOrWhiteSpace(NewItem.NewPartnerName))
+            {
+                newPartner = await _dbContext.WarehousePartners.FirstOrDefaultAsync(partner =>
+                    partner.CompanyId == _tenantContext.CompanyId && partner.Name == NewItem.NewPartnerName.Trim());
+                if (newPartner == null)
+                {
+                    newPartner = new WarehousePartner
+                    {
+                        CompanyId = _tenantContext.CompanyId,
+                        Name = NewItem.NewPartnerName.Trim()
+                    };
+                    _dbContext.WarehousePartners.Add(newPartner);
+                }
+            }
+
             var newItem = new WarehouseItem
             {
                 CompanyId = _tenantContext.CompanyId,
+                PartnerId = NewItem.PartnerId,
+                Partner = newPartner,
                 PartName = NewItem.PartName.Trim(),
                 ProductNumber = string.IsNullOrWhiteSpace(NewItem.ProductNumber)
                     ? await GetNextProductNumberAsync()
@@ -163,13 +199,17 @@ public class WarehouseModel : PageModel
     private async Task LoadItemsAsync()
     {
         var warehouseItems = await _dbContext.WarehouseItems
+            .Include(item => item.Partner)
             .OrderBy(item => item.CreatedAt)
             .ThenBy(item => item.Id)
             .ToListAsync();
+        Partners = await _dbContext.WarehousePartners.OrderBy(partner => partner.Name).ToListAsync();
 
         Items = warehouseItems.Select(item => new WarehouseItemInput
         {
             Id = item.Id,
+            PartnerId = item.PartnerId,
+            PartnerName = item.Partner?.Name,
             PartName = item.PartName,
             ProductNumber = NormalizeProductNumber(item.ProductNumber) ?? item.Id.ToString(),
             Barcode = item.Barcode,
@@ -217,6 +257,8 @@ public class WarehouseModel : PageModel
     public class WarehouseItemInput
     {
         public int Id { get; set; }
+        public int? PartnerId { get; set; }
+        public string? PartnerName { get; set; }
 
         [Display(Name = "Part Name")]
         public string PartName { get; set; } = string.Empty;
@@ -242,6 +284,9 @@ public class WarehouseModel : PageModel
 
     public class NewWarehouseItemInput
     {
+        public int? PartnerId { get; set; }
+        public string? NewPartnerName { get; set; }
+
         [Display(Name = "Part Name")]
         public string? PartName { get; set; }
 

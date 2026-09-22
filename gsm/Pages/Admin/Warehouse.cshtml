@@ -35,6 +35,7 @@
                         <th>Product number</th>
                         <th>Quantity</th>
                         <th>Part name</th>
+                        <th>Partner</th>
                         <th>Barcode</th>
                         <th>Unit price (EUR)</th>
                         <th>Delivery price (EUR)</th>
@@ -48,6 +49,7 @@
                         <td>@(Model.Items[index].ProductNumber ?? "—")</td>
                         <td>@Model.Items[index].Quantity</td>
                         <td>@Model.Items[index].PartName</td>
+                        <td>@(Model.Items[index].PartnerName ?? "—")</td>
                         <td>@(string.IsNullOrWhiteSpace(Model.Items[index].Barcode) ? "—" : Model.Items[index].Barcode)</td>
                         <td>@Model.Items[index].UnitPrice.ToString("0.00")</td>
                         <td>@Model.Items[index].DeliveryPrice.ToString("0.00")</td>
@@ -111,6 +113,20 @@
         <div class="text-muted mb-3">A product number is generated automatically, but you can choose an existing number or enter a new one.</div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="user-form-row"><label asp-for="NewItem.ProductNumber">Product number</label><input asp-for="NewItem.ProductNumber" list="warehouse-product-numbers" /></div>
+        <div class="user-form-row">
+            <label asp-for="NewItem.PartnerId">Existing partner</label>
+            <select asp-for="NewItem.PartnerId">
+                <option value="">Select existing partner</option>
+                @foreach (var partner in Model.Partners)
+                {
+                    <option value="@partner.Id">@partner.Name</option>
+                }
+            </select>
+        </div>
+        <div class="user-form-row">
+            <label asp-for="NewItem.NewPartnerName">Or add new partner</label>
+            <input asp-for="NewItem.NewPartnerName" placeholder="Partner name" />
+        </div>
         <div class="user-form-row"><label asp-for="NewItem.PartName">Part name</label><input asp-for="NewItem.PartName" required /></div>
         <div class="user-form-row user-form-row-two-columns">
             <div><label asp-for="NewItem.Quantity">Quantity</label><input asp-for="NewItem.Quantity" type="number" min="0" step="1" /></div>

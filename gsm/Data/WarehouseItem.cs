@@ -8,6 +8,10 @@ public class WarehouseItem
 
     public int Id { get; set; }
 
+    public int? PartnerId { get; set; }
+
+    public WarehousePartner? Partner { get; set; }
+
     [Required]
     [MaxLength(200)]
     public string PartName { get; set; } = string.Empty;
