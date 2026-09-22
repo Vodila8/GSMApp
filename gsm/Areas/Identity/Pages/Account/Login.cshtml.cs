@@ -75,7 +75,10 @@ public class LoginModel : PageModel
                     return Page();
                 }
 
-                return LocalRedirect(returnUrl);
+                var isStaff = await _userManager.IsInRoleAsync(user, "Boss")
+                    || await _userManager.IsInRoleAsync(user, "Administrator")
+                    || await _userManager.IsInRoleAsync(user, "Technician");
+                return LocalRedirect(isStaff ? returnUrl : Url.Content("~/MyOrders")!);
             }
 
             if (result.IsNotAllowed)
