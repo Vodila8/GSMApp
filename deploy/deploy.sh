@@ -48,4 +48,4 @@ chmod 700 "$PUBLISH_DIR/DataProtectionKeys"
 
 systemctl restart gsm
 systemctl is-active --quiet gsm
-printf 'GSM deployment completed: %s\n' "$(git rev-parse --short HEAD)"
+printf 'GSM deployment completed: %s\n' "$(git -c safe.directory="$REPO_DIR" rev-parse --short HEAD)"
