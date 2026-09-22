@@ -115,11 +115,6 @@ public class OrdersModel : PageModel
         var parts = Input.Parts.Where(part => part.WarehouseItemId.HasValue && part.WarehouseItemId.Value > 0).ToList();
         var services = Input.Services.Where(service => !string.IsNullOrWhiteSpace(service.Description)).ToList();
 
-        if (parts.Count == 0 && services.Count == 0)
-        {
-            ModelState.AddModelError(string.Empty, "Add at least one part or service.");
-        }
-
         foreach (var part in parts)
         {
             if (part.Quantity <= 0 || part.UnitPrice < 0)

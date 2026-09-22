@@ -334,12 +334,8 @@
             const errors = [];
             const hasCustomer = document.getElementById('customer-select').value !== '';
             const hasDevice = deviceSelect.value !== '' || document.querySelector('[name="Input.NewDeviceType"]').value !== '';
-            const hasPart = [...document.querySelectorAll('.part-select')].some(select => select.value !== '');
-            const hasService = [...document.querySelectorAll('[name$=".Description"]')].some(input => input.value.trim() !== '');
-
             if (!hasCustomer) errors.push('Select a customer.');
             if (!hasDevice) errors.push('Select an existing device or choose a new device type.');
-            if (!hasPart && !hasService) errors.push('Add at least one warehouse part or service.');
 
             const errorBox = document.getElementById('order-client-error');
             if (errors.length > 0) {
