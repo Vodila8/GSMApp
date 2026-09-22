@@ -27,6 +27,10 @@ public class WarehouseModel : PageModel
     [BindProperty]
     public NewWarehouseItemInput NewItem { get; set; } = new();
 
+    [BindProperty]
+    public WarehouseSaleInput Sale { get; set; } = new();
+
+    public bool ShowSaleModal { get; private set; }
     public List<string> ProductNumbers { get; private set; } = [];
     public List<WarehousePartner> Partners { get; private set; } = [];
 
@@ -196,6 +200,104 @@ public class WarehouseModel : PageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostSellAsync()
+    {
+        ShowSaleModal = true;
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+
+        var item = await _dbContext.WarehouseItems.FirstOrDefaultAsync(warehouseItem =>
+            warehouseItem.Id == Sale.WarehouseItemId && warehouseItem.CompanyId == _tenantContext.CompanyId);
+        if (item == null)
+        {
+            ModelState.AddModelError("Sale.WarehouseItemId", "Select a valid warehouse item.");
+        }
+
+        if (Sale.Quantity <= 0)
+        {
+            ModelState.AddModelError("Sale.Quantity", "Quantity must be greater than zero.");
+        }
+        else if (item != null && Sale.Quantity > item.Quantity)
+        {
+            ModelState.AddModelError("Sale.Quantity", $"Only {item.Quantity} items are available.");
+        }
+
+        if (Sale.PartnerId.HasValue && !string.IsNullOrWhiteSpace(Sale.NewPartnerName))
+        {
+            ModelState.AddModelError("Sale.PartnerId", "Select an existing partner or enter a new partner, not both.");
+        }
+        else if (!Sale.PartnerId.HasValue && string.IsNullOrWhiteSpace(Sale.NewPartnerName))
+        {
+            ModelState.AddModelError("Sale.PartnerId", "Select an existing partner or enter a new partner.");
+        }
+        else if (Sale.PartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner =>
+                     partner.Id == Sale.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
+        {
+            ModelState.AddModelError("Sale.PartnerId", "Select a valid partner.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadItemsAsync();
+            return Page();
+        }
+
+        WarehousePartner? newPartner = null;
+        if (!string.IsNullOrWhiteSpace(Sale.NewPartnerName))
+        {
+            newPartner = await _dbContext.WarehousePartners.FirstOrDefaultAsync(partner =>
+                partner.CompanyId == _tenantContext.CompanyId && partner.Name == Sale.NewPartnerName.Trim());
+            if (newPartner == null)
+            {
+                newPartner = new WarehousePartner
+                {
+                    CompanyId = _tenantContext.CompanyId,
+                    Name = Sale.NewPartnerName.Trim()
+                };
+                _dbContext.WarehousePartners.Add(newPartner);
+            }
+        }
+
+        await using var transaction = await _dbContext.Database.BeginTransactionAsync();
+        var quantityBefore = item!.Quantity;
+        item.Quantity -= Sale.Quantity;
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userEmail = User.Identity?.Name ?? "Unknown user";
+        var sale = new WarehouseSale
+        {
+            CompanyId = _tenantContext.CompanyId,
+            PartnerId = Sale.PartnerId ?? 0,
+            Partner = newPartner,
+            WarehouseItemId = item.Id,
+            WarehouseItem = item,
+            Quantity = Sale.Quantity,
+            UnitPrice = item.UnitPrice,
+            Note = Sale.Note?.Trim(),
+            UserId = userId,
+            UserEmail = userEmail
+        };
+        _dbContext.WarehouseSales.Add(sale);
+        _dbContext.WarehouseAuditEntries.Add(new WarehouseAuditEntry
+        {
+            CompanyId = _tenantContext.CompanyId,
+            WarehouseItemId = item.Id,
+            ItemName = item.PartName,
+            ProductNumber = item.ProductNumber,
+            Barcode = item.Barcode,
+            Action = "Sale",
+            QuantityBefore = quantityBefore,
+            QuantityAfter = item.Quantity,
+            QuantityChange = -Sale.Quantity,
+            UnitPrice = item.UnitPrice,
+            UserId = userId,
+            UserEmail = userEmail
+        });
+        await _dbContext.SaveChangesAsync();
+        await transaction.CommitAsync();
+
+        TempData["StatusMessage"] = $"Sold {Sale.Quantity} × {item.PartName}.";
+        return RedirectToPage();
+    }
+
     private async Task LoadItemsAsync()
     {
         var warehouseItems = await _dbContext.WarehouseItems
@@ -280,6 +382,15 @@ public class WarehouseModel : PageModel
         [Range(0, int.MaxValue)]
         [Display(Name = "Quantity")]
         public int Quantity { get; set; }
+    }
+
+    public class WarehouseSaleInput
+    {
+        public int WarehouseItemId { get; set; }
+        public int? PartnerId { get; set; }
+        public string? NewPartnerName { get; set; }
+        public int Quantity { get; set; } = 1;
+        public string? Note { get; set; }
     }
 
     public class NewWarehouseItemInput

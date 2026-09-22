@@ -20,6 +20,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<WarehousePartner> WarehousePartners => Set<WarehousePartner>();
 
+    public DbSet<WarehouseSale> WarehouseSales => Set<WarehouseSale>();
+
     public DbSet<WarehouseAuditEntry> WarehouseAuditEntries => Set<WarehouseAuditEntry>();
 
     public DbSet<ServiceOrder> ServiceOrders => Set<ServiceOrder>();
@@ -39,6 +41,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         base.OnModelCreating(builder);
         builder.Entity<WarehouseItem>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehousePartner>().HasQueryFilter(partner => !_tenantContext.IsAuthenticated || partner.CompanyId == _tenantContext.CompanyId);
+        builder.Entity<WarehouseSale>().HasQueryFilter(sale => !_tenantContext.IsAuthenticated || sale.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehouseAuditEntry>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<CustomerDevice>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<ServiceOrder>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);

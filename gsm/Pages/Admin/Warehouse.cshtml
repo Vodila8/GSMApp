@@ -15,6 +15,8 @@
                 <button class="warehouse-action-button" type="button" data-open-warehouse-edit title="Edit warehouse" aria-label="Edit warehouse">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.7-10.9c.4-.4.4-1 0-1.4l-.9-.9a1 1 0 0 0-1.4 0l-1.7 1.7 3.5 3.5 1.7-1.7Z" /></svg>
                 </button>
+                <button class="warehouse-action-button warehouse-sale-button" type="button" data-open-warehouse-sale title="Sell item" aria-label="Sell item">$</button>
+                <a class="warehouse-action-button" href="/WarehouseSales" title="Sales history" aria-label="Sales history">▤</a>
                 <button class="warehouse-action-button warehouse-add-button" type="button" data-open-warehouse-item title="Add item" aria-label="Add item">+</button>
             </div>
         </div>
@@ -143,16 +145,66 @@
     </form>
 </dialog>
 
+<dialog id="warehouse-sale-dialog" class="create-user-dialog">
+    <form method="post" asp-page-handler="Sell" class="create-user-modal-form">
+        <div class="create-user-modal-header">
+            <h2>Sell warehouse item</h2>
+            <button type="button" class="create-user-close" data-close-warehouse-sale aria-label="Close">×</button>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="user-form-row">
+            <label asp-for="Sale.WarehouseItemId">Product</label>
+            <select asp-for="Sale.WarehouseItemId">
+                <option value="">Select product</option>
+                @foreach (var item in Model.Items)
+                {
+                    <option value="@item.Id">@item.PartName (stock: @item.Quantity)</option>
+                }
+            </select>
+        </div>
+        <div class="user-form-row">
+            <label asp-for="Sale.PartnerId">Existing partner</label>
+            <select asp-for="Sale.PartnerId">
+                <option value="">Select existing partner</option>
+                @foreach (var partner in Model.Partners)
+                {
+                    <option value="@partner.Id">@partner.Name</option>
+                }
+            </select>
+        </div>
+        <div class="user-form-row">
+            <label asp-for="Sale.NewPartnerName">Or add new partner</label>
+            <input asp-for="Sale.NewPartnerName" placeholder="Partner name" />
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="Sale.Quantity">Quantity</label><input asp-for="Sale.Quantity" type="number" min="1" /></div>
+            <div><label asp-for="Sale.Note">Note</label><input asp-for="Sale.Note" placeholder="Optional note" /></div>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-warehouse-sale>Cancel</button>
+            <button type="submit" class="btn btn-primary">Record sale</button>
+        </div>
+    </form>
+</dialog>
+
 @section Scripts {
     <partial name="_ValidationScriptsPartial" />
     <script>
         const warehouseEditDialog = document.getElementById('warehouse-edit-dialog');
         const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
+        const warehouseSaleDialog = document.getElementById('warehouse-sale-dialog');
         document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
         document.querySelector('[data-open-warehouse-item]').addEventListener('click', () => warehouseItemDialog.showModal());
+        document.querySelector('[data-open-warehouse-sale]').addEventListener('click', () => warehouseSaleDialog.showModal());
         document.querySelectorAll('[data-close-warehouse-edit]').forEach(button => button.addEventListener('click', () => warehouseEditDialog.close()));
         document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
+        document.querySelectorAll('[data-close-warehouse-sale]').forEach(button => button.addEventListener('click', () => warehouseSaleDialog.close()));
         warehouseEditDialog.addEventListener('click', event => { if (event.target === warehouseEditDialog) warehouseEditDialog.close(); });
         warehouseItemDialog.addEventListener('click', event => { if (event.target === warehouseItemDialog) warehouseItemDialog.close(); });
+        warehouseSaleDialog.addEventListener('click', event => { if (event.target === warehouseSaleDialog) warehouseSaleDialog.close(); });
+        @if (Model.ShowSaleModal)
+        {
+            <text>warehouseSaleDialog.showModal();</text>
+        }
     </script>
 }
