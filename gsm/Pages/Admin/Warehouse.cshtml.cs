@@ -224,9 +224,29 @@ public class WarehouseModel : PageModel
             });
         }
 
+        var deletedPhotoPaths = new List<string>();
         foreach (var input in Items)
         {
-            if (existingItems.TryGetValue(input.Id, out var item) && input.NewPhotos.Count > 0)
+            if (!existingItems.TryGetValue(input.Id, out var item))
+            {
+                continue;
+            }
+
+            if (input.DeletedPhotoIds.Count > 0)
+            {
+                var photosToDelete = await _dbContext.WarehouseItemPhotos
+                    .Where(photo => photo.WarehouseItemId == item.Id &&
+                                    photo.CompanyId == _tenantContext.CompanyId &&
+                                    input.DeletedPhotoIds.Contains(photo.Id))
+                    .ToListAsync();
+                foreach (var photo in photosToDelete)
+                {
+                    _dbContext.WarehouseItemPhotos.Remove(photo);
+                    deletedPhotoPaths.Add(Path.Combine(_environment.WebRootPath, "uploads", "warehouse", photo.FileName));
+                }
+            }
+
+            if (input.NewPhotos.Count > 0)
             {
                 await SavePhotosAsync(item, input.NewPhotos);
             }
@@ -234,6 +254,10 @@ public class WarehouseModel : PageModel
 
         _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
         await _dbContext.SaveChangesAsync();
+        foreach (var path in deletedPhotoPaths)
+        {
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
 
         if (createdItem != null && NewItem.Photos.Count > 0)
         {
@@ -464,6 +488,7 @@ public class WarehouseModel : PageModel
         public string? PartnerName { get; set; }
         public List<WarehousePhotoInput> Photos { get; set; } = [];
         public List<IFormFile> NewPhotos { get; set; } = [];
+        public List<int> DeletedPhotoIds { get; set; } = [];
 
         [Display(Name = "Part Name")]
         public string PartName { get; set; } = string.Empty;

@@ -252,8 +252,14 @@ body {
 .warehouse-photo-list { display: flex; flex-wrap: wrap; gap: .35rem; min-width: 120px; }
 .warehouse-photo-item { position: relative; width: 42px; height: 42px; }
 .warehouse-photo-item img { width: 42px; height: 42px; object-fit: cover; border: 1px solid var(--ops-border); border-radius: .3rem; }
-.warehouse-photo-item form { position: absolute; top: -7px; right: -7px; }
-.warehouse-photo-delete { display: grid; place-items: center; width: 17px; height: 17px; padding: 0; color: #fff; font-size: .75rem; line-height: 1; background: #dc2626; border: 0; border-radius: 50%; cursor: pointer; }
+.warehouse-photo-delete { position: absolute; top: -7px; right: -7px; display: grid; place-items: center; width: 19px; height: 19px; padding: 0; color: #fff; font-size: .8rem; line-height: 1; background: #dc2626; border: 0; border-radius: 50%; cursor: pointer; }
+.warehouse-photo-picker { display: grid; gap: .5rem; }
+.warehouse-photo-add { display: inline-flex; width: max-content; align-items: center; min-height: 34px; padding: .4rem .65rem; color: #475569; font-size: .82rem; font-weight: 600; background: #fff; border: 1px solid #cbd5e1; border-radius: .4rem; cursor: pointer; }
+.warehouse-photo-add:hover { color: #1d4ed8; border-color: #60a5fa; background: #eff6ff; }
+.warehouse-photo-input { position: absolute; width: 1px !important; height: 1px; padding: 0 !important; overflow: hidden; opacity: 0; pointer-events: none; }
+.warehouse-edit-photo-list { min-width: 0; }
+.warehouse-edit-photo-list .warehouse-photo-item { width: 76px; height: 76px; }
+.warehouse-edit-photo-list .warehouse-photo-item img { width: 76px; height: 76px; border-radius: .45rem; }
 .warehouse-edit-dialog { width: min(1400px, calc(100% - 2rem)); max-width: none; padding: 0; border: 0; border-radius: .75rem; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
 .warehouse-edit-dialog::backdrop { background: rgb(15 23 42 / 45%); }
 .warehouse-edit-form { padding: 1.5rem; }
