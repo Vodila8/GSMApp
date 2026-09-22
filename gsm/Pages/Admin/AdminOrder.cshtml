@@ -1,0 +1,93 @@
+@page "/AdminOrder/{id:int}"
+@model gsm.Pages.AdminOrderModel
+@{
+    ViewData["Title"] = "Manage Order";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list order-form admin-order-page">
+        <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
+        <p><strong>@(Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
+        <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
+
+        <form method="post" asp-page-handler="ScanAdb" class="mt-3">
+            <button class="btn btn-outline-success" type="submit">Scan Phone with ADB</button>
+            <small class="d-block text-muted mt-1">Connect and unlock the Android phone, then allow USB debugging.</small>
+        </form>
+        @if (TempData["AdbStatus"] is string adbStatus)
+        {
+            <div class="alert alert-success mt-3" role="alert">@adbStatus</div>
+        }
+        @if (TempData["AdbError"] is string adbError)
+        {
+            <div class="alert alert-danger mt-3" role="alert">@adbError</div>
+        }
+        @if (Model.AdbReport is not null)
+        {
+            <section class="adb-report mt-3" role="status">
+                <div class="adb-report-header">
+                    <div>
+                        <span class="adb-report-kicker">DEVICE CHECK</span>
+                        <h3>Phone diagnostic report</h3>
+                    </div>
+                    <span class="adb-report-status">Connected</span>
+                </div>
+                <div class="adb-report-grid">
+                    <div class="adb-report-item"><span>Manufacturer</span><strong>@Model.AdbReport.Manufacturer</strong></div>
+                    <div class="adb-report-item"><span>Model</span><strong>@Model.AdbReport.Model</strong></div>
+                    <div class="adb-report-item"><span>Android version</span><strong>@Model.AdbReport.AndroidVersion</strong></div>
+                    <div class="adb-report-item"><span>Serial number</span><strong>@Model.AdbReport.SerialNumber</strong></div>
+                    <div class="adb-report-item"><span>Battery level</span><strong>@Model.AdbReport.BatteryLevel%</strong></div>
+                    <div class="adb-report-item"><span>Battery health</span><strong>@Model.AdbReport.BatteryHealth</strong></div>
+                    <div class="adb-report-item"><span>Battery temperature</span><strong>@Model.AdbReport.BatteryTemperature</strong></div>
+                </div>
+                <div class="adb-report-storage">
+                    <span>Internal storage</span>
+                    <strong>@Model.AdbReport.Storage</strong>
+                </div>
+            </section>
+        }
+
+        <form method="post" asp-page-handler="SaveOrder" id="edit-order-form">
+            @if (TempData["StatusMessage"] is string statusMessage) { <div class="alert alert-success mt-3">@statusMessage</div> }
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <h2 class="order-section-title">Parts from Warehouse</h2>
+            <div class="table-responsive"><table class="table warehouse-table"><thead><tr><th>Part</th><th>Unit Price (EUR)</th><th>Quantity</th><th></th></tr></thead><tbody id="parts-body">
+            @for (var index = 0; index < Model.Parts.Count; index++)
+            {
+                <tr class="part-row"><td><input asp-for="Parts[index].OrderLineId" type="hidden" /><select asp-for="Parts[index].WarehouseItemId" class="part-select"><option value="">Select part</option>@foreach (var part in Model.WarehouseItems) { <option value="@part.Id" data-price="@part.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@part.PartName (in stock: @part.Quantity)</option> }</select></td><td><input asp-for="Parts[index].UnitPrice" class="line-price" type="number" min="0" step="0.01" /></td><td><input asp-for="Parts[index].Quantity" class="line-quantity" type="number" min="1" step="1" /></td><td><button class="btn btn-link text-danger remove-part" type="button">×</button></td></tr>
+            }
+            </tbody></table></div>
+            <button id="add-part" class="btn btn-outline-secondary btn-sm" type="button">+ Add Part</button>
+
+            <h2 class="order-section-title">Services</h2>
+            <div class="table-responsive"><table class="table warehouse-table"><thead><tr><th>Service</th><th>Price (EUR)</th><th></th></tr></thead><tbody id="services-body">
+            @for (var index = 0; index < Model.Services.Count; index++)
+            {
+                <tr class="service-row"><td><input asp-for="Services[index].OrderLineId" type="hidden" /><input asp-for="Services[index].Description" placeholder="e.g. Diagnostics" /></td><td><input asp-for="Services[index].UnitPrice" class="service-price" type="number" min="0" step="0.01" /></td><td><button class="btn btn-link text-danger remove-service" type="button">×</button></td></tr>
+            }
+            </tbody></table></div>
+            <button id="add-service" class="btn btn-outline-secondary btn-sm" type="button">+ Add Service</button>
+            <div class="order-total">Total: <strong id="edit-order-total">0.00 EUR</strong></div>
+            <button class="btn btn-primary" type="submit">Save Order Changes</button>
+        </form>
+    </section>
+</div>
+
+<template id="part-template"><tr class="part-row"><td><input name="Parts[__index__].OrderLineId" type="hidden" value="0" /><select name="Parts[__index__].WarehouseItemId" class="part-select"><option value="">Select part</option>@foreach (var part in Model.WarehouseItems) { <option value="@part.Id" data-price="@part.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@part.PartName (in stock: @part.Quantity)</option> }</select></td><td><input name="Parts[__index__].UnitPrice" class="line-price" type="number" min="0" step="0.01" /></td><td><input name="Parts[__index__].Quantity" class="line-quantity" type="number" min="1" value="1" step="1" /></td><td><button class="btn btn-link text-danger remove-part" type="button">×</button></td></tr></template>
+<template id="service-template"><tr class="service-row"><td><input name="Services[__index__].OrderLineId" type="hidden" value="0" /><input name="Services[__index__].Description" placeholder="e.g. Diagnostics" /></td><td><input name="Services[__index__].UnitPrice" class="service-price" type="number" min="0" step="0.01" /></td><td><button class="btn btn-link text-danger remove-service" type="button">×</button></td></tr></template>
+
+@section Scripts {
+<script>
+let partIndex = @Model.Parts.Count, serviceIndex = @Model.Services.Count;
+const partsBody = document.getElementById('parts-body'), servicesBody = document.getElementById('services-body');
+function total() { let value = 0; document.querySelectorAll('.part-row').forEach(r => value += (parseFloat(r.querySelector('.line-price').value) || 0) * (parseInt(r.querySelector('.line-quantity').value) || 0)); document.querySelectorAll('.service-price').forEach(i => value += parseFloat(i.value) || 0); document.getElementById('edit-order-total').textContent = value.toFixed(2) + ' EUR'; }
+function reindex(selector, prefix) { document.querySelectorAll(selector).forEach((row, index) => row.querySelectorAll('input[name], select[name]').forEach(input => input.name = input.name.replace(new RegExp(`${prefix}\\[\\d+\\]`), `${prefix}[${index}]`))); }
+function bindPart(row) { row.querySelector('.part-select').addEventListener('change', e => { const p = e.target.options[e.target.selectedIndex].dataset.price; if (p) row.querySelector('.line-price').value = p; total(); }); row.querySelector('.remove-part').addEventListener('click', () => { row.remove(); reindex('.part-row', 'Parts'); total(); }); }
+function bindService(row) { row.querySelector('.remove-service').addEventListener('click', () => { row.remove(); reindex('.service-row', 'Services'); total(); }); }
+document.querySelectorAll('.part-row').forEach(bindPart); document.querySelectorAll('.service-row').forEach(bindService);
+document.getElementById('add-part').addEventListener('click', () => { partsBody.insertAdjacentHTML('beforeend', document.getElementById('part-template').innerHTML.replaceAll('__index__', partIndex++)); bindPart(partsBody.lastElementChild); });
+document.getElementById('add-service').addEventListener('click', () => { servicesBody.insertAdjacentHTML('beforeend', document.getElementById('service-template').innerHTML.replaceAll('__index__', serviceIndex++)); bindService(servicesBody.lastElementChild); });
+document.addEventListener('input', total); total();
+</script>
+}

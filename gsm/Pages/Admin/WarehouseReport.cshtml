@@ -1,0 +1,60 @@
+@page "/WarehouseReport"
+@model gsm.Pages.WarehouseReportModel
+@{
+    ViewData["Title"] = "Warehouse Report";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list warehouse-report-page">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">INVENTORY</span>
+                <h1 class="warehouse-title">Warehouse Report</h1>
+            </div>
+            <a class="back-link" href="/Warehouse">← Back to warehouse</a>
+        </div>
+
+        @if (Model.Entries.Count == 0)
+        {
+            <p class="text-muted">No warehouse changes have been recorded yet.</p>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table warehouse-table warehouse-report-table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Product number</th>
+                            <th>Barcode</th>
+                            <th>Item</th>
+                            <th>Action</th>
+                            <th>Quantity</th>
+                            <th>Change</th>
+                            <th>Unit price</th>
+                            <th>User</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                    @foreach (var entry in Model.Entries)
+                    {
+                        <tr>
+                            <td>@entry.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@(entry.ProductNumber ?? "—")</td>
+                            <td>@(entry.Barcode ?? "—")</td>
+                            <td><strong>@entry.ItemName</strong></td>
+                            <td>@entry.Action</td>
+                            <td>@entry.QuantityBefore → @entry.QuantityAfter</td>
+                            <td class="@(entry.QuantityChange > 0 ? "stock-increase" : entry.QuantityChange < 0 ? "stock-decrease" : "")">
+                                @(entry.QuantityChange > 0 ? "+" : "")@entry.QuantityChange
+                            </td>
+                            <td>@entry.UnitPrice.ToString("0.00") EUR</td>
+                            <td>@entry.UserEmail</td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </section>
+</div>

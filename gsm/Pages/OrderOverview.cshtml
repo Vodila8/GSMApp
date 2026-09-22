@@ -1,0 +1,50 @@
+@page "/OrderOverview"
+@model gsm.Pages.OrderOverviewModel
+@{
+    ViewData["Title"] = "Order overview";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list order-overview-page">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">SERVICE DESK</span>
+                <h1 class="warehouse-title">@("Order overview")</h1>
+            </div>
+            <a class="back-link" href="/">← Back to home</a>
+        </div>
+
+        <div class="order-filter-links">
+            <a class="@(Model.StatusFilter == "all" ? "active" : "")" href="/OrderOverview">All orders</a>
+            <a class="@(Model.StatusFilter == "progress" ? "active" : "")" href="/OrderOverview?status=progress">In progress</a>
+            <a class="@(Model.StatusFilter == "completed" ? "active" : "")" href="/OrderOverview?status=completed">Completed</a>
+        </div>
+
+        @if (Model.Orders.Count == 0)
+        {
+            <p class="text-muted">No orders found for this filter.</p>
+        }
+        else
+        {
+            <div class="order-overview-list">
+                @foreach (var order in Model.Orders)
+                {
+                    <a class="order-overview-card" href="/AdminOrder/@order.Id">
+                        <div>
+                            <strong>Order #@order.Id</strong>
+                            <span>@order.CustomerName</span>
+                            <span>@order.Device@(string.IsNullOrWhiteSpace(order.DeviceDetails) ? "" : $" — {order.DeviceDetails}")</span>
+                        </div>
+                        <div class="order-overview-meta">
+                            <span class="order-status @(order.IsCompleted ? "completed" : "progress")">
+                                @(order.IsCompleted ? "Completed" : string.IsNullOrWhiteSpace(order.CurrentStage) ? "In progress" : $"In progress — {order.CurrentStage}")
+                            </span>
+                            <span>@order.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy")</span>
+                            <strong>@order.TotalPrice.ToString("0.00") EUR</strong>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+</div>

@@ -1,0 +1,266 @@
+@page "/CreateRepair"
+@model gsm.Pages.OrdersModel
+@{
+    ViewData["Title"] = "Create Repair";
+}
+
+<div class="user-form-page">
+    <form class="warehouse-list order-form repair-form" method="post" asp-page-handler="Create" id="order-form">
+        <div class="repair-form-header">
+            <div>
+                <span class="repair-form-kicker">SERVICE DESK</span>
+                <h1 class="warehouse-title">Create Repair</h1>
+                <p>Register the device, repair details, parts and service work in one order.</p>
+            </div>
+            <span class="repair-form-badge">New repair</span>
+        </div>
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success" role="alert">@statusMessage</div>
+        }
+        <div asp-validation-summary="All" class="text-danger"></div>
+
+        <section class="repair-section">
+        <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
+        <div class="user-form-row user-form-row-two-columns">
+            <div>
+                <label asp-for="Input.CustomerId">Customer</label>
+                <select asp-for="Input.CustomerId" id="customer-select">
+                    <option value="">Select customer</option>
+                    @foreach (var customer in Model.Customers)
+                    {
+                        <option value="@customer.Id" data-device="@customer.Device" data-device-details="@customer.DeviceModelAndSerialNumber">
+                            @(customer.CustomerName ?? customer.Email) — @customer.Email
+                        </option>
+                    }
+                </select>
+                <span asp-validation-for="Input.CustomerId" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.CustomerDeviceId">Device</label>
+                <select asp-for="Input.CustomerDeviceId" id="device-select"></select>
+                <span asp-validation-for="Input.CustomerDeviceId" class="text-danger"></span>
+            </div>
+        </div>
+
+        <div id="new-device-fields" class="user-form-row user-form-row-two-columns" hidden>
+            <div>
+                <label asp-for="Input.NewDeviceType">New Device</label>
+                <select asp-for="Input.NewDeviceType">
+                    <option value="">Select device type</option>
+                    <option>Computer</option><option>Laptop</option><option>Printer</option><option>Phone</option><option>Tablet</option><option>Other</option>
+                </select>
+                <span asp-validation-for="Input.NewDeviceType" class="text-danger"></span>
+            </div>
+            <div>
+                <label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label>
+                <input asp-for="Input.NewDeviceModelAndSerialNumber" />
+            </div>
+        </div>
+
+        </section>
+
+        <section class="repair-section">
+        <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
+        <div class="user-form-row">
+            <label asp-for="Input.ProblemOrRepair">Problem / Repair</label>
+            <textarea asp-for="Input.ProblemOrRepair" rows="3" placeholder="Describe the reported problem or requested repair"></textarea>
+        </div>
+
+        <div class="user-form-row">
+            <label asp-for="Input.DeviceConditionAndNotes">Device Condition and Notes at Acceptance</label>
+            <textarea asp-for="Input.DeviceConditionAndNotes" rows="3" placeholder="Condition of the device when accepted"></textarea>
+        </div>
+
+        <div class="user-form-row user-form-row-two-columns">
+            <div>
+                <label asp-for="Input.Accessories">Accessories</label>
+                <input asp-for="Input.Accessories" type="hidden" id="accessories-value" />
+                <select id="accessories-select" aria-label="Accessories">
+                    <option value="">Select accessory</option>
+                    <option value="SIM card">SIM card</option>
+                    <option value="Case">Case</option>
+                    <option value="Charger">Charger</option>
+                    <option value="Cable">Cable</option>
+                    <option value="Bag">Bag</option>
+                    <option value="Other">Other</option>
+                </select>
+                <input id="accessories-other" type="text" placeholder="Write accessory" aria-label="Other accessory" hidden />
+            </div>
+            <div>
+                <label asp-for="Input.DevicePassword">Device Password</label>
+                <input asp-for="Input.DevicePassword" type="text" />
+            </div>
+        </div>
+
+        <input asp-for="Input.AdbDiagnosticReport" type="hidden" />
+        </section>
+
+        <section class="repair-section repair-cost-section">
+        <h2 class="repair-section-title"><span>3</span> Repair cost</h2>
+        <h2 class="order-section-title">Parts from Warehouse</h2>
+        <div class="table-responsive">
+            <table class="table warehouse-table" id="parts-table">
+                <thead><tr><th>Part</th><th>Unit Price (EUR)</th><th>Quantity</th><th></th></tr></thead>
+                <tbody id="parts-body">
+                @for (var index = 0; index < Model.Input.Parts.Count; index++)
+                {
+                    <tr>
+                        <td>
+                            <select asp-for="Input.Parts[index].WarehouseItemId" class="part-select" aria-label="Part">
+                                <option value="">Select part</option>
+                                @foreach (var part in Model.WarehouseItems)
+                                {
+                                    <option value="@part.Id" data-price="@part.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-stock="@part.Quantity">@part.PartName (in stock: @part.Quantity)</option>
+                                }
+                            </select>
+                        </td>
+                        <td><input asp-for="Input.Parts[index].UnitPrice" class="line-price" type="number" min="0" step="0.01" aria-label="Unit price" /></td>
+                        <td><input asp-for="Input.Parts[index].Quantity" class="line-quantity" type="number" min="1" step="1" aria-label="Quantity" /></td>
+                        <td><button class="btn btn-link text-danger remove-row" type="button">×</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <button id="add-part" class="btn btn-outline-secondary btn-sm" type="button">+ Add Part</button>
+
+        <h2 class="order-section-title">Services</h2>
+        <div class="table-responsive">
+            <table class="table warehouse-table">
+                <thead><tr><th>Service</th><th>Price (EUR)</th><th></th></tr></thead>
+                <tbody id="services-body">
+                @for (var index = 0; index < Model.Input.Services.Count; index++)
+                {
+                    <tr>
+                        <td><input asp-for="Input.Services[index].Description" placeholder="e.g. Diagnostics" aria-label="Service description" /></td>
+                        <td><input asp-for="Input.Services[index].UnitPrice" class="service-price" type="number" min="0" step="0.01" aria-label="Price" /></td>
+                        <td><button class="btn btn-link text-danger remove-row" type="button">×</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <button id="add-service" class="btn btn-outline-secondary btn-sm" type="button">+ Add Service</button>
+
+        <div class="order-total"><span>Repair total</span><strong id="order-total">0.00 EUR</strong></div>
+        <div id="order-client-error" class="alert alert-danger" role="alert" hidden></div>
+        <button class="btn btn-primary" type="submit">Create Repair</button>
+        </section>
+    </form>
+</div>
+
+<template id="part-template">
+    <tr>
+        <td><select name="Input.Parts[__index__].WarehouseItemId" class="part-select" aria-label="Part"><option value="">Select part</option>@foreach (var part in Model.WarehouseItems) { <option value="@part.Id" data-price="@part.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-stock="@part.Quantity">@part.PartName (in stock: @part.Quantity)</option> }</select></td>
+        <td><input name="Input.Parts[__index__].UnitPrice" class="line-price" type="number" min="0" step="0.01" aria-label="Unit price" /></td>
+        <td><input name="Input.Parts[__index__].Quantity" class="line-quantity" type="number" min="1" value="1" step="1" aria-label="Quantity" /></td>
+        <td><button class="btn btn-link text-danger remove-row" type="button">×</button></td>
+    </tr>
+</template>
+<template id="service-template">
+    <tr>
+        <td><input name="Input.Services[__index__].Description" placeholder="e.g. Diagnostics" aria-label="Service description" /></td>
+        <td><input name="Input.Services[__index__].UnitPrice" class="service-price" type="number" min="0" step="0.01" aria-label="Price" /></td>
+        <td><button class="btn btn-link text-danger remove-row" type="button">×</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <script>
+        let partIndex = @Model.Input.Parts.Count;
+        let serviceIndex = @Model.Input.Services.Count;
+        const partsBody = document.getElementById('parts-body');
+        const servicesBody = document.getElementById('services-body');
+
+        function addRow(templateId, target, index) {
+            const template = document.getElementById(templateId).innerHTML.replaceAll('__index__', index);
+            target.insertAdjacentHTML('beforeend', template);
+        }
+
+        const accessoriesSelect = document.getElementById('accessories-select');
+        const accessoriesValue = document.getElementById('accessories-value');
+        const accessoriesOther = document.getElementById('accessories-other');
+        accessoriesSelect.value = accessoriesValue.value && [...accessoriesSelect.options].some(option => option.value === accessoriesValue.value)
+            ? accessoriesValue.value
+            : accessoriesValue.value ? 'Other' : '';
+        accessoriesOther.value = accessoriesSelect.value === 'Other' ? accessoriesValue.value : '';
+        accessoriesOther.hidden = accessoriesSelect.value !== 'Other';
+        accessoriesSelect.addEventListener('change', () => {
+            accessoriesOther.hidden = accessoriesSelect.value !== 'Other';
+            accessoriesOther.value = accessoriesSelect.value === 'Other' ? accessoriesOther.value : '';
+            accessoriesValue.value = accessoriesSelect.value === 'Other' ? accessoriesOther.value : accessoriesSelect.value;
+        });
+        accessoriesOther.addEventListener('input', () => { accessoriesValue.value = accessoriesOther.value; });
+
+        function updateTotal() {
+            let total = 0;
+            document.querySelectorAll('#parts-body tr').forEach(row => {
+                const price = parseFloat(row.querySelector('.line-price')?.value) || 0;
+                const quantity = parseInt(row.querySelector('.line-quantity')?.value) || 0;
+                total += price * quantity;
+            });
+            document.querySelectorAll('.service-price').forEach(input => total += parseFloat(input.value) || 0);
+            document.getElementById('order-total').textContent = total.toFixed(2) + ' EUR';
+        }
+
+        document.getElementById('add-part').addEventListener('click', () => { addRow('part-template', partsBody, partIndex++); updateTotal(); });
+        document.getElementById('add-service').addEventListener('click', () => { addRow('service-template', servicesBody, serviceIndex++); updateTotal(); });
+        document.addEventListener('click', event => { if (event.target.classList.contains('remove-row')) { event.target.closest('tr').remove(); updateTotal(); } });
+        document.addEventListener('input', updateTotal);
+        document.addEventListener('change', event => {
+            if (event.target.classList.contains('part-select')) {
+                const option = event.target.options[event.target.selectedIndex];
+                event.target.closest('tr').querySelector('.line-price').value = option.dataset.price || '';
+                updateTotal();
+            }
+        });
+        const devices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
+            Model.CustomerDevices.Select(device => new { device.Id, device.CustomerId, device.DeviceType, device.ModelAndSerialNumber }),
+            new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        const deviceSelect = document.getElementById('device-select');
+        const newDeviceFields = document.getElementById('new-device-fields');
+        function loadDevices() {
+            const customerId = document.getElementById('customer-select').value;
+            const selectedId = '@Model.Input.CustomerDeviceId';
+            deviceSelect.innerHTML = '<option value="">Add new device</option>';
+            devices.filter(device => device.customerId === customerId).forEach(device => {
+                const label = device.deviceType + (device.modelAndSerialNumber ? ' — ' + device.modelAndSerialNumber : '');
+                const option = new Option(label, device.id);
+                if (String(device.id) === selectedId) option.selected = true;
+                deviceSelect.add(option);
+            });
+            newDeviceFields.hidden = deviceSelect.value !== '';
+        }
+        document.getElementById('customer-select').addEventListener('change', loadDevices);
+        deviceSelect.addEventListener('change', () => { newDeviceFields.hidden = deviceSelect.value !== ''; });
+        document.querySelectorAll('.part-select').forEach(select => { if (select.value) select.dispatchEvent(new Event('change')); });
+        loadDevices();
+        updateTotal();
+
+        document.getElementById('order-form').addEventListener('submit', event => {
+            if (event.submitter?.id === 'scan-adb-button') {
+                return;
+            }
+            const errors = [];
+            const hasCustomer = document.getElementById('customer-select').value !== '';
+            const hasDevice = deviceSelect.value !== '' || document.querySelector('[name="Input.NewDeviceType"]').value !== '';
+            const hasPart = [...document.querySelectorAll('.part-select')].some(select => select.value !== '');
+            const hasService = [...document.querySelectorAll('[name$=".Description"]')].some(input => input.value.trim() !== '');
+
+            if (!hasCustomer) errors.push('Select a customer.');
+            if (!hasDevice) errors.push('Select an existing device or choose a new device type.');
+            if (!hasPart && !hasService) errors.push('Add at least one warehouse part or service.');
+
+            const errorBox = document.getElementById('order-client-error');
+            if (errors.length > 0) {
+                event.preventDefault();
+                errorBox.textContent = errors.join(' ');
+                errorBox.hidden = false;
+                errorBox.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            } else {
+                errorBox.hidden = true;
+            }
+        });
+    </script>
+}

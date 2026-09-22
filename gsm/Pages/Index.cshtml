@@ -1,0 +1,91 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+@if (Model.ShowOrderDashboard)
+{
+    <div class="home-dashboard-layout">
+    <section class="dashboard-section">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">SERVICE DESK</span>
+                <h1>Order overview</h1>
+            </div>
+        </div>
+
+        <div class="dashboard-stats">
+            <a class="dashboard-stat dashboard-stat-total" href="/OrderOverview">
+                <span class="dashboard-stat-label">Total orders</span>
+                <strong>@Model.OrderStats.Total</strong>
+                <small>All registered orders</small>
+            </a>
+            <a class="dashboard-stat dashboard-stat-progress" href="/OrderOverview?status=progress">
+                <span class="dashboard-stat-label">In progress</span>
+                <strong>@Model.OrderStats.InProgress</strong>
+                <small>End stage is not completed</small>
+            </a>
+            <a class="dashboard-stat dashboard-stat-completed" href="/OrderOverview?status=completed">
+                <span class="dashboard-stat-label">Completed</span>
+                <strong>@Model.OrderStats.Completed</strong>
+                <small>End stage has an end date</small>
+            </a>
+        </div>
+    </section>
+
+    <section class="dashboard-section warehouse-search-section">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">INVENTORY</span>
+                <h2>Warehouse parts</h2>
+            </div>
+            <a class="dashboard-section-link" href="/Warehouse">Open warehouse</a>
+        </div>
+        <div class="warehouse-search-form">
+            <div class="warehouse-search-input-wrap">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 20-4.3-4.3a7 7 0 1 0-1.4 1.4L18.6 21 20 20ZM5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z" /></svg>
+                <input id="warehouse-live-search" placeholder="Search by part name, product number or barcode" autocomplete="off" />
+            </div>
+        </div>
+        @if (Model.WarehouseItems.Count == 0)
+        {
+            <p class="text-muted warehouse-empty">No warehouse parts found.</p>
+        }
+        else
+        {
+            <div class="warehouse-preview-list">
+                @foreach (var item in Model.WarehouseItems)
+                {
+                    <div class="warehouse-preview-item" data-warehouse-item data-search="@($"{item.PartName} {item.ProductNumber} {item.Barcode} {item.Id}")">
+                        <div>
+                            <strong>@item.PartName</strong>
+                            <span>№ @item.ProductNumber · @item.Quantity in stock</span>
+                        </div>
+                        <strong>@item.UnitPrice.ToString("0.00") EUR</strong>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const warehouseSearch = document.getElementById('warehouse-live-search');
+        const warehouseItems = [...document.querySelectorAll('[data-warehouse-item]')];
+        const updateWarehouseResults = () => {
+            const query = warehouseSearch.value.trim().toLowerCase();
+            let visibleCount = 0;
+            warehouseItems.forEach(item => {
+                const matches = !query || item.dataset.search.toLowerCase().includes(query);
+                const show = matches && (query || visibleCount < 8);
+                item.hidden = !show;
+                if (show) visibleCount++;
+            });
+        };
+        warehouseSearch?.addEventListener('input', updateWarehouseResults);
+        updateWarehouseResults();
+    </script>
+}

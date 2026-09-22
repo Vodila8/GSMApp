@@ -1,0 +1,21 @@
+# Visual Studio / .NET
+.vs/
+**/bin/
+**/obj/
+**/publish/
+
+# Local build and deployment artifacts
+**/build-check/
+**/build-check-tunnel/
+**/wwwroot/downloads/
+
+# Local secrets and machine-specific settings
+**/appsettings.Development.json
+**/appsettings.Local.json
+**/DataProtectionKeys/
+*.user
+*.suo
+
+# OS files
+.DS_Store
+Thumbs.db

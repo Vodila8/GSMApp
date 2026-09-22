@@ -1,0 +1,142 @@
+@page "/Warehouse"
+@model gsm.Pages.WarehouseModel
+@{
+    ViewData["Title"] = "Warehouse";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list warehouse-page">
+        <div class="warehouse-page-heading">
+            <h1 class="warehouse-title">Warehouse</h1>
+            <div class="warehouse-page-actions">
+                <a class="warehouse-action-button" href="/WarehouseReport" title="Warehouse report" aria-label="Warehouse report">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5V3Zm9 1.8V8h3.2L14 4.8ZM8 12h8v-1.5H8V12Zm0 3h8v-1.5H8V15Zm0 3h5v-1.5H8V18Z" /></svg>
+                </a>
+                <button class="warehouse-action-button" type="button" data-open-warehouse-edit title="Edit warehouse" aria-label="Edit warehouse">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.7-10.9c.4-.4.4-1 0-1.4l-.9-.9a1 1 0 0 0-1.4 0l-1.7 1.7 3.5 3.5 1.7-1.7Z" /></svg>
+                </button>
+                <button class="warehouse-action-button warehouse-add-button" type="button" data-open-warehouse-item title="Add item" aria-label="Add item">+</button>
+            </div>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <datalist id="warehouse-product-numbers">
+            @foreach (var productNumber in Model.ProductNumbers)
+            {
+                <option value="@productNumber"></option>
+            }
+        </datalist>
+
+        <div class="table-responsive">
+            <table class="table warehouse-table warehouse-items-table align-middle">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Product number</th>
+                        <th>Quantity</th>
+                        <th>Part name</th>
+                        <th>Barcode</th>
+                        <th>Unit price (EUR)</th>
+                        <th>Delivery price (EUR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var index = 0; index < Model.Items.Count; index++)
+                {
+                    <tr>
+                        <td>@(index + 1)</td>
+                        <td>@(Model.Items[index].ProductNumber ?? "—")</td>
+                        <td>@Model.Items[index].Quantity</td>
+                        <td>@Model.Items[index].PartName</td>
+                        <td>@(string.IsNullOrWhiteSpace(Model.Items[index].Barcode) ? "—" : Model.Items[index].Barcode)</td>
+                        <td>@Model.Items[index].UnitPrice.ToString("0.00")</td>
+                        <td>@Model.Items[index].DeliveryPrice.ToString("0.00")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<dialog id="warehouse-edit-dialog" class="warehouse-edit-dialog">
+    <form method="post" asp-page-handler="Save" class="warehouse-edit-form">
+        <div class="create-user-modal-header">
+            <h2>Edit warehouse</h2>
+            <button type="button" class="create-user-close" data-close-warehouse-edit aria-label="Close">×</button>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="table-responsive">
+            <table class="table warehouse-table warehouse-edit-table align-middle">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Product number</th>
+                        <th>Quantity</th>
+                        <th>Part name</th>
+                        <th>Barcode</th>
+                        <th>Unit price</th>
+                        <th>Delivery price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var index = 0; index < Model.Items.Count; index++)
+                {
+                    <tr>
+                        <td>@(index + 1)<input asp-for="Items[index].Id" type="hidden" /></td>
+                        <td><input asp-for="Items[index].ProductNumber" list="warehouse-product-numbers" /></td>
+                        <td><input asp-for="Items[index].Quantity" type="number" min="0" step="1" /></td>
+                        <td><input asp-for="Items[index].PartName" /></td>
+                        <td><input asp-for="Items[index].Barcode" /></td>
+                        <td><input asp-for="Items[index].UnitPrice" type="number" min="0" step="0.01" /></td>
+                        <td><input asp-for="Items[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-warehouse-edit>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="warehouse-item-dialog" class="create-user-dialog">
+    <form method="post" asp-page-handler="Save" class="create-user-modal-form">
+        <div class="create-user-modal-header">
+            <h2>Add warehouse item</h2>
+            <button type="button" class="create-user-close" data-close-warehouse-item aria-label="Close">×</button>
+        </div>
+        <div class="text-muted mb-3">A product number is generated automatically, but you can choose an existing number or enter a new one.</div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="user-form-row"><label asp-for="NewItem.ProductNumber">Product number</label><input asp-for="NewItem.ProductNumber" list="warehouse-product-numbers" /></div>
+        <div class="user-form-row"><label asp-for="NewItem.PartName">Part name</label><input asp-for="NewItem.PartName" required /></div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="NewItem.Quantity">Quantity</label><input asp-for="NewItem.Quantity" type="number" min="0" step="1" /></div>
+            <div><label asp-for="NewItem.Barcode">Barcode</label><input asp-for="NewItem.Barcode" /></div>
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="NewItem.UnitPrice">Unit price (EUR)</label><input asp-for="NewItem.UnitPrice" type="number" min="0" step="0.01" /></div>
+            <div><label asp-for="NewItem.DeliveryPrice">Delivery price (EUR)</label><input asp-for="NewItem.DeliveryPrice" type="number" min="0" step="0.01" /></div>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-warehouse-item>Cancel</button>
+            <button type="submit" class="btn btn-primary">Add item</button>
+        </div>
+    </form>
+</dialog>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const warehouseEditDialog = document.getElementById('warehouse-edit-dialog');
+        const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
+        document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
+        document.querySelector('[data-open-warehouse-item]').addEventListener('click', () => warehouseItemDialog.showModal());
+        document.querySelectorAll('[data-close-warehouse-edit]').forEach(button => button.addEventListener('click', () => warehouseEditDialog.close()));
+        document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
+        warehouseEditDialog.addEventListener('click', event => { if (event.target === warehouseEditDialog) warehouseEditDialog.close(); });
+        warehouseItemDialog.addEventListener('click', event => { if (event.target === warehouseItemDialog) warehouseItemDialog.close(); });
+    </script>
+}

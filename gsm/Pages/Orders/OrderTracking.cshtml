@@ -1,0 +1,201 @@
+@page "/OrderTracking/{id:int}"
+@model gsm.Pages.OrderTrackingModel
+@{
+    ViewData["Title"] = "Order Tracking";
+}
+
+<div class="user-form-page">
+    <form class="warehouse-list tracking-form" method="post" asp-page-handler="Save">
+        <h1 class="warehouse-title">Order Tracking</h1>
+        <p class="tracking-order-details">
+            <strong>Order #@Model.Order!.Id</strong><br />
+            Customer: @(Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)<br />
+            Device: @Model.Order.Device @if (!string.IsNullOrWhiteSpace(Model.Order.DeviceModelAndSerialNumber)) { <span>— @Model.Order.DeviceModelAndSerialNumber</span> }
+        </p>
+
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success" role="alert">@statusMessage</div>
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="table-responsive">
+            <table class="table warehouse-table" id="stages-table">
+                <thead><tr><th>No.</th><th>Stage</th><th>Date Range</th><th>Order</th></tr></thead>
+                <tbody>
+                @for (var index = 0; index < Model.Stages.Count; index++)
+                {
+                    var startDateValue = Model.Stages[index].StartDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    var endDateValue = Model.Stages[index].EndDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    <tr data-fixed="@Model.Stages[index].IsFixed.ToString().ToLowerInvariant()">
+                        <td class="stage-number">@(index + 1)<input asp-for="Stages[index].Id" type="hidden" /><input asp-for="Stages[index].IsFixed" type="hidden" /></td>
+                        <td>
+                            @if (Model.Stages[index].IsFixed)
+                            {
+                                <input asp-for="Stages[index].Name" type="hidden" />
+                                @Model.Stages[index].Name <span class="text-muted">(fixed)</span>
+                            }
+                            else
+                            {
+                                <input asp-for="Stages[index].Name" aria-label="Stage name" />
+                            }
+                        </td>
+                        <td>
+                            <input name="Stages[@index].StartDate" value="@startDateValue" class="range-start" type="hidden" />
+                            <input name="Stages[@index].EndDate" value="@endDateValue" class="range-end" type="hidden" />
+                            <button class="date-range-button" type="button">Select date range</button>
+                            <span class="date-range-value" aria-live="polite"></span>
+                        </td>
+                        <td>
+                            @if (!Model.Stages[index].IsFixed)
+                            {
+                                <button class="btn btn-outline-secondary btn-sm move-up" type="button" title="Move up">↑</button>
+                                <button class="btn btn-outline-secondary btn-sm move-down" type="button" title="Move down">↓</button>
+                                <button class="btn btn-outline-danger btn-sm delete-stage" type="button" title="Delete stage">×</button>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <button class="btn btn-outline-secondary btn-sm" id="add-stage" type="button">+ Add Stage</button>
+        <button class="btn btn-primary" type="submit">Save Stages</button>
+    </form>
+</div>
+
+<dialog class="range-calendar" id="range-calendar">
+    <div class="range-calendar-header">
+        <button type="button" id="previous-month" aria-label="Previous month">‹</button>
+        <strong id="calendar-month"></strong>
+        <button type="button" id="next-month" aria-label="Next month">›</button>
+    </div>
+    <div class="calendar-weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="calendar-days" id="calendar-days"></div>
+    <p class="calendar-help">Choose the start date, then the end date.</p>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="clear-range">Clear dates</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="close-calendar">Close</button>
+</dialog>
+
+<template id="stage-template">
+    <tr data-fixed="false">
+        <td class="stage-number">0<input name="Stages[__index__].Id" type="hidden" value="0" /><input name="Stages[__index__].IsFixed" type="hidden" value="false" /></td>
+        <td><input name="Stages[__index__].Name" aria-label="Stage name" placeholder="Stage name" /></td>
+        <td><input name="Stages[__index__].StartDate" class="range-start" type="hidden" /><input name="Stages[__index__].EndDate" class="range-end" type="hidden" /><button class="date-range-button" type="button">Select date range</button><span class="date-range-value" aria-live="polite"></span></td>
+        <td><button class="btn btn-outline-secondary btn-sm move-up" type="button" title="Move up">↑</button><button class="btn btn-outline-secondary btn-sm move-down" type="button" title="Move down">↓</button><button class="btn btn-outline-danger btn-sm delete-stage" type="button" title="Delete stage">×</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <script>
+        const stageBody = document.querySelector('#stages-table tbody');
+        function updateStageNumbers() {
+            [...stageBody.rows].forEach((row, index) => {
+                row.querySelector('.stage-number').firstChild.nodeValue = (index + 1);
+                row.querySelectorAll('input[name]').forEach(input => {
+                    input.name = input.name.replace(/Stages\[\d+\]/, `Stages[${index}]`);
+                });
+            });
+        }
+        let stageIndex = @Model.Stages.Count;
+        document.addEventListener('click', event => {
+            const row = event.target.closest('tr');
+            if (!row) return;
+            if (event.target.classList.contains('move-up')) {
+                const previous = row.previousElementSibling;
+                if (previous && previous.dataset.fixed !== 'true') {
+                    stageBody.insertBefore(row, previous);
+                }
+            }
+            if (event.target.classList.contains('move-down')) {
+                const next = row.nextElementSibling;
+                if (next && next.dataset.fixed !== 'true') {
+                    stageBody.insertBefore(next, row);
+                }
+            }
+            if (event.target.classList.contains('delete-stage')) {
+                row.remove();
+            }
+            updateStageNumbers();
+        });
+
+        const calendar = document.getElementById('range-calendar');
+        const calendarDays = document.getElementById('calendar-days');
+        const calendarMonth = document.getElementById('calendar-month');
+        let activeRangeButton;
+        let displayedMonth = new Date();
+        let rangeStart = '';
+        let rangeEnd = '';
+
+        const toIsoDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const formatDate = value => value ? new Intl.DateTimeFormat('en-GB').format(new Date(`${value}T12:00:00`)) : '';
+        function updateRangeButton(button) {
+            const row = button.closest('tr');
+            const start = row.querySelector('.range-start').value;
+            const end = row.querySelector('.range-end').value;
+            const text = start ? `${formatDate(start)} — ${formatDate(end || start)}` : 'Select date range';
+            button.textContent = text;
+            row.querySelector('.date-range-value').textContent = start ? text : 'No dates selected';
+        }
+        function renderCalendar() {
+            const year = displayedMonth.getFullYear();
+            const month = displayedMonth.getMonth();
+            calendarMonth.textContent = displayedMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            calendarDays.innerHTML = '';
+            const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+            const dayCount = new Date(year, month + 1, 0).getDate();
+            for (let blank = 0; blank < offset; blank++) calendarDays.insertAdjacentHTML('beforeend', '<span></span>');
+            for (let day = 1; day <= dayCount; day++) {
+                const value = toIsoDate(new Date(year, month, day));
+                const selected = value === rangeStart || value === rangeEnd;
+                const inRange = rangeStart && rangeEnd && value > rangeStart && value < rangeEnd;
+                calendarDays.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${selected ? ' selected' : ''}${inRange ? ' in-range' : ''}" data-date="${value}">${day}</button>`);
+            }
+        }
+        function attachRangeButton(button) {
+            updateRangeButton(button);
+            button.addEventListener('click', () => {
+                activeRangeButton = button;
+                const row = button.closest('tr');
+                rangeStart = row.querySelector('.range-start').value;
+                rangeEnd = row.querySelector('.range-end').value;
+                displayedMonth = new Date(`${rangeStart || toIsoDate(new Date())}T12:00:00`);
+                renderCalendar();
+                calendar.showModal();
+            });
+        }
+        document.querySelectorAll('.date-range-button').forEach(attachRangeButton);
+        document.getElementById('add-stage').addEventListener('click', () => {
+            const template = document.getElementById('stage-template').innerHTML.replaceAll('__index__', stageIndex++);
+            const endStage = [...stageBody.rows].find(row => row.dataset.fixed === 'true' && row.querySelector('input[name$=".Name"]').value === 'End');
+            if (endStage) {
+                endStage.insertAdjacentHTML('beforebegin', template);
+                attachRangeButton(endStage.previousElementSibling.querySelector('.date-range-button'));
+            } else {
+                stageBody.insertAdjacentHTML('beforeend', template);
+                attachRangeButton(stageBody.lastElementChild.querySelector('.date-range-button'));
+            }
+            updateStageNumbers();
+        });
+        calendarDays.addEventListener('click', event => {
+            if (!event.target.matches('.calendar-day')) return;
+            const date = event.target.dataset.date;
+            if (!rangeStart || rangeEnd || date < rangeStart) { rangeStart = date; rangeEnd = ''; }
+            else { rangeEnd = date; }
+            const row = activeRangeButton.closest('tr');
+            row.querySelector('.range-start').value = rangeStart;
+            row.querySelector('.range-end').value = rangeEnd || rangeStart;
+            updateRangeButton(activeRangeButton);
+            renderCalendar();
+        });
+        document.getElementById('previous-month').addEventListener('click', () => { displayedMonth.setMonth(displayedMonth.getMonth() - 1); renderCalendar(); });
+        document.getElementById('next-month').addEventListener('click', () => { displayedMonth.setMonth(displayedMonth.getMonth() + 1); renderCalendar(); });
+        document.getElementById('clear-range').addEventListener('click', () => {
+            const row = activeRangeButton.closest('tr');
+            row.querySelector('.range-start').value = '';
+            row.querySelector('.range-end').value = '';
+            rangeStart = ''; rangeEnd = ''; updateRangeButton(activeRangeButton); renderCalendar();
+        });
+        document.getElementById('close-calendar').addEventListener('click', () => calendar.close());
+    </script>
+}

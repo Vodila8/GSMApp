@@ -1,0 +1,71 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - gsm</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/gsm.styles.css" asp-append-version="true" />
+</head>
+<body>
+    @{
+        var isIdentityPage = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
+        var currentRole = User.IsInRole("Boss") ? "Boss" :
+            User.IsInRole("Administrator") ? "Administrator" :
+            User.IsInRole("Technician") ? "Technician" : "User";
+    }
+
+    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage)
+    {
+        <div class="app-shell">
+            <aside class="sidebar" aria-label="Main navigation">
+                <nav class="sidebar-menu">
+                    <a class="sidebar-link" href="/"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20H4v-8.5Zm3 5.5h3v-3h4v3h3v-4.1l-5-4.05-5 4.05V17Z" /></svg><span>Home</span></a>
+                    @if (User.IsInRole("Boss") || User.IsInRole("Administrator"))
+                    {
+                        <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
+                        <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
+                        <a class="sidebar-link" href="/DeviceDiagnostics"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V3Zm0 4H6v12h12V7h-3v2H9V7Zm1 5h4v2h-4v-2Z" /></svg><span>Device Diagnostics</span></a>
+                        <a class="sidebar-link" href="/CreateRepair"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h12v2H4v10h12v2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm14 3 4 4-4 4-1.4-1.4 1.6-1.6H10v-2h8.2l-1.6-1.6L18 8Z" /></svg><span>Create Repair</span></a>
+                    }
+                    else if (User.IsInRole("Technician"))
+                    {
+                        <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
+                    }
+                    else
+                    {
+                        <a class="sidebar-link" href="/MyOrders"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5V4Zm2 2v12h10V6H7Zm2 2h6v2H9V8Zm0 4h6v2H9v-2Z" /></svg><span>My Orders</span></a>
+                    }
+                </nav>
+
+                <div class="sidebar-user">
+                    <strong>@(User.Identity?.Name ?? "User")</strong>
+                    <span>@currentRole</span>
+                </div>
+                <form class="sidebar-logout" asp-area="Identity" asp-page="/Account/Logout" method="post">
+                    <button type="submit" class="sidebar-link sidebar-logout-button">Log out</button>
+                </form>
+            </aside>
+
+            <main role="main" class="app-content">
+                @RenderBody()
+            </main>
+        </div>
+    }
+    else
+    {
+        <div class="site-shell">
+            <main role="main" class="site-main">
+                @RenderBody()
+            </main>
+        </div>
+    }
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

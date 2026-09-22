@@ -1,0 +1,52 @@
+@page "/MyOrderDetails/{id:int}"
+@model gsm.Pages.MyOrderDetailsModel
+@{
+    ViewData["Title"] = "Order Details";
+    var stages = Model.Order!.Stages.OrderBy(stage => stage.SortOrder).ToList();
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list order-details">
+        <a class="back-link" href="/MyOrders">← Back to orders</a>
+        <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
+        <div class="order-device-card">
+            <span class="order-device-label">Device</span>
+            <strong>@Model.Order.Device</strong>
+            @if (!string.IsNullOrWhiteSpace(Model.Order.DeviceModelAndSerialNumber))
+            {
+                <span>@Model.Order.DeviceModelAndSerialNumber</span>
+            }
+            <span class="order-total-price">Total: @Model.Order.TotalPrice.ToString("0.00") EUR</span>
+        </div>
+
+        <h2 class="order-section-title">Order Progress</h2>
+        <ol class="order-timeline">
+            @foreach (var stage in stages)
+            {
+                var isCompleted = stage.EndDate.HasValue;
+                var isCurrent = !isCompleted && stage.StartDate.HasValue;
+                var stageState = isCompleted ? "completed" : isCurrent ? "current" : "pending";
+                <li class="timeline-stage @stageState">
+                    <div class="timeline-marker">@(isCompleted ? "✓" : stage.SortOrder.ToString())</div>
+                    <div class="timeline-content">
+                        <strong>@stage.Name</strong>
+                        <span>
+                            @if (stage.StartDate.HasValue)
+                            {
+                                @stage.StartDate.Value.ToString("dd MMM yyyy")
+                                @if (stage.EndDate.HasValue && stage.EndDate != stage.StartDate)
+                                {
+                                    <span> — @stage.EndDate.Value.ToString("dd MMM yyyy")</span>
+                                }
+                            }
+                            else
+                            {
+                                <span>Dates will be added soon</span>
+                            }
+                        </span>
+                    </div>
+                </li>
+            }
+        </ol>
+    </section>
+</div>

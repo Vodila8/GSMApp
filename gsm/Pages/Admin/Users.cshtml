@@ -1,0 +1,87 @@
+@page "/Users"
+@model gsm.Pages.UsersModel
+@{
+    ViewData["Title"] = "Users";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list">
+        <div class="users-page-heading">
+            <h1 class="warehouse-title">Users</h1>
+            <button class="add-user-button" type="button" data-open-create-user title="Create user" aria-label="Create user">+</button>
+        </div>
+        <form method="get" class="users-search-form">
+            <input asp-for="Search" placeholder="Search by name, email or phone number" autocomplete="off" />
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+        @if (Model.StatusMessage is not null)
+        {
+            <div class="alert alert-success">@Model.StatusMessage</div>
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        @if (Model.Users.Count == 0)
+        {
+            <p class="text-muted">No users have been created yet.</p>
+        }
+        else
+        {
+            <div class="order-cards">
+                @foreach (var user in Model.Users)
+                {
+                    <a class="order-card" href="/UserOrders/@user.Id">
+                        <strong>@user.Name</strong>
+                        <span>@user.Email</span>
+                        <span class="user-card-details">
+                            <span class="user-role">@user.Role</span>
+                            <span>@(string.IsNullOrWhiteSpace(user.PhoneNumber) ? "No phone number" : user.PhoneNumber)</span>
+                        </span>
+                        <span class="order-card-date">View orders and manage dates</span>
+                    </a>
+                }
+            </div>
+        }
+    </section>
+</div>
+
+<dialog id="create-user-dialog" class="create-user-dialog">
+    <form method="post" asp-page-handler="CreateUser" class="create-user-modal-form">
+        <div class="create-user-modal-header">
+            <h2>Create User</h2>
+            <button type="button" class="create-user-close" data-close-create-user aria-label="Close">×</button>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="CreateUser.CustomerName">Customer Name</label><input asp-for="CreateUser.CustomerName" /></div>
+            <div><label asp-for="CreateUser.PhoneNumber">Phone Number</label><input asp-for="CreateUser.PhoneNumber" type="tel" /></div>
+        </div>
+        <div class="user-form-row"><label asp-for="CreateUser.Email">Email</label><input asp-for="CreateUser.Email" type="email" /><span asp-validation-for="CreateUser.Email" class="text-danger"></span></div>
+        <div class="user-form-row">
+            <label asp-for="CreateUser.Role">Role</label>
+            <select asp-for="CreateUser.Role">
+                <option value="User">User</option>
+                <option value="Technician">Technician</option>
+                @if (User.IsInRole("Boss")) { <option value="Administrator">Administrator</option> }
+            </select>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-create-user>Cancel</button>
+            <button type="submit" class="btn btn-primary">Create User</button>
+        </div>
+    </form>
+</dialog>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const createUserDialog = document.getElementById('create-user-dialog');
+        document.querySelector('[data-open-create-user]').addEventListener('click', () => createUserDialog.showModal());
+        document.querySelectorAll('[data-close-create-user]').forEach(button => button.addEventListener('click', () => createUserDialog.close()));
+        createUserDialog.addEventListener('click', event => {
+            if (event.target === createUserDialog) createUserDialog.close();
+        });
+        @if (Model.ShowCreateUserModal)
+        {
+            <text>createUserDialog.showModal();</text>
+        }
+    </script>
+}
