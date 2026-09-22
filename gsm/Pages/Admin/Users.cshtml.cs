@@ -52,6 +52,7 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostCreateUserAsync()
     {
         ShowCreateUserModal = true;
+        ModelState.Remove($"{nameof(Password)}.{nameof(PasswordInput.NewPassword)}");
         _logger.LogInformation("Create user request received for {Email} with role {Role}", CreateUser.Email, CreateUser.Role);
         if (!ModelState.IsValid)
         {
