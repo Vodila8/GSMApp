@@ -48,9 +48,28 @@
             </section>
         }
 
-        <form method="post" asp-page-handler="SaveOrder" id="edit-order-form">
+        <form method="post" asp-page-handler="SaveOrder" enctype="multipart/form-data" id="edit-order-form">
             @if (TempData["StatusMessage"] is string statusMessage) { <div class="alert alert-success mt-3">@statusMessage</div> }
             <div asp-validation-summary="All" class="text-danger"></div>
+            <section class="repair-section">
+                <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
+                <div class="user-form-row user-form-row-two-columns">
+                    <div><label asp-for="Input.CustomerId">Customer</label><select asp-for="Input.CustomerId" id="edit-customer-select"><option value="">Select customer</option>@foreach (var customer in Model.Customers) { <option value="@customer.Id">@(customer.CustomerName ?? customer.Email) — @customer.Email</option> }</select></div>
+                    <div><label asp-for="Input.CustomerDeviceId">Device</label><select asp-for="Input.CustomerDeviceId" id="edit-device-select"></select></div>
+                </div>
+                <div id="edit-new-device-fields" class="user-form-row user-form-row-two-columns">
+                    <div><label asp-for="Input.NewDeviceType">New Device</label><select asp-for="Input.NewDeviceType"><option value="">Select device type</option><option>Computer</option><option>Laptop</option><option>Printer</option><option>Phone</option><option>Tablet</option><option>Other</option></select></div>
+                    <div><label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label><input asp-for="Input.NewDeviceModelAndSerialNumber" /></div>
+                </div>
+                <div class="user-form-row"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
+            </section>
+            <section class="repair-section">
+                <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
+                <div class="user-form-row"><label asp-for="Input.ProblemOrRepair">Problem / Repair</label><textarea asp-for="Input.ProblemOrRepair" rows="3"></textarea></div>
+                <div class="user-form-row"><label asp-for="Input.DeviceConditionAndNotes">Device Condition and Notes at Acceptance</label><textarea asp-for="Input.DeviceConditionAndNotes" rows="3"></textarea></div>
+                <div class="user-form-row user-form-row-two-columns"><div><label asp-for="Input.Accessories">Accessories</label><input asp-for="Input.Accessories" type="hidden" id="edit-accessories-value" /><div class="accessory-options" id="edit-accessories-options"><button type="button" class="accessory-option" data-accessory="SIM card">SIM card</button><button type="button" class="accessory-option" data-accessory="Case">Case</button><button type="button" class="accessory-option" data-accessory="Charger">Charger</button><button type="button" class="accessory-option" data-accessory="Cable">Cable</button><button type="button" class="accessory-option" data-accessory="Bag">Bag</button><button type="button" class="accessory-option" data-accessory="Other">Other</button></div><input asp-for="Input.OtherAccessory" id="edit-accessories-other" type="text" placeholder="Write accessory" hidden /></div><div><label asp-for="Input.DevicePassword">Device Password</label><input asp-for="Input.DevicePassword" type="text" /></div></div>
+                <input asp-for="Input.AdbDiagnosticReport" type="hidden" />
+            </section>
             <h2 class="order-section-title">Parts from Warehouse</h2>
             <div class="table-responsive"><table class="table warehouse-table"><thead><tr><th>Part</th><th>Unit Price (EUR)</th><th>Quantity</th><th></th></tr></thead><tbody id="parts-body">
             @for (var index = 0; index < Model.Parts.Count; index++)
@@ -88,6 +107,58 @@ function bindService(row) { row.querySelector('.remove-service').addEventListene
 document.querySelectorAll('.part-row').forEach(bindPart); document.querySelectorAll('.service-row').forEach(bindService);
 document.getElementById('add-part').addEventListener('click', () => { partsBody.insertAdjacentHTML('beforeend', document.getElementById('part-template').innerHTML.replaceAll('__index__', partIndex++)); bindPart(partsBody.lastElementChild); });
 document.getElementById('add-service').addEventListener('click', () => { servicesBody.insertAdjacentHTML('beforeend', document.getElementById('service-template').innerHTML.replaceAll('__index__', serviceIndex++)); bindService(servicesBody.lastElementChild); });
-document.addEventListener('input', total); total();
+
+const devices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CustomerDevices.Select(device => new { device.Id, device.CustomerId, device.DeviceType, device.ModelAndSerialNumber, photos = device.Photos.Select(photo => new { photo.Id, photo.FileName, photo.OriginalFileName }) }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+const customerSelect = document.getElementById('edit-customer-select');
+const deviceSelect = document.getElementById('edit-device-select');
+const newDeviceFields = document.getElementById('edit-new-device-fields');
+const photoPicker = document.getElementById('edit-device-photo-picker');
+const photoInput = document.getElementById('edit-device-photos');
+const photoPreview = document.getElementById('edit-device-photo-preview');
+const selectedDeviceId = '@Model.Input.CustomerDeviceId';
+let photoFiles = [];
+const deletedPhotoIds = new Set();
+function syncPhotoFiles() { const data = new DataTransfer(); photoFiles.forEach(file => data.items.add(file)); photoInput.files = data.files; }
+function renderPhotos() {
+    photoPreview.innerHTML = '';
+    const device = devices.find(item => String(item.id) === deviceSelect.value);
+    (device?.photos || []).forEach(photo => {
+        if (deletedPhotoIds.has(photo.id)) return;
+        const item = document.createElement('div'); item.className = 'warehouse-photo-item';
+        item.innerHTML = `<a href="/uploads/customer-devices/${photo.fileName}" target="_blank"><img src="/uploads/customer-devices/${photo.fileName}" alt="${photo.originalFileName || 'Device photo'}"></a><button type="button" class="warehouse-photo-delete" data-remove-existing-photo="${photo.id}" title="Remove photo" aria-label="Remove photo">×</button>`;
+        photoPreview.appendChild(item);
+    });
+    photoFiles.forEach((file, index) => {
+        const item = document.createElement('div'); item.className = 'warehouse-photo-item';
+        item.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="${file.name}"><button type="button" class="warehouse-photo-delete" data-remove-new-photo="${index}" title="Remove photo" aria-label="Remove photo">×</button>`;
+        photoPreview.appendChild(item);
+    });
+}
+function loadDevices() {
+    deviceSelect.innerHTML = '<option value="">Add new device</option>';
+    devices.filter(device => device.customerId === customerSelect.value).forEach(device => deviceSelect.add(new Option(device.deviceType + (device.modelAndSerialNumber ? ' — ' + device.modelAndSerialNumber : ''), device.id)));
+    if (devices.some(device => String(device.id) === selectedDeviceId && device.customerId === customerSelect.value)) deviceSelect.value = selectedDeviceId;
+    newDeviceFields.hidden = deviceSelect.value !== '';
+    renderPhotos();
+}
+customerSelect.addEventListener('change', loadDevices);
+deviceSelect.addEventListener('change', () => { newDeviceFields.hidden = deviceSelect.value !== ''; renderPhotos(); });
+photoInput.addEventListener('change', () => { photoFiles = Array.from(photoInput.files); renderPhotos(); });
+photoPicker.addEventListener('click', event => {
+    const removeNew = event.target.closest('[data-remove-new-photo]');
+    if (removeNew) { photoFiles.splice(Number(removeNew.dataset.removeNewPhoto), 1); syncPhotoFiles(); renderPhotos(); return; }
+    const removeExisting = event.target.closest('[data-remove-existing-photo]');
+    if (removeExisting) { deletedPhotoIds.add(Number(removeExisting.dataset.removeExistingPhoto)); const input = document.createElement('input'); input.type = 'hidden'; input.name = 'Input.DeletedDevicePhotoIds'; input.value = removeExisting.dataset.removeExistingPhoto; photoPicker.appendChild(input); renderPhotos(); }
+});
+const accessoryOptions = document.getElementById('edit-accessories-options');
+const accessoryValue = document.getElementById('edit-accessories-value');
+const accessoryOther = document.getElementById('edit-accessories-other');
+const selectedAccessories = new Set((accessoryValue.value || '').split(',').map(value => value.trim()).filter(Boolean));
+accessoryOptions.querySelectorAll('[data-accessory]').forEach(button => { if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected'); });
+function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySelectorAll('.selected')].map(button => button.dataset.accessory).filter(value => value !== 'Other').concat(accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected') && accessoryOther.value.trim() ? [accessoryOther.value.trim()] : []).join(', '); accessoryOther.hidden = !accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected'); }
+accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { button.classList.toggle('selected'); syncAccessories(); } });
+accessoryOther.addEventListener('input', syncAccessories);
+document.getElementById('edit-order-form').addEventListener('submit', syncAccessories);
+loadDevices(); total();
 </script>
 }
