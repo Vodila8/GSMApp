@@ -120,7 +120,7 @@
             <select id="new-item-partner-select">
                 @if (Model.Partners.Count > 0)
                 {
-                    <option value="">Select existing partner</option>
+                    <option value="" disabled selected>Choose partner</option>
                 }
                 @if (Model.Partners.Count == 0)
                 {
@@ -179,7 +179,7 @@
             <select id="sale-partner-select">
                 @if (Model.Partners.Count > 0)
                 {
-                    <option value="">Select existing partner</option>
+                    <option value="" disabled selected>Choose partner</option>
                 }
                 @if (Model.Partners.Count == 0)
                 {
