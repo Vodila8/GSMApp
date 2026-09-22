@@ -224,7 +224,7 @@ public class OrdersModel : PageModel
                 .. services.Select(service => new ServiceOrderLine
                 {
                     CompanyId = _tenantContext.CompanyId!,
-                    Description = service.Description.Trim(),
+                    Description = service.Description!.Trim(),
                     UnitPrice = service.UnitPrice,
                     Quantity = 1,
                     IsWarehousePart = false
@@ -235,7 +235,7 @@ public class OrdersModel : PageModel
                 .. services.Select((service, index) => new OrderStage
                 {
                     CompanyId = _tenantContext.CompanyId!,
-                    Name = service.Description.Trim(),
+                    Name = service.Description!.Trim(),
                     SortOrder = index + 1
                 }),
                 new OrderStage { CompanyId = _tenantContext.CompanyId!, Name = "End", SortOrder = services.Count + 1, IsFixed = true }
@@ -396,7 +396,7 @@ public class OrdersModel : PageModel
 
     public class OrderInput
     {
-        public string CustomerId { get; set; } = string.Empty;
+        public string? CustomerId { get; set; }
         public int? CustomerDeviceId { get; set; }
         public string? NewDeviceType { get; set; }
         public string? NewDeviceModelAndSerialNumber { get; set; }
@@ -422,7 +422,7 @@ public class OrdersModel : PageModel
 
     public class ServiceInput
     {
-        public string Description { get; set; } = string.Empty;
+        public string? Description { get; set; }
         public decimal UnitPrice { get; set; }
     }
 }
