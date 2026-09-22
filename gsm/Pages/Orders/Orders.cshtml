@@ -74,10 +74,9 @@
 
         <div class="user-form-row user-form-row-two-columns">
             <div>
-                <label asp-for="Input.Accessories">Accessories</label>
+                <label asp-for="Input.SelectedAccessories">Accessories</label>
                 <input asp-for="Input.Accessories" type="hidden" id="accessories-value" />
-                <select id="accessories-select" aria-label="Accessories">
-                    <option value="">Select accessory</option>
+                <select asp-for="Input.SelectedAccessories" id="accessories-select" aria-label="Accessories" multiple size="6">
                     <option value="SIM card">SIM card</option>
                     <option value="Case">Case</option>
                     <option value="Charger">Charger</option>
@@ -85,7 +84,8 @@
                     <option value="Bag">Bag</option>
                     <option value="Other">Other</option>
                 </select>
-                <input id="accessories-other" type="text" placeholder="Write accessory" aria-label="Other accessory" hidden />
+                <small class="text-muted">Hold Ctrl (Windows) or Command (Mac) to select multiple accessories.</small>
+                <input asp-for="Input.OtherAccessory" id="accessories-other" type="text" placeholder="Write accessory" aria-label="Other accessory" hidden />
             </div>
             <div>
                 <label asp-for="Input.DevicePassword">Device Password</label>
@@ -181,17 +181,28 @@
         const accessoriesSelect = document.getElementById('accessories-select');
         const accessoriesValue = document.getElementById('accessories-value');
         const accessoriesOther = document.getElementById('accessories-other');
-        accessoriesSelect.value = accessoriesValue.value && [...accessoriesSelect.options].some(option => option.value === accessoriesValue.value)
-            ? accessoriesValue.value
-            : accessoriesValue.value ? 'Other' : '';
-        accessoriesOther.value = accessoriesSelect.value === 'Other' ? accessoriesValue.value : '';
-        accessoriesOther.hidden = accessoriesSelect.value !== 'Other';
-        accessoriesSelect.addEventListener('change', () => {
-            accessoriesOther.hidden = accessoriesSelect.value !== 'Other';
-            accessoriesOther.value = accessoriesSelect.value === 'Other' ? accessoriesOther.value : '';
-            accessoriesValue.value = accessoriesSelect.value === 'Other' ? accessoriesOther.value : accessoriesSelect.value;
+        const selectedAccessories = new Set((accessoriesValue.value || '').split(',').map(value => value.trim()).filter(Boolean));
+        [...accessoriesSelect.options].forEach(option => {
+            option.selected = selectedAccessories.has(option.value);
         });
-        accessoriesOther.addEventListener('input', () => { accessoriesValue.value = accessoriesOther.value; });
+        accessoriesOther.hidden = !selectedAccessories.has('Other');
+
+        function syncAccessories() {
+            const selected = [...accessoriesSelect.selectedOptions]
+                .map(option => option.value)
+                .filter(value => value !== 'Other');
+            if (accessoriesSelect.selectedOptions.length > 0 && accessoriesSelect.selectedOptions[0].value === 'Other') {
+                selected.push(accessoriesOther.value.trim());
+            } else if ([...accessoriesSelect.selectedOptions].some(option => option.value === 'Other')) {
+                selected.push(accessoriesOther.value.trim());
+            }
+            accessoriesValue.value = selected.filter(Boolean).join(', ');
+            accessoriesOther.hidden = ![...accessoriesSelect.selectedOptions].some(option => option.value === 'Other');
+        }
+
+        accessoriesSelect.addEventListener('change', syncAccessories);
+        accessoriesOther.addEventListener('input', syncAccessories);
+        document.getElementById('order-form').addEventListener('submit', syncAccessories);
 
         function updateTotal() {
             let total = 0;

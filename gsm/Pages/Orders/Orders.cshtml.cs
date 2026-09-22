@@ -197,7 +197,7 @@ public class OrdersModel : PageModel
             DeviceModelAndSerialNumber = device.ModelAndSerialNumber,
             ProblemOrRepair = Input.ProblemOrRepair?.Trim(),
             DeviceConditionAndNotes = Input.DeviceConditionAndNotes?.Trim(),
-            Accessories = Input.Accessories?.Trim(),
+            Accessories = BuildAccessories(),
             DevicePassword = Input.DevicePassword,
             AdbDiagnosticReport = Input.AdbDiagnosticReport,
             TotalPrice = parts.Sum(part => part.UnitPrice * part.Quantity) + services.Sum(service => service.UnitPrice),
@@ -281,6 +281,23 @@ public class OrdersModel : PageModel
         CustomerDevices = await _dbContext.CustomerDevices.OrderBy(item => item.DeviceType).ToListAsync();
     }
 
+    private string? BuildAccessories()
+    {
+        var accessories = Input.SelectedAccessories
+            .Where(accessory => !string.Equals(accessory, "Other", StringComparison.OrdinalIgnoreCase))
+            .Select(accessory => accessory.Trim())
+            .Where(accessory => accessory.Length > 0)
+            .ToList();
+
+        if (Input.SelectedAccessories.Any(accessory => string.Equals(accessory, "Other", StringComparison.OrdinalIgnoreCase)) &&
+            !string.IsNullOrWhiteSpace(Input.OtherAccessory))
+        {
+            accessories.Add(Input.OtherAccessory.Trim());
+        }
+
+        return accessories.Count == 0 ? null : string.Join(", ", accessories.Distinct(StringComparer.OrdinalIgnoreCase));
+    }
+
     private Task<bool> IsEmployeeAsync(string userId) =>
         _dbContext.UserRoles
             .Join(_dbContext.Roles,
@@ -309,6 +326,8 @@ public class OrdersModel : PageModel
         public string? ProblemOrRepair { get; set; }
         public string? DeviceConditionAndNotes { get; set; }
         public string? Accessories { get; set; }
+        public List<string> SelectedAccessories { get; set; } = [];
+        public string? OtherAccessory { get; set; }
         public string? DevicePassword { get; set; }
         public string? AdbDiagnosticReport { get; set; }
         public List<PartInput> Parts { get; set; } = [new()];
