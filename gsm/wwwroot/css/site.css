@@ -432,6 +432,8 @@ body {
 .order-cards { display: grid; gap: 1rem; }
 .order-card { display: grid; gap: .35rem; padding: 1rem 1.25rem; color: #202124; text-decoration: none; border: 1px solid #dbe1e7; border-radius: .5rem; }
 .order-card:hover { color: #202124; background: #f8f9fa; border-color: #0d6efd; }
+.order-card > a { display: grid; gap: .35rem; color: inherit; text-decoration: none; }
+.order-card > form { margin-top: .35rem; }
 .order-card-number { font-weight: 700; }
 .order-card-date { color: #6c757d; font-size: .875rem; }
 .order-card-price, .order-total-price { font-weight: 700; }

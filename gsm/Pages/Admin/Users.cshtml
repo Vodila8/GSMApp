@@ -28,15 +28,23 @@
             <div class="order-cards">
                 @foreach (var user in Model.Users)
                 {
-                    <a class="order-card" href="/UserOrders/@user.Id">
-                        <strong>@user.Name</strong>
-                        <span>@user.Email</span>
-                        <span class="user-card-details">
-                            <span class="user-role">@user.Role</span>
-                            <span>@(string.IsNullOrWhiteSpace(user.PhoneNumber) ? "No phone number" : user.PhoneNumber)</span>
-                        </span>
-                        <span class="order-card-date">View orders and manage dates</span>
-                    </a>
+                    <div class="order-card">
+                        <a href="/UserOrders/@user.Id">
+                            <strong>@user.Name</strong>
+                            <span>@user.Email</span>
+                            <span class="user-card-details">
+                                <span class="user-role">@user.Role</span>
+                                <span>@(string.IsNullOrWhiteSpace(user.PhoneNumber) ? "No phone number" : user.PhoneNumber)</span>
+                            </span>
+                            <span class="order-card-date">View orders and manage dates</span>
+                        </a>
+                        @if (User.IsInRole("Boss"))
+                        {
+                            <form method="post" asp-page-handler="DeleteUser" asp-route-id="@user.Id" onsubmit="return confirm('Delete this user?');">
+                                <button type="submit" class="btn btn-outline-danger">Delete user</button>
+                            </form>
+                        }
+                    </div>
                 }
             </div>
         }

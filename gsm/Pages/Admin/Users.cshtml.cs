@@ -139,6 +139,33 @@ public class UsersModel : PageModel
         return RedirectToPage();
     }
 
+    public async Task<IActionResult> OnPostDeleteUserAsync(string id)
+    {
+        if (!User.IsInRole("Boss")) return Forbid();
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+
+        var currentUserId = _userManager.GetUserId(User);
+        var user = await _userManager.Users
+            .FirstOrDefaultAsync(item => item.Id == id && item.CompanyId == _tenantContext.CompanyId);
+        if (user == null) return NotFound();
+        if (user.Id == currentUserId) return Forbid();
+
+        var roles = await _userManager.GetRolesAsync(user);
+        if (roles.Contains("Boss", StringComparer.OrdinalIgnoreCase)) return Forbid();
+
+        var result = await _userManager.DeleteAsync(user);
+        if (!result.Succeeded)
+        {
+            foreach (var error in result.Errors) ModelState.AddModelError(string.Empty, error.Description);
+            await OnGetAsync();
+            return Page();
+        }
+
+        _logger.LogInformation("User {Email} was deleted by {AdministratorId}.", user.Email, currentUserId);
+        TempData["StatusMessage"] = $"User {user.Email} was deleted.";
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPostSetPasswordAsync(string id)
     {
         if (!ModelState.IsValid)
