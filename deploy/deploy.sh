@@ -15,7 +15,14 @@ cd "$REPO_DIR"
 exec 9>/var/lock/gsm-deploy.lock
 flock -n 9 || exit 0
 
+current_commit="$(git -c safe.directory="$REPO_DIR" rev-parse HEAD)"
 git -c safe.directory="$REPO_DIR" fetch origin main
+remote_commit="$(git -c safe.directory="$REPO_DIR" rev-parse origin/main)"
+if [[ "$current_commit" == "$remote_commit" ]]; then
+    printf 'No new commit; deployment skipped at %s\n' "$current_commit"
+    exit 0
+fi
+
 git -c safe.directory="$REPO_DIR" merge --ff-only origin/main
 
 dotnet restore "$REPO_DIR/gsm/gsm.csproj"
