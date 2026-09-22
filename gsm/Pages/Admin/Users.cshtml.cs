@@ -52,8 +52,11 @@ public class UsersModel : PageModel
     public async Task<IActionResult> OnPostCreateUserAsync()
     {
         ShowCreateUserModal = true;
+        _logger.LogInformation("Create user request received for {Email} with role {Role}", CreateUser.Email, CreateUser.Role);
         if (!ModelState.IsValid)
         {
+            var validationErrors = string.Join("; ", ModelState.Values.SelectMany(value => value.Errors).Select(error => error.ErrorMessage));
+            _logger.LogWarning("Create user validation failed: {ValidationErrors}", validationErrors);
             await OnGetAsync();
             return Page();
         }
@@ -68,9 +71,14 @@ public class UsersModel : PageModel
             return Page();
         }
 
-        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId))
+        {
+            _logger.LogWarning("Create user rejected because the current user has no company claim.");
+            return Forbid();
+        }
         if (await _userManager.FindByEmailAsync(CreateUser.Email!) != null)
         {
+            _logger.LogWarning("Create user rejected because the email already exists: {Email}", CreateUser.Email);
             ModelState.AddModelError("CreateUser.Email", "An account with this email already exists.");
             await OnGetAsync();
             return Page();
@@ -89,6 +97,7 @@ public class UsersModel : PageModel
         var createResult = await _userManager.CreateAsync(user, generatedPassword);
         if (!createResult.Succeeded)
         {
+            _logger.LogWarning("Create user failed: {Errors}", string.Join("; ", createResult.Errors.Select(error => error.Description)));
             foreach (var error in createResult.Errors) ModelState.AddModelError(string.Empty, error.Description);
             await OnGetAsync();
             return Page();
@@ -97,6 +106,7 @@ public class UsersModel : PageModel
         var roleResult = await _userManager.AddToRoleAsync(user, CreateUser.Role);
         if (!roleResult.Succeeded)
         {
+            _logger.LogWarning("Create user role assignment failed: {Errors}", string.Join("; ", roleResult.Errors.Select(error => error.Description)));
             ModelState.AddModelError(string.Empty, "The user was created, but the role could not be assigned.");
             await OnGetAsync();
             return Page();
@@ -122,6 +132,7 @@ public class UsersModel : PageModel
             return Page();
         }
 
+        _logger.LogInformation("User {Email} was created and the confirmation email was sent.", user.Email);
         TempData["StatusMessage"] = "The user was created and a confirmation email was sent.";
         return RedirectToPage();
     }
