@@ -8,6 +8,8 @@ REPO_DIR="/opt/gsm"
 PUBLISH_DIR="$REPO_DIR/publish"
 AGENT_DIR="$REPO_DIR/gsm-agent"
 AGENT_ZIP="$PUBLISH_DIR/wwwroot/downloads/gsm-agent.zip"
+AGENT_STAGE="$(mktemp -d)"
+trap 'rm -rf "$AGENT_STAGE"' EXIT
 
 cd "$REPO_DIR"
 exec 9>/var/lock/gsm-deploy.lock
@@ -35,11 +37,18 @@ fi
 
 dotnet publish "$REPO_DIR/gsm/gsm.csproj" --configuration Release --output "$PUBLISH_DIR" --no-restore
 
+dotnet publish "$AGENT_DIR/gsm-agent.csproj" \
+    --configuration Release \
+    --runtime win-x64 \
+    --self-contained true \
+    -p:PublishSingleFile=true \
+    --output "$AGENT_STAGE"
+
 mkdir -p "$(dirname "$AGENT_ZIP")"
 rm -f "$AGENT_ZIP"
 (
-    cd "$AGENT_DIR"
-    zip -qr "$AGENT_ZIP" . -x 'bin/*' 'obj/*' 'publish/*'
+    cd "$AGENT_STAGE"
+    zip -qr "$AGENT_ZIP" .
 )
 
 mkdir -p "$PUBLISH_DIR/DataProtectionKeys"
