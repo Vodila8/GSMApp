@@ -118,8 +118,18 @@
         <div class="user-form-row">
             <label for="new-item-partner-select">Partner</label>
             <select id="new-item-partner-select">
-                <option value="">Select existing partner</option>
-                <option value="__new__">Add new partner</option>
+                @if (Model.Partners.Count > 0)
+                {
+                    <option value="">Select existing partner</option>
+                }
+                @if (Model.Partners.Count == 0)
+                {
+                    <option value="__new__" selected>Add new partner</option>
+                }
+                else
+                {
+                    <option value="__new__">Add new partner</option>
+                }
                 @foreach (var partner in Model.Partners)
                 {
                     <option value="@partner.Id">@partner.Name</option>
@@ -167,8 +177,18 @@
         <div class="user-form-row">
             <label for="sale-partner-select">Partner</label>
             <select id="sale-partner-select">
-                <option value="">Select existing partner</option>
-                <option value="__new__">Add new partner</option>
+                @if (Model.Partners.Count > 0)
+                {
+                    <option value="">Select existing partner</option>
+                }
+                @if (Model.Partners.Count == 0)
+                {
+                    <option value="__new__" selected>Add new partner</option>
+                }
+                else
+                {
+                    <option value="__new__">Add new partner</option>
+                }
                 @foreach (var partner in Model.Partners)
                 {
                     <option value="@partner.Id">@partner.Name</option>
