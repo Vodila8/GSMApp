@@ -817,4 +817,13 @@ body { background: var(--ops-bg); color: var(--ops-text); }
   .repair-form .warehouse-table { font-size: .8rem; }
 }
 
+.global-action-link,
+.global-action-link:hover,
+.global-action-link:focus { color: #aab8d0 !important; background: var(--ops-navy) !important; border: 0 !important; box-shadow: none !important; outline: none; }
+.global-action-link:hover, .global-action-link:focus-visible { color: #fff !important; background: var(--ops-navy-soft) !important; }
+.global-action-link:focus-visible { outline: 2px solid var(--ops-blue); outline-offset: -2px; }
+.warehouse-sale-dialog { width: min(1500px, calc(100% - 2rem)) !important; max-width: none !important; }
+.warehouse-delivery-dialog { width: min(1100px, calc(100% - 2rem)) !important; max-width: none !important; }
+.global-warehouse-dialog { margin: auto; }
+
 .agent-setup-steps { padding-left: 1.15rem; margin: .7rem 0 0; color: #475569; font-size: .86rem; line-height: 1.65; }

@@ -139,8 +139,8 @@
                         renderSaleItems();
                         if (!deliveryItemsBody.children.length) addDeliveryRow();
                     }
-                    document.querySelector('[data-open-global-sale]')?.addEventListener('click', async () => { await loadCatalog(); saleDialog.showModal(); });
-                    document.querySelector('[data-open-global-delivery]')?.addEventListener('click', async () => { await loadCatalog(); deliveryDialog.showModal(); });
+                    document.querySelector('[data-open-global-sale]')?.addEventListener('click', async () => { saleDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
+                    document.querySelector('[data-open-global-delivery]')?.addEventListener('click', async () => { deliveryDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
                     saleSearch.addEventListener('input', renderSaleItems);
                     saleItemsBody.addEventListener('input', updateSaleTotal);
                     saleItemsBody.addEventListener('change', updateSaleTotal);
