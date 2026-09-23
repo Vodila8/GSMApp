@@ -18,6 +18,10 @@ public class WarehouseSale
     public int Quantity { get; set; }
     public decimal UnitPrice { get; set; }
 
+    public decimal DiscountPercent { get; set; }
+
+    public decimal TotalAmount { get; set; }
+
     [MaxLength(1000)]
     public string? Note { get; set; }
 

@@ -29,6 +29,8 @@
                             <th>Product</th>
                             <th>Quantity</th>
                             <th>Unit price</th>
+                            <th>Discount</th>
+                            <th>Total amount</th>
                             <th>Note</th>
                             <th>User</th>
                         </tr>
@@ -42,6 +44,8 @@
                             <td>@sale.WarehouseItem.PartName</td>
                             <td>@sale.Quantity</td>
                             <td>@sale.UnitPrice.ToString("0.00") EUR</td>
+                            <td>@sale.DiscountPercent.ToString("0.##")%</td>
+                            <td>@sale.TotalAmount.ToString("0.00") EUR</td>
                             <td>@(string.IsNullOrWhiteSpace(sale.Note) ? "—" : sale.Note)</td>
                             <td>@sale.UserEmail</td>
                         </tr>

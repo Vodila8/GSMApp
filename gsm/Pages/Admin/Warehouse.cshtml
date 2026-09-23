@@ -216,7 +216,7 @@
                 <option value="">Select product</option>
                 @foreach (var item in Model.Items)
                 {
-                    <option value="@item.Id">@item.PartName (stock: @item.Quantity)</option>
+                    <option value="@item.Id" data-unit-price="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.PartName (stock: @item.Quantity)</option>
                 }
             </select>
         </div>
@@ -247,7 +247,11 @@
             <input asp-for="Sale.NewPartnerName" placeholder="Partner name" />
         </div>
         <div class="user-form-row user-form-row-two-columns">
-            <div><label asp-for="Sale.Quantity">Quantity</label><input asp-for="Sale.Quantity" type="number" min="1" /></div>
+            <div><label asp-for="Sale.Quantity">Quantity</label><input asp-for="Sale.Quantity" id="sale-quantity" type="number" min="1" /></div>
+            <div><label asp-for="Sale.DiscountPercent">Discount (%)</label><input asp-for="Sale.DiscountPercent" id="sale-discount" type="number" min="0" max="100" step="0.01" /></div>
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label for="sale-total">Total amount</label><input id="sale-total" type="text" value="0.00 EUR" readonly /></div>
             <div><label asp-for="Sale.Note">Note</label><input asp-for="Sale.Note" placeholder="Optional note" /></div>
         </div>
         <div class="create-user-modal-actions">
@@ -333,6 +337,21 @@
             });
         }
 
+        const saleProduct = document.getElementById('Sale_WarehouseItemId');
+        const saleQuantity = document.getElementById('sale-quantity');
+        const saleDiscount = document.getElementById('sale-discount');
+        const saleTotal = document.getElementById('sale-total');
+        function updateSaleTotal() {
+            const option = saleProduct.options[saleProduct.selectedIndex];
+            const unitPrice = Number(option?.dataset.unitPrice || 0);
+            const quantity = Number(saleQuantity.value || 0);
+            const discount = Number(saleDiscount.value || 0);
+            saleTotal.value = `${(unitPrice * quantity * (1 - discount / 100)).toFixed(2)} EUR`;
+        }
+        saleProduct.addEventListener('change', updateSaleTotal);
+        saleQuantity.addEventListener('input', updateSaleTotal);
+        saleDiscount.addEventListener('input', updateSaleTotal);
+        updateSaleTotal();
         document.querySelectorAll('[data-photo-picker]').forEach(setupPhotoPicker);
         setupPartnerChoice('new-item-partner-select', 'new-item-partner-id', 'NewItem_NewPartnerName', 'new-item-partner-name-field');
         setupPartnerChoice('sale-partner-select', 'sale-partner-id', 'Sale_NewPartnerName', 'sale-partner-name-field');

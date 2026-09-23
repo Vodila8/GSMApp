@@ -305,6 +305,11 @@ public class WarehouseModel : PageModel
             ModelState.AddModelError("Sale.Quantity", $"Only {item.Quantity} items are available.");
         }
 
+        if (Sale.DiscountPercent < 0 || Sale.DiscountPercent > 100)
+        {
+            ModelState.AddModelError("Sale.DiscountPercent", "Discount must be between 0 and 100 percent.");
+        }
+
         if (Sale.PartnerId.HasValue && !string.IsNullOrWhiteSpace(Sale.NewPartnerName))
         {
             ModelState.AddModelError("Sale.PartnerId", "Select an existing partner or enter a new partner, not both.");
@@ -346,6 +351,7 @@ public class WarehouseModel : PageModel
         item.Quantity -= Sale.Quantity;
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var userEmail = User.Identity?.Name ?? "Unknown user";
+        var totalAmount = Math.Round(item.UnitPrice * Sale.Quantity * (1 - Sale.DiscountPercent / 100m), 2);
         var sale = new WarehouseSale
         {
             CompanyId = _tenantContext.CompanyId,
@@ -355,6 +361,8 @@ public class WarehouseModel : PageModel
             WarehouseItem = item,
             Quantity = Sale.Quantity,
             UnitPrice = item.UnitPrice,
+            DiscountPercent = Sale.DiscountPercent,
+            TotalAmount = totalAmount,
             Note = Sale.Note?.Trim(),
             UserId = userId,
             UserEmail = userEmail
@@ -525,6 +533,7 @@ public class WarehouseModel : PageModel
         public int? PartnerId { get; set; }
         public string? NewPartnerName { get; set; }
         public int Quantity { get; set; } = 1;
+        public decimal DiscountPercent { get; set; }
         public string? Note { get; set; }
     }
 
