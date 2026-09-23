@@ -283,7 +283,8 @@ body {
 .warehouse-delivery-table select { min-width: 150px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
 .delivery-new-partner[hidden] { display: none !important; }
 .global-sale-table input { min-width: 90px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
-.global-sale-table input.global-sale-select { width: 18px; min-width: 18px; height: 18px; padding: 0; accent-color: var(--ops-blue); }
+.global-sale-table th:first-child, .global-sale-table td:first-child { width: 60px; min-width: 60px; padding-right: .35rem; padding-left: .35rem; text-align: center; white-space: nowrap; }
+.global-sale-table input.global-sale-select { display: block; width: 18px; min-width: 18px; height: 18px; margin: auto; padding: 0; accent-color: var(--ops-blue); }
 .global-modal-total { display: flex; justify-content: flex-end; gap: .5rem; padding: 1rem 0; color: #475569; font-size: 1.1rem; font-weight: 700; }
 .global-modal-total strong { color: var(--ops-blue-dark); }
 .warehouse-edit-form { padding: 1.5rem; }
@@ -820,9 +821,9 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 
 .global-action-link,
 .global-action-link:hover,
-.global-action-link:focus { color: #aab8d0 !important; background: var(--ops-navy) !important; border: 0 !important; box-shadow: none !important; outline: none; }
-.global-action-link:hover, .global-action-link:focus-visible { color: #fff !important; background: var(--ops-navy-soft) !important; }
-.global-action-link:focus-visible { outline: 2px solid var(--ops-blue); outline-offset: -2px; }
+.global-action-link:focus,
+.global-action-link:focus-visible { color: #aab8d0 !important; background: var(--ops-navy) !important; border: 0 !important; box-shadow: none !important; outline: none !important; }
+.global-action-link:hover { color: #fff !important; background: var(--ops-navy-soft) !important; }
 .warehouse-sale-dialog { width: min(1500px, calc(100% - 2rem)) !important; max-width: none !important; }
 .warehouse-delivery-dialog { width: min(1250px, calc(100% - 2rem)) !important; max-width: none !important; }
 .global-warehouse-dialog { margin: auto; }
