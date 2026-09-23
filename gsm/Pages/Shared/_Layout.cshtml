@@ -21,7 +21,10 @@
         <div class="app-shell">
             <aside class="sidebar" aria-label="Main navigation">
                 <nav class="sidebar-menu">
-                    <a class="sidebar-link" href="/"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20H4v-8.5Zm3 5.5h3v-3h4v3h3v-4.1l-5-4.05-5 4.05V17Z" /></svg><span>Home</span></a>
+                    @if (User.IsInRole("Boss") || User.IsInRole("Administrator") || User.IsInRole("Technician"))
+                    {
+                        <a class="sidebar-link" href="/"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20H4v-8.5Zm3 5.5h3v-3h4v3h3v-4.1l-5-4.05-5 4.05V17Z" /></svg><span>Home</span></a>
+                    }
                     @if (User.IsInRole("Boss") || User.IsInRole("Administrator"))
                     {
                         <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
