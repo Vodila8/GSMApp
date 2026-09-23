@@ -307,6 +307,17 @@ public class AdminOrderModel : PageModel
         Input.ProblemOrRepair = Order.ProblemOrRepair;
         Input.DeviceConditionAndNotes = Order.DeviceConditionAndNotes;
         Input.Accessories = Order.Accessories;
+        var accessoryValues = (Order.Accessories ?? string.Empty)
+            .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .ToList();
+        var knownAccessories = new[] { "SIM card", "Case", "Charger", "Cable", "Bag" };
+        Input.SelectedAccessories = accessoryValues.Where(value => knownAccessories.Contains(value, StringComparer.OrdinalIgnoreCase)).ToList();
+        var customAccessory = accessoryValues.Where(value => !knownAccessories.Contains(value, StringComparer.OrdinalIgnoreCase)).ToList();
+        if (customAccessory.Count > 0)
+        {
+            Input.SelectedAccessories.Add("Other");
+            Input.OtherAccessory = string.Join(", ", customAccessory);
+        }
         Input.DevicePassword = Order.DevicePassword;
         Input.AdbDiagnosticReport = Order.AdbDiagnosticReport;
         Parts = Order.Lines.Where(line => line.IsWarehousePart).Select(line => new PartInput { OrderLineId = line.Id, WarehouseItemId = line.WarehouseItemId ?? 0, UnitPrice = line.UnitPrice, Quantity = line.Quantity }).ToList();

@@ -190,7 +190,11 @@
         const accessoriesOptions = document.getElementById('accessories-options');
         const accessoriesValue = document.getElementById('accessories-value');
         const accessoriesOther = document.getElementById('accessories-other');
-        const selectedAccessories = new Set((accessoriesValue.value || '').split(',').map(value => value.trim()).filter(Boolean));
+        const accessoryValues = (accessoriesValue.value || '').split(',').map(value => value.trim()).filter(Boolean);
+        const knownAccessories = new Set(['SIM card', 'Case', 'Charger', 'Cable', 'Bag', 'Other']);
+        const selectedAccessories = new Set(accessoryValues.filter(value => knownAccessories.has(value)));
+        const customAccessory = accessoryValues.filter(value => !knownAccessories.has(value));
+        if (customAccessory.length > 0) { selectedAccessories.add('Other'); accessoriesOther.value = customAccessory.join(', '); }
         accessoriesOptions.querySelectorAll('[data-accessory]').forEach(button => {
             if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected');
         });

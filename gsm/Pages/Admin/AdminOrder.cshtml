@@ -153,7 +153,11 @@ photoPicker.addEventListener('click', event => {
 const accessoryOptions = document.getElementById('edit-accessories-options');
 const accessoryValue = document.getElementById('edit-accessories-value');
 const accessoryOther = document.getElementById('edit-accessories-other');
-const selectedAccessories = new Set((accessoryValue.value || '').split(',').map(value => value.trim()).filter(Boolean));
+const accessoryValues = (accessoryValue.value || '').split(',').map(value => value.trim()).filter(Boolean);
+const knownAccessories = new Set(['SIM card', 'Case', 'Charger', 'Cable', 'Bag', 'Other']);
+const selectedAccessories = new Set(accessoryValues.filter(value => knownAccessories.has(value)));
+const customAccessory = accessoryValues.filter(value => !knownAccessories.has(value));
+if (customAccessory.length > 0) { selectedAccessories.add('Other'); accessoryOther.value = customAccessory.join(', '); }
 accessoryOptions.querySelectorAll('[data-accessory]').forEach(button => { if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected'); });
 function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySelectorAll('.selected')].map(button => button.dataset.accessory).filter(value => value !== 'Other').concat(accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected') && accessoryOther.value.trim() ? [accessoryOther.value.trim()] : []).join(', '); accessoryOther.hidden = !accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected'); }
 accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { button.classList.toggle('selected'); syncAccessories(); } });
