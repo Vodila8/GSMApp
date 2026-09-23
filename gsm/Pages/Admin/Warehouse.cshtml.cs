@@ -33,17 +33,23 @@ public class WarehouseModel : PageModel
     [BindProperty]
     public WarehouseSaleInput Sale { get; set; } = new();
 
+    [BindProperty]
+    public List<NewWarehouseItemInput> DeliveryItems { get; set; } = [new()];
+
     public bool ShowSaleModal { get; private set; }
+    public bool ShowDeliveryModal { get; private set; }
     public List<string> ProductNumbers { get; private set; } = [];
     public List<WarehousePartner> Partners { get; private set; } = [];
 
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
-    public async Task OnGetAsync(string? sell = null)
+    public async Task OnGetAsync(string? sell = null, string? delivery = null)
     {
         ShowSaleModal = string.Equals(sell, "1", StringComparison.OrdinalIgnoreCase) ||
                         bool.TryParse(sell, out var showSale) && showSale;
+        ShowDeliveryModal = string.Equals(delivery, "1", StringComparison.OrdinalIgnoreCase) ||
+                           bool.TryParse(delivery, out var showDelivery) && showDelivery;
         await LoadItemsAsync();
         NewItem.ProductNumber ??= await GetNextProductNumberAsync();
     }
@@ -286,6 +292,131 @@ public class WarehouseModel : PageModel
         var path = Path.Combine(_environment.WebRootPath, "uploads", "warehouse", photo.FileName);
         if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
 
+        return RedirectToPage();
+    }
+
+    public async Task<IActionResult> OnPostSaveDeliveryAsync()
+    {
+        ShowDeliveryModal = true;
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+
+        DeliveryItems = DeliveryItems.Where(item =>
+            !string.IsNullOrWhiteSpace(item.PartName) ||
+            !string.IsNullOrWhiteSpace(item.ProductNumber) ||
+            item.Quantity.HasValue ||
+            item.Photos.Count > 0).ToList();
+        if (DeliveryItems.Count == 0)
+        {
+            DeliveryItems.Add(new NewWarehouseItemInput());
+            ModelState.AddModelError(string.Empty, "Add at least one delivery item.");
+        }
+
+        var hasBlankProductNumber = false;
+        foreach (var (input, index) in DeliveryItems.Select((value, index) => (value, index)))
+        {
+            if (string.IsNullOrWhiteSpace(input.PartName))
+                ModelState.AddModelError($"DeliveryItems[{index}].PartName", "Part name is required.");
+            else if (input.PartName.Length > 200)
+                ModelState.AddModelError($"DeliveryItems[{index}].PartName", "Part name cannot exceed 200 characters.");
+
+            if (!string.IsNullOrWhiteSpace(input.ProductNumber) && !input.ProductNumber.All(char.IsDigit))
+                ModelState.AddModelError($"DeliveryItems[{index}].ProductNumber", "Product number must contain digits only.");
+            if (string.IsNullOrWhiteSpace(input.ProductNumber)) hasBlankProductNumber = true;
+            if (input.Quantity is < 0)
+                ModelState.AddModelError($"DeliveryItems[{index}].Quantity", "Quantity cannot be negative.");
+            if (input.UnitPrice is < 0 || input.UnitPrice > 999999.99m)
+                ModelState.AddModelError($"DeliveryItems[{index}].UnitPrice", "Unit price must be between 0 and 999999.99.");
+            if (input.DeliveryPrice is < 0 || input.DeliveryPrice > 999999.99m)
+                ModelState.AddModelError($"DeliveryItems[{index}].DeliveryPrice", "Delivery price must be between 0 and 999999.99.");
+            if (input.Photos.Count > 10)
+                ModelState.AddModelError($"DeliveryItems[{index}].Photos", "You can upload up to 10 photos at a time.");
+            foreach (var photo in input.Photos)
+            {
+                if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
+                    ModelState.AddModelError($"DeliveryItems[{index}].Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
+            }
+
+            if (input.PartnerId.HasValue && !string.IsNullOrWhiteSpace(input.NewPartnerName))
+                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select an existing partner or enter a new partner, not both.");
+            else if (input.PartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == input.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
+                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select a valid partner.");
+            else if (!input.PartnerId.HasValue && string.IsNullOrWhiteSpace(input.NewPartnerName))
+                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select an existing partner or enter a new partner.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadItemsAsync();
+            return Page();
+        }
+
+        var nextProductNumber = hasBlankProductNumber ? int.Parse(await GetNextProductNumberAsync()) : 0;
+        var createdItems = new List<WarehouseItem>();
+        var auditEntries = new List<WarehouseAuditEntry>();
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userEmail = User.Identity?.Name ?? "Unknown user";
+
+        foreach (var input in DeliveryItems)
+        {
+            WarehousePartner? newPartner = null;
+            if (!string.IsNullOrWhiteSpace(input.NewPartnerName))
+            {
+                newPartner = await _dbContext.WarehousePartners.FirstOrDefaultAsync(partner =>
+                    partner.CompanyId == _tenantContext.CompanyId && partner.Name == input.NewPartnerName.Trim());
+                if (newPartner == null)
+                {
+                    newPartner = new WarehousePartner
+                    {
+                        CompanyId = _tenantContext.CompanyId,
+                        Name = input.NewPartnerName.Trim()
+                    };
+                    _dbContext.WarehousePartners.Add(newPartner);
+                }
+            }
+
+            var productNumber = string.IsNullOrWhiteSpace(input.ProductNumber)
+                ? nextProductNumber++.ToString()
+                : NormalizeProductNumber(input.ProductNumber);
+            var item = new WarehouseItem
+            {
+                CompanyId = _tenantContext.CompanyId,
+                PartnerId = input.PartnerId,
+                Partner = newPartner,
+                PartName = input.PartName!.Trim(),
+                ProductNumber = productNumber,
+                Barcode = input.Barcode?.Trim(),
+                UnitPrice = input.UnitPrice ?? 0,
+                DeliveryPrice = input.DeliveryPrice ?? 0,
+                Quantity = input.Quantity ?? 0
+            };
+            _dbContext.WarehouseItems.Add(item);
+            createdItems.Add(item);
+            auditEntries.Add(new WarehouseAuditEntry
+            {
+                CompanyId = _tenantContext.CompanyId,
+                ItemName = item.PartName,
+                ProductNumber = item.ProductNumber,
+                Barcode = item.Barcode,
+                Action = "Item delivered",
+                QuantityBefore = 0,
+                QuantityAfter = item.Quantity,
+                QuantityChange = item.Quantity,
+                UnitPrice = item.UnitPrice,
+                UserId = userId,
+                UserEmail = userEmail
+            });
+        }
+
+        _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
+        await _dbContext.SaveChangesAsync();
+        foreach (var (item, input) in createdItems.Zip(DeliveryItems))
+        {
+            if (input.Photos.Count > 0)
+                await SavePhotosAsync(item, input.Photos);
+        }
+        await _dbContext.SaveChangesAsync();
+
+        TempData["StatusMessage"] = $"Delivered {createdItems.Count} item(s).";
         return RedirectToPage();
     }
 

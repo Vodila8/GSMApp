@@ -211,6 +211,63 @@
     </form>
 </dialog>
 
+<dialog id="warehouse-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog">
+    <form method="post" asp-page-handler="SaveDelivery" enctype="multipart/form-data" class="warehouse-edit-form">
+        <div class="create-user-modal-header">
+            <h2>Warehouse delivery</h2>
+            <button type="button" class="create-user-close" data-close-warehouse-delivery aria-label="Close">×</button>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="table-responsive">
+            <table class="table warehouse-table warehouse-edit-table warehouse-delivery-table align-middle">
+                <thead><tr><th>No.</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Photos</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead>
+                <tbody id="delivery-items-body">
+                @for (var index = 0; index < Model.DeliveryItems.Count; index++)
+                {
+                    <tr class="delivery-item-row" data-delivery-row>
+                        <td>@(index + 1)</td>
+                        <td><input asp-for="DeliveryItems[index].ProductNumber" list="warehouse-product-numbers" /></td>
+                        <td><input asp-for="DeliveryItems[index].Quantity" type="number" min="0" step="1" /></td>
+                        <td><input asp-for="DeliveryItems[index].PartName" required /></td>
+                        <td>
+                            <select asp-for="DeliveryItems[index].PartnerId" class="delivery-partner-select">
+                                <option value="">Add new partner</option>
+                                @foreach (var partner in Model.Partners)
+                                {
+                                    <option value="@partner.Id">@partner.Name</option>
+                                }
+                            </select>
+                            <input asp-for="DeliveryItems[index].NewPartnerName" class="delivery-new-partner" placeholder="New partner name" />
+                        </td>
+                        <td><div class="warehouse-photo-picker" data-photo-picker><label class="warehouse-photo-add">Choose photos<input asp-for="DeliveryItems[index].Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div></div></td>
+                        <td><input asp-for="DeliveryItems[index].Barcode" /></td>
+                        <td><input asp-for="DeliveryItems[index].UnitPrice" type="number" min="0" step="0.01" /></td>
+                        <td><input asp-for="DeliveryItems[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
+                        <td><button type="button" class="btn btn-link text-danger remove-delivery-row">×</button></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <template id="delivery-row-template">
+            <tr class="delivery-item-row" data-delivery-row>
+                <td>__number__</td>
+                <td><input name="DeliveryItems[__index__].ProductNumber" list="warehouse-product-numbers" /></td>
+                <td><input name="DeliveryItems[__index__].Quantity" type="number" min="0" step="1" /></td>
+                <td><input name="DeliveryItems[__index__].PartName" required /></td>
+                <td><select name="DeliveryItems[__index__].PartnerId" class="delivery-partner-select"><option value="">Add new partner</option>@foreach (var partner in Model.Partners) { <option value="@partner.Id">@partner.Name</option> }</select><input name="DeliveryItems[__index__].NewPartnerName" class="delivery-new-partner" placeholder="New partner name" /></td>
+                <td><div class="warehouse-photo-picker" data-photo-picker><label class="warehouse-photo-add">Choose photos<input name="DeliveryItems[__index__].Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div></div></td>
+                <td><input name="DeliveryItems[__index__].Barcode" /></td>
+                <td><input name="DeliveryItems[__index__].UnitPrice" type="number" min="0" step="0.01" /></td>
+                <td><input name="DeliveryItems[__index__].DeliveryPrice" type="number" min="0" step="0.01" /></td>
+                <td><button type="button" class="btn btn-link text-danger remove-delivery-row">×</button></td>
+            </tr>
+        </template>
+        <button type="button" id="add-delivery-row" class="btn btn-outline-secondary btn-sm">+ Add item</button>
+        <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-warehouse-delivery>Cancel</button><button type="submit" class="btn btn-primary">Save delivery</button></div>
+    </form>
+</dialog>
+
 <dialog id="warehouse-sale-dialog" class="create-user-dialog warehouse-sale-dialog">
     <form method="post" asp-page-handler="Sell" class="create-user-modal-form">
         <div class="create-user-modal-header">
@@ -279,6 +336,7 @@
         const warehouseEditDialog = document.getElementById('warehouse-edit-dialog');
         const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
         const warehouseSaleDialog = document.getElementById('warehouse-sale-dialog');
+        const warehouseDeliveryDialog = document.getElementById('warehouse-delivery-dialog');
 
         function setupPartnerChoice(selectId, partnerIdId, newNameId, newNameFieldId) {
             const select = document.getElementById(selectId);
@@ -374,7 +432,44 @@
         saleQuantity.addEventListener('input', updateSaleTotal);
         saleDiscount.addEventListener('input', updateSaleTotal);
         updateSaleTotal();
+        function setupDeliveryPartner(row) {
+            const select = row.querySelector('.delivery-partner-select');
+            const newPartner = row.querySelector('.delivery-new-partner');
+            const update = () => {
+                const isNew = !select.value;
+                newPartner.hidden = !isNew;
+                if (!isNew) newPartner.value = '';
+            };
+            update();
+            select.addEventListener('change', update);
+        }
+
         document.querySelectorAll('[data-photo-picker]').forEach(setupPhotoPicker);
+        document.querySelectorAll('[data-delivery-row]').forEach(setupDeliveryPartner);
+        const deliveryItemsBody = document.getElementById('delivery-items-body');
+        let deliveryIndex = deliveryItemsBody.querySelectorAll('[data-delivery-row]').length;
+        document.getElementById('add-delivery-row').addEventListener('click', () => {
+            const rowMarkup = document.getElementById('delivery-row-template').innerHTML
+                .replaceAll('__index__', deliveryIndex)
+                .replaceAll('__number__', deliveryIndex + 1);
+            deliveryItemsBody.insertAdjacentHTML('beforeend', rowMarkup);
+            const row = deliveryItemsBody.lastElementChild;
+            setupPhotoPicker(row.querySelector('[data-photo-picker]'));
+            setupDeliveryPartner(row);
+            deliveryIndex++;
+        });
+        deliveryItemsBody.addEventListener('click', event => {
+            if (event.target.closest('.remove-delivery-row') && deliveryItemsBody.querySelectorAll('[data-delivery-row]').length > 1) {
+                event.target.closest('[data-delivery-row]').remove();
+            }
+        });
+        warehouseDeliveryDialog.querySelector('form').addEventListener('submit', () => {
+            deliveryItemsBody.querySelectorAll('[data-delivery-row]').forEach((row, index) => {
+                row.querySelectorAll('input[name], select[name]').forEach(input => {
+                    input.name = input.name.replace(/DeliveryItems\[\d+\]/, `DeliveryItems[${index}]`);
+                });
+            });
+        });
         setupPartnerChoice('new-item-partner-select', 'new-item-partner-id', 'NewItem_NewPartnerName', 'new-item-partner-name-field');
         setupPartnerChoice('sale-partner-select', 'sale-partner-id', 'Sale_NewPartnerName', 'sale-partner-name-field');
         document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
@@ -383,9 +478,15 @@
         document.querySelectorAll('[data-close-warehouse-edit]').forEach(button => button.addEventListener('click', () => warehouseEditDialog.close()));
         document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
         document.querySelectorAll('[data-close-warehouse-sale]').forEach(button => button.addEventListener('click', () => warehouseSaleDialog.close()));
+        document.querySelectorAll('[data-close-warehouse-delivery]').forEach(button => button.addEventListener('click', () => warehouseDeliveryDialog.close()));
         warehouseEditDialog.addEventListener('click', event => { if (event.target === warehouseEditDialog) warehouseEditDialog.close(); });
         warehouseItemDialog.addEventListener('click', event => { if (event.target === warehouseItemDialog) warehouseItemDialog.close(); });
         warehouseSaleDialog.addEventListener('click', event => { if (event.target === warehouseSaleDialog) warehouseSaleDialog.close(); });
+        warehouseDeliveryDialog.addEventListener('click', event => { if (event.target === warehouseDeliveryDialog) warehouseDeliveryDialog.close(); });
+        @if (Model.ShowDeliveryModal)
+        {
+            <text>warehouseDeliveryDialog.showModal();</text>
+        }
         @if (Model.ShowSaleModal)
         {
             <text>warehouseSaleDialog.showModal();</text>

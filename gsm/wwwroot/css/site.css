@@ -278,6 +278,10 @@ body {
 .warehouse-edit-dialog::backdrop { background: rgb(15 23 42 / 45%); }
 .warehouse-sale-dialog { width: min(1100px, calc(100% - 2rem)); max-width: none; margin: auto; }
 .warehouse-sale-dialog select[size] { min-height: 190px; padding: .55rem .65rem; }
+.warehouse-delivery-dialog { width: min(1500px, calc(100% - 2rem)); max-width: none; margin: auto; }
+.warehouse-delivery-table { min-width: 1250px; }
+.warehouse-delivery-table select { min-width: 150px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
+.delivery-new-partner[hidden] { display: none !important; }
 .warehouse-edit-form { padding: 1.5rem; }
 .warehouse-edit-table { min-width: 1050px; margin-bottom: 0; }
 .warehouse-edit-table input { width: 100%; min-width: 110px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
