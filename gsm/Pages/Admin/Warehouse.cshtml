@@ -490,10 +490,6 @@
         document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
         document.querySelectorAll('[data-close-warehouse-sale]').forEach(button => button.addEventListener('click', () => warehouseSaleDialog.close()));
         document.querySelectorAll('[data-close-warehouse-delivery]').forEach(button => button.addEventListener('click', () => warehouseDeliveryDialog.close()));
-        warehouseEditDialog.addEventListener('click', event => { if (event.target === warehouseEditDialog) warehouseEditDialog.close(); });
-        warehouseItemDialog.addEventListener('click', event => { if (event.target === warehouseItemDialog) warehouseItemDialog.close(); });
-        warehouseSaleDialog.addEventListener('click', event => { if (event.target === warehouseSaleDialog) warehouseSaleDialog.close(); });
-        warehouseDeliveryDialog.addEventListener('click', event => { if (event.target === warehouseDeliveryDialog) warehouseDeliveryDialog.close(); });
         @if (Model.ShowDeliveryModal)
         {
             <text>warehouseDeliveryDialog.showModal();</text>

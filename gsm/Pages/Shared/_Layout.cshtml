@@ -246,9 +246,6 @@
                     document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => saleDialog.close()));
                     document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => deliveryDialog.close()));
                     document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => partnerDialog.close()));
-                    saleDialog.addEventListener('click', event => { if (event.target === saleDialog) saleDialog.close(); });
-                    deliveryDialog.addEventListener('click', event => { if (event.target === deliveryDialog) deliveryDialog.close(); });
-                    partnerDialog.addEventListener('click', event => { if (event.target === partnerDialog) partnerDialog.close(); });
                 })();
             </script>
         }
