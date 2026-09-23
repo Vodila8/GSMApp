@@ -782,6 +782,8 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 }
 
 @media (max-width: 700px) {
+  .global-warehouse-dialog.is-maximized { left: 0 !important; }
+  .global-warehouse-dialog { min-width: 0; min-height: 0; resize: none; }
   .app-shell { display: block; }
   .sidebar { display: block; min-height: auto; padding: .75rem; }
   .sidebar-menu { display: flex; flex-direction: row; gap: .3rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: thin; }
@@ -837,7 +839,12 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .global-action-link:hover { color: #fff !important; background: var(--ops-navy-soft) !important; }
 .warehouse-sale-dialog { width: min(1500px, calc(100% - 2rem)) !important; max-width: none !important; }
 .warehouse-delivery-dialog { width: min(1250px, calc(100% - 2rem)) !important; max-width: none !important; }
-.global-warehouse-dialog { margin: auto; }
+.global-warehouse-dialog { margin: auto; resize: both; overflow: auto; min-width: 520px; min-height: 360px; }
+.global-warehouse-dialog.is-maximized { top: 0 !important; right: 0 !important; bottom: 0 !important; left: 250px !important; width: auto !important; height: auto !important; max-width: none !important; max-height: none !important; margin: 0 !important; border-radius: 0; }
+.global-window-header { cursor: move; user-select: none; }
+.global-window-controls { display: flex; align-items: center; gap: .35rem; }
+.global-window-maximize { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; color: #64748b; font: inherit; border: 0; border-radius: .35rem; background: transparent; cursor: pointer; }
+.global-window-maximize:hover { color: #0f172a; background: #eaf1f7; }
 .global-partner-dialog { width: min(620px, calc(100% - 2rem)) !important; max-width: none !important; margin: auto; }
 
 .agent-setup-steps { padding-left: 1.15rem; margin: .7rem 0 0; color: #475569; font-size: .86rem; line-height: 1.65; }
