@@ -722,9 +722,8 @@ public class WarehouseModel : PageModel
         {
             var search = Search.Trim();
             warehouseItems = warehouseItems.Where(item =>
-                (!string.IsNullOrWhiteSpace(item.Barcode) && item.Barcode.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
-                item.PartName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
-                (NormalizeProductNumber(item.ProductNumber)?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false))
+                (!string.IsNullOrWhiteSpace(item.Barcode) && string.Equals(item.Barcode.Trim(), search, StringComparison.OrdinalIgnoreCase)) ||
+                item.PartName.Contains(search, StringComparison.OrdinalIgnoreCase))
                 .ToList();
         }
         Partners = await _dbContext.WarehousePartners.OrderBy(partner => partner.Name).ToListAsync();

@@ -69,7 +69,7 @@
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Sell items</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div></div>
                     <div class="user-form-row"><label for="global-sale-partner">Partner</label><select id="global-sale-partner"></select><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /><input type="text" name="BatchNewPartnerName" id="global-sale-new-partner" placeholder="New partner name" hidden /></div>
-                    <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode, product number or part name" /></div>
+                    <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode or part name" /></div>
                     <div class="table-responsive"><table class="table warehouse-table global-sale-table"><thead><tr><th>Select</th><th>Product</th><th>Stock</th><th>Quantity</th><th>Discount (%)</th><th>Total</th></tr></thead><tbody id="global-sale-items"></tbody></table></div>
                     <div class="global-modal-total">Total: <strong id="global-sale-total">0.00 EUR</strong></div>
                     <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-sale>Cancel</button><button type="submit" class="btn btn-primary">Record sale</button></div>
@@ -184,7 +184,9 @@
                         saleItemsBody.querySelectorAll('tr').forEach(row => {
                             const item = catalog.find(product => String(product.id) === row.dataset.id);
                             const state = previousState.get(row.dataset.id);
-                            row.hidden = term !== '' && !`${item.partName} ${item.productNumber || ''} ${item.barcode || ''}`.toLowerCase().includes(term);
+                            const partNameMatches = item.partName.toLowerCase().includes(term);
+                            const barcodeMatches = term !== '' && (item.barcode || '').trim().toLowerCase() === term;
+                            row.hidden = term !== '' && !partNameMatches && !barcodeMatches;
                             if (state) {
                                 row.querySelector('.global-sale-select').checked = state.checked;
                                 row.querySelector('.global-sale-quantity').value = state.quantity;
@@ -193,9 +195,19 @@
                         });
                         updateSaleTotal();
                     }
+                    function setupGlobalDeliveryProductRow(row) {
+                        const productNumber = row.querySelector('input[name$=".ProductNumber"]');
+                        const partName = row.querySelector('input[name$=".PartName"]');
+                        productNumber.addEventListener('input', () => {
+                            const value = productNumber.value.trim().toLowerCase().replace(/^p-/, '');
+                            const item = catalog.find(product => String(product.productNumber || '').trim().toLowerCase().replace(/^p-/, '') === value);
+                            if (item) partName.value = item.partName;
+                        });
+                    }
                     function addDeliveryRow() {
                         const index = deliveryIndex++;
                         deliveryItemsBody.insertAdjacentHTML('beforeend', `<tr><td>${index + 1}</td><td><input name="DeliveryItems[${index}].ProductNumber"></td><td><input name="DeliveryItems[${index}].Quantity" type="number" min="0" value="0"></td><td><input name="DeliveryItems[${index}].PartName" required></td><td><input name="DeliveryItems[${index}].Photos" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple></td><td><input name="DeliveryItems[${index}].Barcode"></td><td><input name="DeliveryItems[${index}].UnitPrice" type="number" min="0" step="0.01"></td><td><input name="DeliveryItems[${index}].DeliveryPrice" type="number" min="0" step="0.01"></td><td><button type="button" class="btn btn-link text-danger global-remove-delivery">×</button></td></tr>`);
+                        setupGlobalDeliveryProductRow(deliveryItemsBody.lastElementChild);
                     }
                     async function loadCatalog() {
                         const response = await fetch('/Warehouse?handler=Options');

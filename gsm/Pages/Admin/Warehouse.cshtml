@@ -21,7 +21,7 @@
         </div>
         <form method="get" class="warehouse-page-search" role="search">
             <label class="visually-hidden" for="warehouse-search">Search warehouse</label>
-            <input id="warehouse-search" name="search" value="@Model.Search" placeholder="Search by barcode, product number or part name" />
+            <input id="warehouse-search" name="search" value="@Model.Search" placeholder="Search by barcode or part name" />
             <button class="btn btn-primary" type="submit">Search</button>
             @if (!string.IsNullOrWhiteSpace(Model.Search))
             {
@@ -277,7 +277,7 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="user-form-row">
             <label for="sale-product-search">Search product</label>
-            <input id="sale-product-search" type="search" placeholder="Search by barcode, product number or part name" autocomplete="off" />
+            <input id="sale-product-search" type="search" placeholder="Search by barcode or part name" autocomplete="off" />
         </div>
         <div class="user-form-row">
             <label asp-for="Sale.WarehouseItemId">Product</label>
@@ -432,6 +432,16 @@
         saleQuantity.addEventListener('input', updateSaleTotal);
         saleDiscount.addEventListener('input', updateSaleTotal);
         updateSaleTotal();
+        const deliveryCatalog = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.Select(item => new { item.ProductNumber, item.PartName }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        function setupDeliveryProductRow(row) {
+            const productNumber = row.querySelector('input[name$=".ProductNumber"]');
+            const partName = row.querySelector('input[name$=".PartName"]');
+            productNumber.addEventListener('input', () => {
+                const value = productNumber.value.trim().toLowerCase().replace(/^p-/, '');
+                const item = deliveryCatalog.find(product => String(product.productNumber || '').trim().toLowerCase().replace(/^p-/, '') === value);
+                if (item) partName.value = item.partName;
+            });
+        }
         function setupDeliveryPartner(row) {
             const select = row.querySelector('.delivery-partner-select');
             const newPartner = row.querySelector('.delivery-new-partner');
@@ -445,7 +455,7 @@
         }
 
         document.querySelectorAll('[data-photo-picker]').forEach(setupPhotoPicker);
-        document.querySelectorAll('[data-delivery-row]').forEach(setupDeliveryPartner);
+        document.querySelectorAll('[data-delivery-row]').forEach(row => { setupDeliveryProductRow(row); setupDeliveryPartner(row); });
         const deliveryItemsBody = document.getElementById('delivery-items-body');
         let deliveryIndex = deliveryItemsBody.querySelectorAll('[data-delivery-row]').length;
         document.getElementById('add-delivery-row').addEventListener('click', () => {
@@ -455,6 +465,7 @@
             deliveryItemsBody.insertAdjacentHTML('beforeend', rowMarkup);
             const row = deliveryItemsBody.lastElementChild;
             setupPhotoPicker(row.querySelector('[data-photo-picker]'));
+            setupDeliveryProductRow(row);
             setupDeliveryPartner(row);
             deliveryIndex++;
         });
