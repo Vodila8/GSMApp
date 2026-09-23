@@ -213,7 +213,8 @@
         accessoriesOptions.addEventListener('click', event => {
             const button = event.target.closest('[data-accessory]');
             if (!button) return;
-            button.classList.toggle('selected');
+            if (button.dataset.accessory === 'Other') button.classList.add('selected');
+            else button.classList.toggle('selected');
             syncAccessories();
         });
         accessoriesOther.addEventListener('input', syncAccessories);

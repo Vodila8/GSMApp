@@ -753,4 +753,51 @@ body { background: var(--ops-bg); color: var(--ops-text); }
   .diagnostics-grid { grid-template-columns: 1fr; }
 }
 
+@media (max-width: 700px) {
+  .app-shell { display: block; }
+  .sidebar { display: block; min-height: auto; padding: .75rem; }
+  .sidebar-menu { display: flex; flex-direction: row; gap: .3rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: thin; }
+  .sidebar-link { flex: 0 0 auto; width: auto; white-space: nowrap; }
+  .sidebar-link[href="/"] { margin-bottom: 0; font-size: .84rem; }
+  .sidebar-user { position: static; margin-top: .55rem; }
+  .sidebar-logout { position: static; margin-top: .4rem; }
+  .sidebar-logout-button { width: auto; padding: .55rem .75rem; }
+  .app-content { width: 100%; }
+  .user-form-page { padding: .75rem; }
+  .warehouse-list, .user-form, .dashboard-section { width: 100%; max-width: none; padding: 1rem; margin-top: .75rem; border-radius: .7rem; }
+  .warehouse-page-heading, .profile-page-header, .repair-form-header { align-items: flex-start; flex-direction: column; }
+  .warehouse-page-actions { flex-wrap: wrap; margin-bottom: 1rem; }
+  .warehouse-title, .repair-form .warehouse-title { font-size: 1.45rem; }
+  .repair-form { padding: 1rem; }
+  .repair-section { padding: 1rem; margin-bottom: .85rem; }
+  .repair-form-badge { align-self: flex-start; }
+  .repair-form .order-total { width: 100%; max-width: none; }
+  .repair-form .btn-primary { width: 100%; min-width: 0; }
+  .create-user-dialog, .warehouse-edit-dialog { width: calc(100% - 1rem); max-height: calc(100dvh - 1rem); overflow: auto; }
+  .create-user-modal-form, .warehouse-edit-form { padding: 1rem; }
+  .warehouse-edit-table { min-width: 1050px; }
+  .warehouse-edit-dialog .table-responsive { overflow-x: auto; }
+  .dashboard-heading { align-items: flex-start; flex-direction: column; }
+  .dashboard-heading .back-link { align-self: flex-start; }
+  .order-filter-links { gap: .4rem; }
+  .order-filter-links a { flex: 1 1 auto; justify-content: center; }
+  .profile-danger-zone { padding: 1rem; }
+  .profile-delete-form { max-width: none; }
+  .profile-page-header .btn { width: 100%; }
+  .price-adjustment-form { grid-template-columns: 1fr; }
+  .order-overview-meta { align-items: flex-start; flex-direction: column; gap: .45rem; white-space: normal; }
+  .adb-report-grid { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 420px) {
+  html { font-size: 15px; }
+  .sidebar-link { padding: .55rem .65rem; font-size: .78rem; }
+  .sidebar-link-icon { display: none; }
+  .warehouse-action-button { width: 2.1rem; height: 2.1rem; }
+  .user-form-row-two-columns, .user-form-row-three-columns { grid-template-columns: 1fr; }
+  .warehouse-photo-list { min-width: 0; }
+  .repair-section-title { font-size: .98rem; }
+  .repair-form .warehouse-table { font-size: .8rem; }
+}
+
 .agent-setup-steps { padding-left: 1.15rem; margin: .7rem 0 0; color: #475569; font-size: .86rem; line-height: 1.65; }

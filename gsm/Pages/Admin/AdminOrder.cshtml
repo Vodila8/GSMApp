@@ -160,7 +160,7 @@ const customAccessory = accessoryValues.filter(value => !knownAccessories.has(va
 if (customAccessory.length > 0) { selectedAccessories.add('Other'); accessoryOther.value = customAccessory.join(', '); }
 accessoryOptions.querySelectorAll('[data-accessory]').forEach(button => { if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected'); });
 function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySelectorAll('.selected')].map(button => button.dataset.accessory).filter(value => value !== 'Other').concat(accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected') && accessoryOther.value.trim() ? [accessoryOther.value.trim()] : []).join(', '); accessoryOther.hidden = !accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected'); }
-accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { button.classList.toggle('selected'); syncAccessories(); } });
+accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { if (button.dataset.accessory === 'Other') button.classList.add('selected'); else button.classList.toggle('selected'); syncAccessories(); } });
 accessoryOther.addEventListener('input', syncAccessories);
 document.getElementById('edit-order-form').addEventListener('submit', syncAccessories);
 loadDevices(); total();
