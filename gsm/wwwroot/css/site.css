@@ -276,9 +276,9 @@ body {
 .warehouse-edit-photo-list .warehouse-photo-item img { width: 76px; height: 76px; border-radius: .45rem; }
 .warehouse-edit-dialog { width: 60%; max-width: none; margin: auto; padding: 0; border: 0; border-radius: .75rem; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
 .warehouse-edit-dialog::backdrop { background: rgb(15 23 42 / 45%); }
-.warehouse-sale-dialog { width: min(1100px, calc(100% - 2rem)); max-width: none; margin: auto; }
+.warehouse-sale-dialog { width: min(1500px, calc(100% - 2rem)); max-width: none; margin: auto; }
 .warehouse-sale-dialog select[size] { min-height: 190px; padding: .55rem .65rem; }
-.warehouse-delivery-dialog { width: min(1500px, calc(100% - 2rem)); max-width: none; margin: auto; }
+.warehouse-delivery-dialog { width: min(1100px, calc(100% - 2rem)); max-width: none; margin: auto; }
 .warehouse-delivery-table { min-width: 1250px; }
 .warehouse-delivery-table select { min-width: 150px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
 .delivery-new-partner[hidden] { display: none !important; }
@@ -666,6 +666,7 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .sidebar-link { padding: .72rem .9rem; color: #aab8d0; font-size: .84rem; font-weight: 600; border-radius: .45rem; }
 .sidebar-link:hover, .sidebar-link:focus { color: #fff; background: var(--ops-navy-soft); }
 .global-action-link { width: 100%; border: 0; text-align: left; font: inherit; cursor: pointer; }
+.sidebar-action-icon { display: grid; place-items: center; font-size: 1.05rem; font-weight: 800; line-height: 1; }
 .sidebar-link { display: flex; align-items: center; gap: .75rem; }
 .sidebar-link-icon { flex: 0 0 1.25rem; width: 1.25rem; height: 1.25rem; fill: currentColor; opacity: .9; }
 .sidebar-link[href="/"] .sidebar-link-icon { width: 1.35rem; height: 1.35rem; }
