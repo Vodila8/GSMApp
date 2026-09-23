@@ -36,6 +36,15 @@ public class WarehouseModel : PageModel
     [BindProperty]
     public List<NewWarehouseItemInput> DeliveryItems { get; set; } = [new()];
 
+    [BindProperty]
+    public int? BatchPartnerId { get; set; }
+
+    [BindProperty]
+    public string? BatchNewPartnerName { get; set; }
+
+    [BindProperty]
+    public List<WarehouseSaleInput> SaleItems { get; set; } = [];
+
     public bool ShowSaleModal { get; private set; }
     public bool ShowDeliveryModal { get; private set; }
     public List<string> ProductNumbers { get; private set; } = [];
@@ -43,6 +52,28 @@ public class WarehouseModel : PageModel
 
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
+
+    public async Task<IActionResult> OnGetOptionsAsync()
+    {
+        var items = await _dbContext.WarehouseItems
+            .OrderBy(item => item.PartName)
+            .Select(item => new
+            {
+                item.Id,
+                item.PartName,
+                item.ProductNumber,
+                item.Barcode,
+                item.Quantity,
+                item.UnitPrice,
+                item.DeliveryPrice
+            })
+            .ToListAsync();
+        var partners = await _dbContext.WarehousePartners
+            .OrderBy(partner => partner.Name)
+            .Select(partner => new { partner.Id, partner.Name })
+            .ToListAsync();
+        return new JsonResult(new { items, partners });
+    }
 
     public async Task OnGetAsync(string? sell = null, string? delivery = null)
     {
@@ -417,6 +448,97 @@ public class WarehouseModel : PageModel
         await _dbContext.SaveChangesAsync();
 
         TempData["StatusMessage"] = $"Delivered {createdItems.Count} item(s).";
+        return RedirectToRefererOrWarehouse();
+    }
+
+    public async Task<IActionResult> OnPostSellBatchAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+        var selectedItems = SaleItems.Where(item => item.WarehouseItemId > 0).ToList();
+        if (selectedItems.Count == 0)
+            ModelState.AddModelError(string.Empty, "Select at least one product.");
+        if (BatchPartnerId.HasValue && !string.IsNullOrWhiteSpace(BatchNewPartnerName))
+            ModelState.AddModelError("BatchPartnerId", "Select an existing partner or enter a new partner, not both.");
+        else if (!BatchPartnerId.HasValue && string.IsNullOrWhiteSpace(BatchNewPartnerName))
+            ModelState.AddModelError("BatchPartnerId", "Select an existing partner or enter a new partner.");
+        else if (BatchPartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == BatchPartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
+            ModelState.AddModelError("BatchPartnerId", "Select a valid partner.");
+
+        var items = await _dbContext.WarehouseItems
+            .Where(item => selectedItems.Select(selected => selected.WarehouseItemId).Contains(item.Id))
+            .ToDictionaryAsync(item => item.Id);
+        var required = selectedItems.GroupBy(item => item.WarehouseItemId).ToDictionary(group => group.Key, group => group.Sum(item => item.Quantity));
+        foreach (var selected in selectedItems)
+        {
+            if (selected.Quantity <= 0) ModelState.AddModelError(string.Empty, "Quantity must be greater than zero.");
+            if (selected.DiscountPercent < 0 || selected.DiscountPercent > 100) ModelState.AddModelError(string.Empty, "Discount must be between 0 and 100 percent.");
+        }
+        foreach (var (itemId, quantity) in required)
+        {
+            if (!items.TryGetValue(itemId, out var item)) ModelState.AddModelError(string.Empty, "A selected product no longer exists.");
+            else if (quantity > item.Quantity) ModelState.AddModelError(string.Empty, $"Not enough stock for {item.PartName}. Available: {item.Quantity}; requested: {quantity}.");
+        }
+        if (!ModelState.IsValid) return RedirectToRefererOrWarehouse();
+
+        WarehousePartner? newPartner = null;
+        if (!string.IsNullOrWhiteSpace(BatchNewPartnerName))
+        {
+            newPartner = await _dbContext.WarehousePartners.FirstOrDefaultAsync(partner => partner.CompanyId == _tenantContext.CompanyId && partner.Name == BatchNewPartnerName.Trim());
+            if (newPartner == null)
+            {
+                newPartner = new WarehousePartner { CompanyId = _tenantContext.CompanyId, Name = BatchNewPartnerName.Trim() };
+                _dbContext.WarehousePartners.Add(newPartner);
+            }
+        }
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var userEmail = User.Identity?.Name ?? "Unknown user";
+        var auditEntries = new List<WarehouseAuditEntry>();
+        foreach (var selected in selectedItems)
+        {
+            var item = items[selected.WarehouseItemId];
+            var quantityBefore = item.Quantity;
+            item.Quantity -= selected.Quantity;
+            _dbContext.WarehouseSales.Add(new WarehouseSale
+            {
+                CompanyId = _tenantContext.CompanyId,
+                PartnerId = BatchPartnerId ?? 0,
+                Partner = newPartner,
+                WarehouseItemId = item.Id,
+                WarehouseItem = item,
+                Quantity = selected.Quantity,
+                UnitPrice = item.UnitPrice,
+                DiscountPercent = selected.DiscountPercent,
+                TotalAmount = Math.Round(item.UnitPrice * selected.Quantity * (1 - selected.DiscountPercent / 100m), 2),
+                Note = selected.Note?.Trim(),
+                UserId = userId,
+                UserEmail = userEmail
+            });
+            auditEntries.Add(new WarehouseAuditEntry
+            {
+                CompanyId = _tenantContext.CompanyId,
+                WarehouseItemId = item.Id,
+                ItemName = item.PartName,
+                ProductNumber = item.ProductNumber,
+                Barcode = item.Barcode,
+                Action = "Sale",
+                QuantityBefore = quantityBefore,
+                QuantityAfter = item.Quantity,
+                QuantityChange = -selected.Quantity,
+                UnitPrice = item.UnitPrice,
+                UserId = userId,
+                UserEmail = userEmail
+            });
+        }
+        _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
+        await _dbContext.SaveChangesAsync();
+        return RedirectToRefererOrWarehouse();
+    }
+
+    private IActionResult RedirectToRefererOrWarehouse()
+    {
+        var referer = Request.Headers.Referer.ToString();
+        if (Uri.TryCreate(referer, UriKind.Absolute, out var uri) && uri.Host.Equals(Request.Host.Host, StringComparison.OrdinalIgnoreCase))
+            return Redirect(uri.AbsolutePath);
         return RedirectToPage();
     }
 
@@ -523,7 +645,7 @@ public class WarehouseModel : PageModel
         await transaction.CommitAsync();
 
         TempData["StatusMessage"] = $"Sold {Sale.Quantity} × {item.PartName}.";
-        return RedirectToPage();
+        return RedirectToRefererOrWarehouse();
     }
 
     private async Task SavePhotosAsync(WarehouseItem item, IEnumerable<IFormFile> files)

@@ -29,16 +29,16 @@
                     {
                         <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
-                        <a class="sidebar-link" href="/Warehouse?sell=true"><span aria-hidden="true">$</span><span>Sell item</span></a>
-                        <a class="sidebar-link" href="/Warehouse?delivery=true"><span aria-hidden="true">↙</span><span>Delivery</span></a>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span aria-hidden="true">$</span><span>Sell item</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span aria-hidden="true">↙</span><span>Delivery</span></button>
                         <a class="sidebar-link" href="/DeviceDiagnostics"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V3Zm0 4H6v12h12V7h-3v2H9V7Zm1 5h4v2h-4v-2Z" /></svg><span>Device Diagnostics</span></a>
                         <a class="sidebar-link" href="/CreateRepair"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h12v2H4v10h12v2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm14 3 4 4-4 4-1.4-1.4 1.6-1.6H10v-2h8.2l-1.6-1.6L18 8Z" /></svg><span>Create Repair</span></a>
                     }
                     else if (User.IsInRole("Technician"))
                     {
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
-                        <a class="sidebar-link" href="/Warehouse?sell=true"><span aria-hidden="true">$</span><span>Sell item</span></a>
-                        <a class="sidebar-link" href="/Warehouse?delivery=true"><span aria-hidden="true">↙</span><span>Delivery</span></a>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span aria-hidden="true">$</span><span>Sell item</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span aria-hidden="true">↙</span><span>Delivery</span></button>
                     }
                     else
                     {
@@ -59,6 +59,115 @@
                 @RenderBody()
             </main>
         </div>
+
+        @if (User.IsInRole("Boss") || User.IsInRole("Administrator") || User.IsInRole("Technician"))
+        {
+            <dialog id="global-sale-dialog" class="create-user-dialog warehouse-sale-dialog global-warehouse-dialog">
+                <form method="post" action="/Warehouse?handler=SellBatch" class="create-user-modal-form" id="global-sale-form">
+                    @Html.AntiForgeryToken()
+                    <div class="create-user-modal-header"><h2>Sell items</h2><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div>
+                    <div class="user-form-row"><label for="global-sale-partner">Partner</label><select id="global-sale-partner"></select><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /><input type="text" name="BatchNewPartnerName" id="global-sale-new-partner" placeholder="New partner name" hidden /></div>
+                    <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode, product number or part name" /></div>
+                    <div class="table-responsive"><table class="table warehouse-table global-sale-table"><thead><tr><th>Select</th><th>Product</th><th>Stock</th><th>Quantity</th><th>Discount (%)</th><th>Total</th></tr></thead><tbody id="global-sale-items"></tbody></table></div>
+                    <div class="global-modal-total">Total: <strong id="global-sale-total">0.00 EUR</strong></div>
+                    <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-sale>Cancel</button><button type="submit" class="btn btn-primary">Record sale</button></div>
+                </form>
+            </dialog>
+            <dialog id="global-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog global-warehouse-dialog">
+                <form method="post" action="/Warehouse?handler=SaveDelivery" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
+                    @Html.AntiForgeryToken()
+                    <div class="create-user-modal-header"><h2>Warehouse delivery</h2><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div>
+                    <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner">Partner</label><select id="global-delivery-partner"></select><input type="hidden" id="global-delivery-partner-id" /><input type="text" id="global-delivery-new-partner" placeholder="New partner name" hidden /></div>
+                    <div class="table-responsive"><table class="table warehouse-table warehouse-delivery-table"><thead><tr><th>No.</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Photos</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead><tbody id="global-delivery-items"></tbody></table></div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="global-add-delivery-row">+ Add item</button>
+                    <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-delivery>Cancel</button><button type="submit" class="btn btn-primary">Save delivery</button></div>
+                </form>
+            </dialog>
+            <script>
+                (() => {
+                    const saleDialog = document.getElementById('global-sale-dialog');
+                    const deliveryDialog = document.getElementById('global-delivery-dialog');
+                    const saleItemsBody = document.getElementById('global-sale-items');
+                    const saleSearch = document.getElementById('global-sale-search');
+                    const saleTotal = document.getElementById('global-sale-total');
+                    const salePartner = document.getElementById('global-sale-partner');
+                    const saleNewPartner = document.getElementById('global-sale-new-partner');
+                    const deliveryItemsBody = document.getElementById('global-delivery-items');
+                    let catalog = [];
+                    let partners = [];
+                    let deliveryIndex = 0;
+
+                    const partnerOptions = select => {
+                        select.innerHTML = '<option value="">Add new partner</option>' + partners.map(partner => `<option value="${partner.id}">${partner.name}</option>`).join('');
+                    };
+                    const updatePartner = (select, input, hidden) => {
+                        const isNew = !select.value;
+                        input.hidden = !isNew;
+                        hidden.value = isNew ? '' : select.value;
+                        if (!isNew) input.value = '';
+                    };
+                    function updateSaleTotal() {
+                        let total = 0;
+                        saleItemsBody.querySelectorAll('tr').forEach(row => {
+                            if (!row.querySelector('.global-sale-select').checked) return;
+                            const item = catalog.find(product => String(product.id) === row.dataset.id);
+                            const quantity = Number(row.querySelector('.global-sale-quantity').value || 0);
+                            const discount = Number(row.querySelector('.global-sale-discount').value || 0);
+                            const amount = (item?.unitPrice || 0) * quantity * (1 - discount / 100);
+                            row.querySelector('.global-sale-row-total').textContent = amount.toFixed(2) + ' EUR';
+                            total += amount;
+                        });
+                        saleTotal.textContent = total.toFixed(2) + ' EUR';
+                    }
+                    function renderSaleItems() {
+                        const term = saleSearch.value.trim().toLowerCase();
+                        saleItemsBody.innerHTML = catalog.filter(item => `${item.partName} ${item.productNumber || ''} ${item.barcode || ''}`.toLowerCase().includes(term)).map(item => `<tr data-id="${item.id}"><td><input class="global-sale-select" type="checkbox"></td><td>${item.partName} · product ${item.productNumber || '—'} · barcode ${item.barcode || '—'}</td><td>${item.quantity}</td><td><input class="global-sale-quantity" type="number" min="1" max="${item.quantity}" value="1"></td><td><input class="global-sale-discount" type="number" min="0" max="100" step="0.01" value="0"></td><td class="global-sale-row-total">0.00 EUR</td></tr>`).join('');
+                        updateSaleTotal();
+                    }
+                    function addDeliveryRow() {
+                        const index = deliveryIndex++;
+                        deliveryItemsBody.insertAdjacentHTML('beforeend', `<tr><td>${index + 1}</td><td><input name="DeliveryItems[${index}].ProductNumber"></td><td><input name="DeliveryItems[${index}].Quantity" type="number" min="0" value="0"></td><td><input name="DeliveryItems[${index}].PartName" required></td><td><input name="DeliveryItems[${index}].Photos" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple></td><td><input name="DeliveryItems[${index}].Barcode"></td><td><input name="DeliveryItems[${index}].UnitPrice" type="number" min="0" step="0.01"></td><td><input name="DeliveryItems[${index}].DeliveryPrice" type="number" min="0" step="0.01"></td><td><button type="button" class="btn btn-link text-danger global-remove-delivery">×</button></td></tr>`);
+                    }
+                    async function loadCatalog() {
+                        const response = await fetch('/Warehouse?handler=Options');
+                        const data = await response.json();
+                        catalog = data.items; partners = data.partners;
+                        const deliveryPartner = document.getElementById('global-delivery-partner');
+                        partnerOptions(salePartner); partnerOptions(deliveryPartner);
+                        updatePartner(salePartner, saleNewPartner, document.getElementById('global-sale-partner-id'));
+                        updatePartner(deliveryPartner, document.getElementById('global-delivery-new-partner'), document.getElementById('global-delivery-partner-id'));
+                        renderSaleItems();
+                        if (!deliveryItemsBody.children.length) addDeliveryRow();
+                    }
+                    document.querySelector('[data-open-global-sale]')?.addEventListener('click', async () => { await loadCatalog(); saleDialog.showModal(); });
+                    document.querySelector('[data-open-global-delivery]')?.addEventListener('click', async () => { await loadCatalog(); deliveryDialog.showModal(); });
+                    saleSearch.addEventListener('input', renderSaleItems);
+                    saleItemsBody.addEventListener('input', updateSaleTotal);
+                    saleItemsBody.addEventListener('change', updateSaleTotal);
+                    salePartner.addEventListener('change', () => updatePartner(salePartner, saleNewPartner, document.getElementById('global-sale-partner-id')));
+                    document.getElementById('global-delivery-partner').addEventListener('change', event => updatePartner(event.target, document.getElementById('global-delivery-new-partner'), document.getElementById('global-delivery-partner-id')));
+                    document.getElementById('global-add-delivery-row').addEventListener('click', addDeliveryRow);
+                    deliveryItemsBody.addEventListener('click', event => { if (event.target.closest('.global-remove-delivery') && deliveryItemsBody.children.length > 1) event.target.closest('tr').remove(); });
+                    document.getElementById('global-sale-form').addEventListener('submit', () => {
+                        let selectedIndex = 0;
+                        saleItemsBody.querySelectorAll('tr').forEach(row => { if (row.querySelector('.global-sale-select').checked) { ['WarehouseItemId', 'Quantity', 'DiscountPercent'].forEach((field, fieldIndex) => { const input = document.createElement('input'); input.type = 'hidden'; input.name = `SaleItems[${selectedIndex}].${field}`; input.value = field === 'WarehouseItemId' ? row.dataset.id : row.querySelector(fieldIndex === 1 ? '.global-sale-quantity' : '.global-sale-discount').value; document.getElementById('global-sale-form').appendChild(input); }); selectedIndex++; } });
+                    });
+                    document.getElementById('global-delivery-form').addEventListener('submit', () => {
+                        const partner = document.getElementById('global-delivery-partner');
+                        const newPartner = document.getElementById('global-delivery-new-partner');
+                        deliveryItemsBody.querySelectorAll('tr').forEach((row, index) => {
+                            row.querySelectorAll('input[name]').forEach(input => { input.name = input.name.replace(/DeliveryItems\[\d+\]/, `DeliveryItems[${index}]`); });
+                            const partnerId = document.createElement('input'); partnerId.type = 'hidden'; partnerId.name = `DeliveryItems[${index}].PartnerId`; partnerId.value = partner.value; document.getElementById('global-delivery-form').appendChild(partnerId);
+                            const partnerName = document.createElement('input'); partnerName.type = 'hidden'; partnerName.name = `DeliveryItems[${index}].NewPartnerName`; partnerName.value = newPartner.value; document.getElementById('global-delivery-form').appendChild(partnerName);
+                        });
+                    });
+                    document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => saleDialog.close()));
+                    document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => deliveryDialog.close()));
+                    saleDialog.addEventListener('click', event => { if (event.target === saleDialog) saleDialog.close(); });
+                    deliveryDialog.addEventListener('click', event => { if (event.target === deliveryDialog) deliveryDialog.close(); });
+                })();
+            </script>
+        }
     }
     else
     {
