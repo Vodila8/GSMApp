@@ -276,6 +276,8 @@ body {
 .warehouse-edit-photo-list .warehouse-photo-item img { width: 76px; height: 76px; border-radius: .45rem; }
 .warehouse-edit-dialog { width: 60%; max-width: none; margin: auto; padding: 0; border: 0; border-radius: .75rem; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
 .warehouse-edit-dialog::backdrop { background: rgb(15 23 42 / 45%); }
+.warehouse-sale-dialog { width: min(1100px, calc(100% - 2rem)); max-width: none; margin: auto; }
+.warehouse-sale-dialog select[size] { min-height: 190px; padding: .55rem .65rem; }
 .warehouse-edit-form { padding: 1.5rem; }
 .warehouse-edit-table { min-width: 1050px; margin-bottom: 0; }
 .warehouse-edit-table input { width: 100%; min-width: 110px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }

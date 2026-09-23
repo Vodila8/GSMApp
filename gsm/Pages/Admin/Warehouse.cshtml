@@ -15,7 +15,6 @@
                 <button class="warehouse-action-button" type="button" data-open-warehouse-edit title="Edit warehouse" aria-label="Edit warehouse">
                     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.7-10.9c.4-.4.4-1 0-1.4l-.9-.9a1 1 0 0 0-1.4 0l-1.7 1.7 3.5 3.5 1.7-1.7Z" /></svg>
                 </button>
-                <button class="warehouse-action-button warehouse-sale-button" type="button" data-open-warehouse-sale title="Sell item" aria-label="Sell item">$</button>
                 <a class="warehouse-action-button" href="/WarehouseSales" title="Sales history" aria-label="Sales history">▤</a>
                 <button class="warehouse-action-button warehouse-add-button" type="button" data-open-warehouse-item title="Add item" aria-label="Add item">+</button>
             </div>
@@ -212,7 +211,7 @@
     </form>
 </dialog>
 
-<dialog id="warehouse-sale-dialog" class="create-user-dialog">
+<dialog id="warehouse-sale-dialog" class="create-user-dialog warehouse-sale-dialog">
     <form method="post" asp-page-handler="Sell" class="create-user-modal-form">
         <div class="create-user-modal-header">
             <h2>Sell warehouse item</h2>
@@ -220,12 +219,16 @@
         </div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="user-form-row">
+            <label for="sale-product-search">Search product</label>
+            <input id="sale-product-search" type="search" placeholder="Search by barcode, product number or part name" autocomplete="off" />
+        </div>
+        <div class="user-form-row">
             <label asp-for="Sale.WarehouseItemId">Product</label>
-            <select asp-for="Sale.WarehouseItemId">
+            <select asp-for="Sale.WarehouseItemId" id="sale-product-select" size="6">
                 <option value="">Select product</option>
                 @foreach (var item in Model.Items)
                 {
-                    <option value="@item.Id" data-unit-price="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@item.PartName (stock: @item.Quantity)</option>
+                    <option value="@item.Id" data-unit-price="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-search="@($"{item.PartName} {item.ProductNumber} {item.Barcode}")">@item.PartName · product @item.ProductNumber · barcode @(string.IsNullOrWhiteSpace(item.Barcode) ? "—" : item.Barcode) · stock: @item.Quantity</option>
                 }
             </select>
         </div>
@@ -357,6 +360,16 @@
             const discount = Number(saleDiscount.value || 0);
             saleTotal.value = `${(unitPrice * quantity * (1 - discount / 100)).toFixed(2)} EUR`;
         }
+        const saleProductSearch = document.getElementById('sale-product-search');
+        saleProductSearch.addEventListener('input', () => {
+            const term = saleProductSearch.value.trim().toLowerCase();
+            [...saleProduct.options].forEach((option, index) => {
+                if (index === 0) return;
+                option.hidden = term !== '' && !(option.dataset.search || option.textContent).toLowerCase().includes(term);
+            });
+            if (saleProduct.selectedOptions[0]?.hidden) saleProduct.value = '';
+            updateSaleTotal();
+        });
         saleProduct.addEventListener('change', updateSaleTotal);
         saleQuantity.addEventListener('input', updateSaleTotal);
         saleDiscount.addEventListener('input', updateSaleTotal);
@@ -366,7 +379,7 @@
         setupPartnerChoice('sale-partner-select', 'sale-partner-id', 'Sale_NewPartnerName', 'sale-partner-name-field');
         document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
         document.querySelector('[data-open-warehouse-item]').addEventListener('click', () => warehouseItemDialog.showModal());
-        document.querySelector('[data-open-warehouse-sale]').addEventListener('click', () => warehouseSaleDialog.showModal());
+        document.querySelector('[data-open-warehouse-sale]')?.addEventListener('click', () => warehouseSaleDialog.showModal());
         document.querySelectorAll('[data-close-warehouse-edit]').forEach(button => button.addEventListener('click', () => warehouseEditDialog.close()));
         document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
         document.querySelectorAll('[data-close-warehouse-sale]').forEach(button => button.addEventListener('click', () => warehouseSaleDialog.close()));
