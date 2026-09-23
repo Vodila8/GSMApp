@@ -832,9 +832,8 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 }
 
 .global-action-link,
-.global-action-link:hover,
 .global-action-link:focus,
-.global-action-link:focus-visible { color: #aab8d0 !important; background: var(--ops-navy) !important; border: 0 !important; box-shadow: none !important; outline: none !important; }
+.global-action-link:focus-visible { color: var(--ops-blue-dark) !important; background: var(--ops-navy) !important; border: 0 !important; box-shadow: none !important; outline: none !important; }
 .global-action-link:hover { color: #fff !important; background: var(--ops-navy-soft) !important; }
 .warehouse-sale-dialog { width: min(1500px, calc(100% - 2rem)) !important; max-width: none !important; }
 .warehouse-delivery-dialog { width: min(1250px, calc(100% - 2rem)) !important; max-width: none !important; }
