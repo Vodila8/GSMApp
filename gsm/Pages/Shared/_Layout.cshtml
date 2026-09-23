@@ -39,10 +39,10 @@
                     }
                 </nav>
 
-                <div class="sidebar-user">
+                <a class="sidebar-user" href="/Profile" aria-label="Open profile">
                     <strong>@(User.Identity?.Name ?? "User")</strong>
                     <span>@currentRole</span>
-                </div>
+                </a>
                 <form class="sidebar-logout" asp-area="Identity" asp-page="/Account/Logout" method="post">
                     <button type="submit" class="sidebar-link sidebar-logout-button">Log out</button>
                 </form>
