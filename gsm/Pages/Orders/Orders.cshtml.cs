@@ -396,7 +396,7 @@ public class OrdersModel : PageModel
 
     public class OrderInput
     {
-        public string? CustomerId { get; set; }
+          public string? CustomerId { get; set; }
         public int? CustomerDeviceId { get; set; }
         public string? NewDeviceType { get; set; }
         public string? NewDeviceModelAndSerialNumber { get; set; }
