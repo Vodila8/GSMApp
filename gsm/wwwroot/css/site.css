@@ -281,6 +281,18 @@ body {
 .warehouse-delivery-dialog { width: min(1250px, calc(100% - 2rem)); max-width: none; margin: auto; }
 .warehouse-delivery-table { min-width: 1250px; }
 .warehouse-delivery-table select { min-width: 150px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
+.warehouse-delivery-dialog .global-delivery-partner select,
+.warehouse-delivery-dialog .global-delivery-partner input,
+.warehouse-delivery-dialog .warehouse-delivery-table input,
+.warehouse-delivery-dialog .warehouse-delivery-table select { color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .5rem; outline: none; transition: border-color .15s, box-shadow .15s, background .15s; }
+.warehouse-delivery-dialog .global-delivery-partner select,
+.warehouse-delivery-dialog .global-delivery-partner input { display: block; width: 100%; min-height: 42px; padding: .6rem .75rem; }
+.warehouse-delivery-dialog .warehouse-delivery-table input,
+.warehouse-delivery-dialog .warehouse-delivery-table select { min-height: 38px; padding: .45rem .55rem; }
+.warehouse-delivery-dialog .global-delivery-partner select:focus,
+.warehouse-delivery-dialog .global-delivery-partner input:focus,
+.warehouse-delivery-dialog .warehouse-delivery-table input:focus,
+.warehouse-delivery-dialog .warehouse-delivery-table select:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
 .delivery-new-partner[hidden] { display: none !important; }
 .global-sale-table input { min-width: 90px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
 .global-sale-table th:first-child, .global-sale-table td:first-child { width: 60px; min-width: 60px; padding-right: .35rem; padding-left: .35rem; text-align: center; white-space: nowrap; }
