@@ -31,6 +31,7 @@
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
                         <a class="sidebar-link" href="/DeviceDiagnostics"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V3Zm0 4H6v12h12V7h-3v2H9V7Zm1 5h4v2h-4v-2Z" /></svg><span>Device Diagnostics</span></a>
                         <a class="sidebar-link" href="/CreateRepair"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h12v2H4v10h12v2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm14 3 4 4-4 4-1.4-1.4 1.6-1.6H10v-2h8.2l-1.6-1.6L18 8Z" /></svg><span>Create Repair</span></a>
                     }
@@ -39,6 +40,7 @@
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
                     }
                     else
                     {
@@ -83,10 +85,21 @@
                     <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-delivery>Cancel</button><button type="submit" class="btn btn-primary">Save delivery</button></div>
                 </form>
             </dialog>
+            <dialog id="global-partner-dialog" class="create-user-dialog global-partner-dialog">
+                <form method="post" action="/Warehouse?handler=CreatePartner" class="create-user-modal-form" id="global-partner-form">
+                    @Html.AntiForgeryToken()
+                    <div class="create-user-modal-header"><h2>Add partner</h2><button type="button" class="create-user-close" data-close-global-partner aria-label="Close">×</button></div>
+                    <div class="user-form-row"><label for="global-partner-name">Name</label><input id="global-partner-name" name="NewPartner.Name" required /></div>
+                    <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-egn">EGN</label><input id="global-partner-egn" name="NewPartner.Egn" /></div><div><label for="global-partner-bulstat">Bulstat</label><input id="global-partner-bulstat" name="NewPartner.Bulstat" /></div></div>
+                    <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-phone">Phone</label><input id="global-partner-phone" name="NewPartner.Phone" type="tel" /></div><div><label for="global-partner-email">Email</label><input id="global-partner-email" name="NewPartner.Email" type="email" /></div></div>
+                    <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-partner>Cancel</button><button type="submit" class="btn btn-primary">Add partner</button></div>
+                </form>
+            </dialog>
             <script>
                 (() => {
                     const saleDialog = document.getElementById('global-sale-dialog');
                     const deliveryDialog = document.getElementById('global-delivery-dialog');
+                    const partnerDialog = document.getElementById('global-partner-dialog');
                     const saleItemsBody = document.getElementById('global-sale-items');
                     const saleSearch = document.getElementById('global-sale-search');
                     const saleTotal = document.getElementById('global-sale-total');
@@ -156,6 +169,7 @@
                     }
                     document.querySelector('[data-open-global-sale]')?.addEventListener('click', async () => { saleDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
                     document.querySelector('[data-open-global-delivery]')?.addEventListener('click', async () => { deliveryDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
+                    document.querySelector('[data-open-global-partner]')?.addEventListener('click', () => partnerDialog.showModal());
                     saleSearch.addEventListener('input', renderSaleItems);
                     saleItemsBody.addEventListener('input', updateSaleTotal);
                     saleItemsBody.addEventListener('change', updateSaleTotal);
@@ -178,8 +192,10 @@
                     });
                     document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => saleDialog.close()));
                     document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => deliveryDialog.close()));
+                    document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => partnerDialog.close()));
                     saleDialog.addEventListener('click', event => { if (event.target === saleDialog) saleDialog.close(); });
                     deliveryDialog.addEventListener('click', event => { if (event.target === deliveryDialog) deliveryDialog.close(); });
+                    partnerDialog.addEventListener('click', event => { if (event.target === partnerDialog) partnerDialog.close(); });
                 })();
             </script>
         }

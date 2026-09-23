@@ -45,6 +45,9 @@ public class WarehouseModel : PageModel
     [BindProperty]
     public List<WarehouseSaleInput> SaleItems { get; set; } = [];
 
+    [BindProperty]
+    public PartnerInput NewPartner { get; set; } = new();
+
     public bool ShowSaleModal { get; private set; }
     public bool ShowDeliveryModal { get; private set; }
     public List<string> ProductNumbers { get; private set; } = [];
@@ -451,6 +454,31 @@ public class WarehouseModel : PageModel
         return RedirectToRefererOrWarehouse();
     }
 
+    public async Task<IActionResult> OnPostCreatePartnerAsync()
+    {
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+        if (string.IsNullOrWhiteSpace(NewPartner.Name)) ModelState.AddModelError("NewPartner.Name", "Partner name is required.");
+        if (NewPartner.Name?.Length > 200) ModelState.AddModelError("NewPartner.Name", "Partner name cannot exceed 200 characters.");
+        if (NewPartner.Egn?.Length > 50) ModelState.AddModelError("NewPartner.Egn", "EGN cannot exceed 50 characters.");
+        if (NewPartner.Phone?.Length > 50) ModelState.AddModelError("NewPartner.Phone", "Phone cannot exceed 50 characters.");
+        if (NewPartner.Email?.Length > 256) ModelState.AddModelError("NewPartner.Email", "Email cannot exceed 256 characters.");
+        if (NewPartner.Bulstat?.Length > 100) ModelState.AddModelError("NewPartner.Bulstat", "Bulstat cannot exceed 100 characters.");
+        if (!ModelState.IsValid) return RedirectToRefererOrWarehouse();
+
+        _dbContext.WarehousePartners.Add(new WarehousePartner
+        {
+            CompanyId = _tenantContext.CompanyId,
+            Name = NewPartner.Name!.Trim(),
+            Egn = NewPartner.Egn?.Trim(),
+            Phone = NewPartner.Phone?.Trim(),
+            Email = NewPartner.Email?.Trim(),
+            Bulstat = NewPartner.Bulstat?.Trim()
+        });
+        await _dbContext.SaveChangesAsync();
+        TempData["StatusMessage"] = "Partner added.";
+        return RedirectToRefererOrWarehouse();
+    }
+
     public async Task<IActionResult> OnPostSellBatchAsync()
     {
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
@@ -792,6 +820,15 @@ public class WarehouseModel : PageModel
         public int Id { get; set; }
         public string FileName { get; set; } = string.Empty;
         public string? OriginalFileName { get; set; }
+    }
+
+    public class PartnerInput
+    {
+        public string? Name { get; set; }
+        public string? Egn { get; set; }
+        public string? Phone { get; set; }
+        public string? Email { get; set; }
+        public string? Bulstat { get; set; }
     }
 
     public class WarehouseSaleInput

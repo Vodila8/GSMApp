@@ -826,5 +826,6 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .warehouse-sale-dialog { width: min(1500px, calc(100% - 2rem)) !important; max-width: none !important; }
 .warehouse-delivery-dialog { width: min(1250px, calc(100% - 2rem)) !important; max-width: none !important; }
 .global-warehouse-dialog { margin: auto; }
+.global-partner-dialog { width: min(620px, calc(100% - 2rem)) !important; max-width: none !important; margin: auto; }
 
 .agent-setup-steps { padding-left: 1.15rem; margin: .7rem 0 0; color: #475569; font-size: .86rem; line-height: 1.65; }
