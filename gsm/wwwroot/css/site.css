@@ -718,6 +718,9 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .home-dashboard-layout .dashboard-section { width: 100%; margin: 0 0 1rem; }
 .home-dashboard-layout .warehouse-search-section { width: 50%; margin: 0; }
 .warehouse-search-section h2 { margin: 0; color: var(--ops-text); font-size: 1.25rem; font-weight: 800; }
+.warehouse-page-search { display: flex; align-items: center; gap: .6rem; margin: 0 0 1.25rem; }
+.warehouse-page-search input { flex: 1; min-width: 0; min-height: 42px; padding: .6rem .75rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .5rem; outline: none; }
+.warehouse-page-search input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
 .dashboard-section-link { color: var(--ops-blue-dark); font-size: .8rem; font-weight: 700; text-decoration: none; }
 .dashboard-section-link:hover { text-decoration: underline; }
 .warehouse-search-form { display: flex; gap: .65rem; margin-bottom: 1rem; }
@@ -767,6 +770,9 @@ body { background: var(--ops-bg); color: var(--ops-text); }
   .warehouse-list, .user-form, .dashboard-section { width: 100%; max-width: none; padding: 1rem; margin-top: .75rem; border-radius: .7rem; }
   .warehouse-page-heading, .profile-page-header, .repair-form-header { align-items: flex-start; flex-direction: column; }
   .warehouse-page-actions { flex-wrap: wrap; margin-bottom: 1rem; }
+  .warehouse-page-search { flex-wrap: wrap; }
+  .warehouse-page-search input { flex: 1 1 100%; }
+  .warehouse-page-search .btn { flex: 1 1 0; }
   .warehouse-title, .repair-form .warehouse-title { font-size: 1.45rem; }
   .repair-form { padding: 1rem; }
   .repair-section { padding: 1rem; margin-bottom: .85rem; }

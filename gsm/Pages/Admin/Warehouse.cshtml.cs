@@ -37,6 +37,9 @@ public class WarehouseModel : PageModel
     public List<string> ProductNumbers { get; private set; } = [];
     public List<WarehousePartner> Partners { get; private set; } = [];
 
+    [BindProperty(SupportsGet = true)]
+    public string? Search { get; set; }
+
     public async Task OnGetAsync()
     {
         await LoadItemsAsync();
@@ -432,6 +435,15 @@ public class WarehouseModel : PageModel
             .OrderBy(item => item.CreatedAt)
             .ThenBy(item => item.Id)
             .ToListAsync();
+        if (!string.IsNullOrWhiteSpace(Search))
+        {
+            var search = Search.Trim();
+            warehouseItems = warehouseItems.Where(item =>
+                (!string.IsNullOrWhiteSpace(item.Barcode) && item.Barcode.Contains(search, StringComparison.OrdinalIgnoreCase)) ||
+                item.PartName.Contains(search, StringComparison.OrdinalIgnoreCase) ||
+                (NormalizeProductNumber(item.ProductNumber)?.Contains(search, StringComparison.OrdinalIgnoreCase) ?? false))
+                .ToList();
+        }
         Partners = await _dbContext.WarehousePartners.OrderBy(partner => partner.Name).ToListAsync();
 
         Items = warehouseItems.Select(item => new WarehouseItemInput
