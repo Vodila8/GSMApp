@@ -29,14 +29,14 @@
                     {
                         <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
-                        <a class="sidebar-link" href="/Warehouse?sell=1"><span aria-hidden="true">$</span><span>Sell item</span></a>
+                        <a class="sidebar-link" href="/Warehouse?sell=true"><span aria-hidden="true">$</span><span>Sell item</span></a>
                         <a class="sidebar-link" href="/DeviceDiagnostics"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V3Zm0 4H6v12h12V7h-3v2H9V7Zm1 5h4v2h-4v-2Z" /></svg><span>Device Diagnostics</span></a>
                         <a class="sidebar-link" href="/CreateRepair"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h12v2H4v10h12v2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm14 3 4 4-4 4-1.4-1.4 1.6-1.6H10v-2h8.2l-1.6-1.6L18 8Z" /></svg><span>Create Repair</span></a>
                     }
                     else if (User.IsInRole("Technician"))
                     {
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
-                        <a class="sidebar-link" href="/Warehouse?sell=1"><span aria-hidden="true">$</span><span>Sell item</span></a>
+                        <a class="sidebar-link" href="/Warehouse?sell=true"><span aria-hidden="true">$</span><span>Sell item</span></a>
                     }
                     else
                     {

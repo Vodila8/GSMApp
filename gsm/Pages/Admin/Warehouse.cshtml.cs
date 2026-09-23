@@ -40,9 +40,10 @@ public class WarehouseModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
-    public async Task OnGetAsync(bool sell = false)
+    public async Task OnGetAsync(string? sell = null)
     {
-        ShowSaleModal = sell;
+        ShowSaleModal = string.Equals(sell, "1", StringComparison.OrdinalIgnoreCase) ||
+                        bool.TryParse(sell, out var showSale) && showSale;
         await LoadItemsAsync();
         NewItem.ProductNumber ??= await GetNextProductNumberAsync();
     }
