@@ -121,7 +121,22 @@
                     }
                     function renderSaleItems() {
                         const term = saleSearch.value.trim().toLowerCase();
-                        saleItemsBody.innerHTML = catalog.filter(item => `${item.partName} ${item.productNumber || ''} ${item.barcode || ''}`.toLowerCase().includes(term)).map(item => `<tr data-id="${item.id}"><td><input class="global-sale-select" type="checkbox"></td><td>${item.partName} · product ${item.productNumber || '—'} · barcode ${item.barcode || '—'}</td><td>${item.quantity}</td><td><input class="global-sale-quantity" type="number" min="1" max="${item.quantity}" value="1"></td><td><input class="global-sale-discount" type="number" min="0" max="100" step="0.01" value="0"></td><td class="global-sale-row-total">0.00 EUR</td></tr>`).join('');
+                        const previousState = new Map([...saleItemsBody.querySelectorAll('tr')].map(row => [row.dataset.id, {
+                            checked: row.querySelector('.global-sale-select')?.checked,
+                            quantity: row.querySelector('.global-sale-quantity')?.value || 1,
+                            discount: row.querySelector('.global-sale-discount')?.value || 0
+                        }]));
+                        saleItemsBody.innerHTML = catalog.map(item => `<tr data-id="${item.id}"><td><input class="global-sale-select" type="checkbox"></td><td>${item.partName} · product ${item.productNumber || '—'} · barcode ${item.barcode || '—'}</td><td>${item.quantity}</td><td><input class="global-sale-quantity" type="number" min="1" max="${item.quantity}" value="1"></td><td><input class="global-sale-discount" type="number" min="0" max="100" step="0.01" value="0"></td><td class="global-sale-row-total">0.00 EUR</td></tr>`).join('');
+                        saleItemsBody.querySelectorAll('tr').forEach(row => {
+                            const item = catalog.find(product => String(product.id) === row.dataset.id);
+                            const state = previousState.get(row.dataset.id);
+                            row.hidden = term !== '' && !`${item.partName} ${item.productNumber || ''} ${item.barcode || ''}`.toLowerCase().includes(term);
+                            if (state) {
+                                row.querySelector('.global-sale-select').checked = state.checked;
+                                row.querySelector('.global-sale-quantity').value = state.quantity;
+                                row.querySelector('.global-sale-discount').value = state.discount;
+                            }
+                        });
                         updateSaleTotal();
                     }
                     function addDeliveryRow() {
