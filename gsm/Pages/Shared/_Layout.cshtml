@@ -91,7 +91,7 @@
             <dialog id="global-partner-dialog" class="create-user-dialog global-partner-dialog">
                 <form method="post" action="/Warehouse?handler=CreatePartner" class="create-user-modal-form" id="global-partner-form">
                     @Html.AntiForgeryToken()
-                    <div class="create-user-modal-header global-window-header"><h2>Add partner</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-global-partner aria-label="Close">×</button></div></div>
+                    <div class="create-user-modal-header global-window-header"><h2>Add partner</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-partner aria-label="Close">×</button></div></div>
                     <div class="user-form-row"><label for="global-partner-name">Name</label><input id="global-partner-name" name="NewPartner.Name" required /></div>
                     <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-egn">EGN</label><input id="global-partner-egn" name="NewPartner.Egn" /></div><div><label for="global-partner-bulstat">Bulstat</label><input id="global-partner-bulstat" name="NewPartner.Bulstat" /></div></div>
                     <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-phone">Phone</label><input id="global-partner-phone" name="NewPartner.Phone" type="tel" /></div><div><label for="global-partner-email">Email</label><input id="global-partner-email" name="NewPartner.Email" type="email" /></div></div>
@@ -183,7 +183,6 @@
                     setupGlobalWindow(deliveryDialog, 'delivery', 'Delivery');
                     setupGlobalWindow(referenceDialog, 'reference', 'Reference');
                     setupGlobalWindow(partnerDialog, 'partner', 'Add partner');
-                    setupGlobalWindow(referenceDialog);
                     let catalog = [];
                     let partners = [];
                     let deliveryIndex = 0;
