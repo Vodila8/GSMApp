@@ -94,7 +94,9 @@ public class OrdersModel : PageModel
         ApplicationUser? customer = null;
         if (!string.IsNullOrWhiteSpace(Input.CustomerId))
         {
-            customer = await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == Input.CustomerId && user.CompanyId == _tenantContext.CompanyId);
+            customer = await _dbContext.Users.FirstOrDefaultAsync(user =>
+                user.Id == Input.CustomerId &&
+                (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)));
             if (customer == null || await IsEmployeeAsync(Input.CustomerId))
             {
                 ModelState.AddModelError("Input.CustomerId", "Select a registered customer.");
