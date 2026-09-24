@@ -43,6 +43,9 @@ public class WarehouseModel : PageModel
     public string? BatchNewPartnerName { get; set; }
 
     [BindProperty]
+    public DateOnly BatchSaleDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
+
+    [BindProperty]
     public List<WarehouseSaleInput> SaleItems { get; set; } = [];
 
     [BindProperty]
@@ -539,6 +542,7 @@ public class WarehouseModel : PageModel
                 UnitPrice = item.UnitPrice,
                 DiscountPercent = selected.DiscountPercent,
                 TotalAmount = Math.Round(item.UnitPrice * selected.Quantity * (1 - selected.DiscountPercent / 100m), 2),
+                SaleDate = BatchSaleDate,
                 Note = selected.Note?.Trim(),
                 UserId = userId,
                 UserEmail = userEmail
@@ -651,6 +655,7 @@ public class WarehouseModel : PageModel
             UnitPrice = item.UnitPrice,
             DiscountPercent = Sale.DiscountPercent,
             TotalAmount = totalAmount,
+            SaleDate = Sale.SaleDate,
             Note = Sale.Note?.Trim(),
             UserId = userId,
             UserEmail = userEmail
@@ -839,6 +844,7 @@ public class WarehouseModel : PageModel
         public string? NewPartnerName { get; set; }
         public int Quantity { get; set; } = 1;
         public decimal DiscountPercent { get; set; }
+        public DateOnly SaleDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
         public string? Note { get; set; }
     }
 

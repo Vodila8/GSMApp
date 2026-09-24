@@ -1,5 +1,6 @@
 using gsm.Data;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.EntityFrameworkCore;
 
@@ -12,48 +13,51 @@ public class WarehouseReportModel : PageModel
 
     public WarehouseReportModel(ApplicationDbContext dbContext) => _dbContext = dbContext;
 
-    public List<AuditItem> Entries { get; private set; } = [];
+    [BindProperty(SupportsGet = true)]
+    public string Type { get; set; } = "sales";
+
+    [BindProperty(SupportsGet = true)]
+    public DateOnly? FromDate { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public DateOnly? ToDate { get; set; }
+
+    [BindProperty(SupportsGet = true)]
+    public string? ProductNumber { get; set; }
+
+    public List<WarehouseSale> Sales { get; private set; } = [];
+    public List<WarehouseItem> Deliveries { get; private set; } = [];
+    public bool IsDeliveryReport => string.Equals(Type, "deliveries", StringComparison.OrdinalIgnoreCase);
 
     public async Task OnGetAsync()
     {
-        var auditEntries = await _dbContext.WarehouseAuditEntries
-            .OrderByDescending(entry => entry.CreatedAt)
-            .ToListAsync();
-        var warehouseItems = await _dbContext.WarehouseItems.ToListAsync();
-
-        Entries = auditEntries.Select(entry =>
+        Type = IsDeliveryReport ? "deliveries" : "sales";
+        var productFilter = ProductNumber?.Trim();
+        if (IsDeliveryReport)
         {
-            var currentItem = warehouseItems.FirstOrDefault(item =>
-                item.Id == entry.WarehouseItemId ||
-                (entry.WarehouseItemId == null && item.PartName == entry.ItemName));
-
-            return new AuditItem
-            {
-                ItemName = entry.ItemName,
-                ProductNumber = entry.ProductNumber ?? currentItem?.ProductNumber ?? currentItem?.Id.ToString(),
-                Barcode = entry.Barcode ?? currentItem?.Barcode,
-                Action = entry.Action,
-                QuantityBefore = entry.QuantityBefore,
-                QuantityAfter = entry.QuantityAfter,
-                QuantityChange = entry.QuantityChange,
-                UnitPrice = entry.UnitPrice,
-                UserEmail = entry.UserEmail,
-                CreatedAt = entry.CreatedAt
-            };
-        }).ToList();
+            Deliveries = await _dbContext.WarehouseItems
+                .Include(item => item.Partner)
+                .Where(item => item.DeliveryDate.HasValue)
+                .OrderByDescending(item => item.DeliveryDate)
+                .ThenBy(item => item.PartName)
+                .ToListAsync();
+            Deliveries = Deliveries.Where(item => MatchesDate(item.DeliveryDate!.Value) && MatchesProduct(item.ProductNumber, productFilter)).ToList();
+        }
+        else
+        {
+            Sales = await _dbContext.WarehouseSales
+                .Include(sale => sale.Partner)
+                .Include(sale => sale.WarehouseItem)
+                .OrderByDescending(sale => sale.CreatedAt)
+                .ToListAsync();
+            Sales = Sales.Where(sale => MatchesDate(sale.SaleDate ?? DateOnly.FromDateTime(sale.CreatedAt.ToLocalTime())) &&
+                                       MatchesProduct(sale.WarehouseItem.ProductNumber ?? sale.WarehouseItem.Id.ToString(), productFilter)).ToList();
+        }
     }
 
-    public class AuditItem
-    {
-        public string ItemName { get; set; } = string.Empty;
-        public string? ProductNumber { get; set; }
-        public string? Barcode { get; set; }
-        public string Action { get; set; } = string.Empty;
-        public int QuantityBefore { get; set; }
-        public int QuantityAfter { get; set; }
-        public int QuantityChange { get; set; }
-        public decimal UnitPrice { get; set; }
-        public string UserEmail { get; set; } = string.Empty;
-        public DateTime CreatedAt { get; set; }
-    }
+    private bool MatchesDate(DateOnly date) =>
+        (!FromDate.HasValue || date >= FromDate.Value) && (!ToDate.HasValue || date <= ToDate.Value);
+
+    private static bool MatchesProduct(string? productNumber, string? filter) =>
+        string.IsNullOrWhiteSpace(filter) || (!string.IsNullOrWhiteSpace(productNumber) && productNumber.Contains(filter, StringComparison.OrdinalIgnoreCase));
 }

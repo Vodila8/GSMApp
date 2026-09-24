@@ -39,7 +39,7 @@
                     @foreach (var sale in Model.Sales)
                     {
                         <tr>
-                            <td>@sale.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy HH:mm")</td>
+                            <td>@(sale.SaleDate?.ToString("dd.MM.yyyy") ?? sale.CreatedAt.ToLocalTime().ToString("dd.MM.yyyy"))</td>
                             <td>@sale.Partner.Name</td>
                             <td>@sale.WarehouseItem.PartName</td>
                             <td>@sale.Quantity</td>

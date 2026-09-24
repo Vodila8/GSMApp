@@ -22,6 +22,8 @@ public class WarehouseSale
 
     public decimal TotalAmount { get; set; }
 
+    public DateOnly? SaleDate { get; set; }
+
     [MaxLength(1000)]
     public string? Note { get; set; }
 

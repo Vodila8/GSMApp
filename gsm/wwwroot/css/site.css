@@ -64,6 +64,9 @@ body {
 .order-status.progress { color: #92400e; background: #fef3c7; }
 
 .warehouse-list.warehouse-report-page { width: calc(100% - 2rem); max-width: none; box-sizing: border-box; }
+.warehouse-report-filters { display: grid; grid-template-columns: minmax(170px, 1fr) repeat(3, minmax(150px, 1fr)) auto auto; gap: .65rem; align-items: end; padding: 1rem; margin-bottom: 1.25rem; background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .65rem; }
+.warehouse-report-filters label { display: block; margin-bottom: .35rem; color: #51627a; font-size: .75rem; font-weight: 700; }
+.warehouse-report-filters input, .warehouse-report-filters select { width: 100%; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); background: #fff; border: 1px solid var(--ops-border); border-radius: .45rem; }
 .warehouse-report-table { width: 100%; min-width: 1400px; table-layout: auto; }
 .warehouse-report-table th { white-space: nowrap; }
 .warehouse-report-table td { white-space: nowrap; }
@@ -839,6 +842,7 @@ body { background: var(--ops-bg); color: var(--ops-text); }
   .warehouse-page-actions { flex-wrap: wrap; margin-bottom: 1rem; }
   .warehouse-page-search { flex-wrap: wrap; }
   .warehouse-page-search input { flex: 1 1 100%; }
+  .warehouse-report-filters { grid-template-columns: 1fr; }
   .warehouse-page-search .btn { flex: 1 1 0; }
   .warehouse-title, .repair-form .warehouse-title { font-size: 1.45rem; }
   .repair-form { padding: 1rem; }

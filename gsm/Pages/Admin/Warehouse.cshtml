@@ -306,7 +306,10 @@
             <input asp-for="Sale.NewPartnerName" placeholder="Partner name" />
         </div>
         <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="Sale.SaleDate">Sale date</label><input asp-for="Sale.SaleDate" type="date" /></div>
             <div><label asp-for="Sale.Quantity">Quantity</label><input asp-for="Sale.Quantity" id="sale-quantity" type="number" min="1" /></div>
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
             <div><label asp-for="Sale.DiscountPercent">Discount (%)</label><input asp-for="Sale.DiscountPercent" id="sale-discount" type="number" min="0" max="100" step="0.01" /></div>
         </div>
         <div class="user-form-row user-form-row-two-columns">

@@ -29,6 +29,7 @@
                     {
                         <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
+                        <a class="sidebar-link" href="/WarehouseReport"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Help</span></a>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
@@ -38,6 +39,7 @@
                     else if (User.IsInRole("Technician"))
                     {
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
+                        <a class="sidebar-link" href="/WarehouseReport"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Help</span></a>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
@@ -69,6 +71,7 @@
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Sell items</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div></div>
                     <div class="user-form-row"><label for="global-sale-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-sale-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /><div class="global-partner-options" id="global-sale-partner-options" hidden></div></div></div>
+                    <div class="user-form-row"><label for="global-sale-date">Sale date</label><input id="global-sale-date" name="BatchSaleDate" type="date" value="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" /></div>
                     <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode or part name" /></div>
                     <div class="table-responsive"><table class="table warehouse-table global-sale-table"><thead><tr><th>No.</th><th>Select</th><th>Product</th><th>Stock</th><th>Quantity</th><th>Discount (%)</th><th>Notes</th><th>Total</th></tr></thead><tbody id="global-sale-items"></tbody></table></div>
                     <div class="global-modal-total">Total: <strong id="global-sale-total">0.00 EUR</strong></div>
