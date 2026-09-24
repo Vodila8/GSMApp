@@ -299,9 +299,7 @@ body {
 .delivery-new-partner[hidden] { display: none !important; }
 .global-sale-table input { min-width: 90px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
 .global-sale-table th:first-child, .global-sale-table td:first-child { width: 60px; min-width: 60px; padding-right: .35rem; padding-left: .35rem; text-align: center; white-space: nowrap; }
-.global-sale-table input.global-sale-select { display: block; appearance: none; -webkit-appearance: none; width: 18px !important; min-width: 18px !important; height: 18px !important; margin: auto; padding: 0 !important; border: 1px solid #cbd5e1 !important; border-radius: .25rem; background: #fff; box-shadow: none !important; outline: none !important; cursor: pointer; }
-.global-sale-table input.global-sale-select:checked { border-color: var(--ops-blue) !important; background: var(--ops-blue); }
-.global-sale-table input.global-sale-select:checked::after { display: block; color: #fff; font-size: .85rem; font-weight: 800; line-height: 16px; text-align: center; content: '✓'; }
+.global-sale-table input.global-sale-select { display: block; appearance: auto; -webkit-appearance: auto; width: 18px !important; min-width: 18px !important; height: 18px !important; margin: auto; padding: 0 !important; border: 0 !important; border-radius: .25rem; background: transparent; accent-color: var(--ops-blue); box-shadow: none !important; outline: none !important; cursor: pointer; }
 .global-modal-total { display: flex; justify-content: flex-end; gap: .5rem; padding: 1rem 0; color: #475569; font-size: 1.1rem; font-weight: 700; }
 .global-modal-total strong { color: var(--ops-blue-dark); }
 .warehouse-edit-form { padding: 1.5rem; }
