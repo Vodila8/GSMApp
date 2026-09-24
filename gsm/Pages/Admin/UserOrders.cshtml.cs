@@ -40,7 +40,9 @@ public class UserOrdersModel : PageModel
             return Page();
         }
 
-        var user = await _userManager.Users.FirstOrDefaultAsync(item => item.Id == id && item.CompanyId == _tenantContext.CompanyId);
+        var user = await _userManager.Users.FirstOrDefaultAsync(item =>
+            item.Id == id &&
+            (item.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == item.Id && membership.CompanyId == _tenantContext.CompanyId)));
         if (user == null) return NotFound();
 
         var token = await _userManager.GeneratePasswordResetTokenAsync(user);
@@ -91,7 +93,9 @@ public class UserOrdersModel : PageModel
 
     private async Task<bool> LoadAsync(string id)
     {
-        Customer = await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == id && user.CompanyId == _tenantContext.CompanyId);
+        Customer = await _dbContext.Users.FirstOrDefaultAsync(user =>
+            user.Id == id &&
+            (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)));
         if (Customer == null) return false;
         Orders = await _dbContext.ServiceOrders
             .Where(order => order.CustomerId == id)

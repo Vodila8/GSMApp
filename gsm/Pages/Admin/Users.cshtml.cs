@@ -171,13 +171,39 @@ public class UsersModel : PageModel
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
         var currentUserId = _userManager.GetUserId(User);
-        var user = await _userManager.Users
-            .FirstOrDefaultAsync(item => item.Id == id && item.CompanyId == _tenantContext.CompanyId);
+        var user = await _userManager.Users.FirstOrDefaultAsync(item => item.Id == id);
         if (user == null) return NotFound();
         if (user.Id == currentUserId) return Forbid();
 
+        var memberships = await _dbContext.UserCompanyMemberships
+            .IgnoreQueryFilters()
+            .Where(membership => membership.UserId == user.Id)
+            .ToListAsync();
+        var belongsToCompany = user.CompanyId == _tenantContext.CompanyId || memberships.Any(membership => membership.CompanyId == _tenantContext.CompanyId);
+        if (!belongsToCompany) return Forbid();
+
         var roles = await _userManager.GetRolesAsync(user);
         if (roles.Contains("Boss", StringComparer.OrdinalIgnoreCase)) return Forbid();
+
+        var currentMembership = memberships.FirstOrDefault(membership => membership.CompanyId == _tenantContext.CompanyId);
+        if (currentMembership != null) _dbContext.UserCompanyMemberships.Remove(currentMembership);
+        if (user.CompanyId == _tenantContext.CompanyId)
+        {
+            var replacementCompany = memberships.FirstOrDefault(membership => membership.CompanyId != _tenantContext.CompanyId)?.CompanyId;
+            if (replacementCompany != null)
+            {
+                user.CompanyId = replacementCompany;
+                await _dbContext.SaveChangesAsync();
+                TempData["StatusMessage"] = $"User {user.Email} was removed from this company.";
+                return RedirectToPage();
+            }
+        }
+        if (user.CompanyId != _tenantContext.CompanyId)
+        {
+            await _dbContext.SaveChangesAsync();
+            TempData["StatusMessage"] = $"User {user.Email} was removed from this company.";
+            return RedirectToPage();
+        }
 
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
@@ -200,7 +226,9 @@ public class UsersModel : PageModel
             return Page();
         }
 
-        var user = await _userManager.Users.FirstOrDefaultAsync(item => item.Id == id && item.CompanyId == _tenantContext.CompanyId);
+        var user = await _userManager.Users.FirstOrDefaultAsync(item =>
+            item.Id == id &&
+            (item.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == item.Id && membership.CompanyId == _tenantContext.CompanyId)));
         if (user == null)
         {
             return NotFound();
