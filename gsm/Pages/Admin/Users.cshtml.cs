@@ -78,12 +78,38 @@ public class UsersModel : PageModel
             _logger.LogWarning("Create user rejected because the current user has no company claim.");
             return Forbid();
         }
-        if (await _userManager.FindByEmailAsync(CreateUser.Email!) != null)
+        var existingUser = await _userManager.FindByEmailAsync(CreateUser.Email!);
+        if (existingUser != null)
         {
-            _logger.LogWarning("Create user rejected because the email already exists: {Email}", CreateUser.Email);
-            ModelState.AddModelError("CreateUser.Email", "An account with this email already exists.");
-            await OnGetAsync();
-            return Page();
+            if (!User.IsInRole("Boss") || !string.Equals(CreateUser.Role, "User", StringComparison.OrdinalIgnoreCase))
+            {
+                _logger.LogWarning("Create user rejected because the email already exists: {Email}", CreateUser.Email);
+                ModelState.AddModelError("CreateUser.Email", "An account with this email already exists.");
+                await OnGetAsync();
+                return Page();
+            }
+
+            var alreadyLinked = await _dbContext.UserCompanyMemberships.AnyAsync(membership =>
+                membership.UserId == existingUser.Id && membership.CompanyId == _tenantContext.CompanyId);
+            if (existingUser.CompanyId == _tenantContext.CompanyId || alreadyLinked)
+            {
+                ModelState.AddModelError("CreateUser.Email", "This client is already registered in this company.");
+                await OnGetAsync();
+                return Page();
+            }
+
+            _dbContext.UserCompanyMemberships.Add(new UserCompanyMembership
+            {
+                UserId = existingUser.Id,
+                CompanyId = _tenantContext.CompanyId
+            });
+            existingUser.EmailConfirmed = true;
+            existingUser.Status = UserStatus.Active;
+            if (!string.IsNullOrWhiteSpace(CreateUser.CustomerName)) existingUser.CustomerName = CreateUser.CustomerName.Trim();
+            if (!string.IsNullOrWhiteSpace(CreateUser.PhoneNumber)) existingUser.PhoneNumber = CreateUser.PhoneNumber.Trim();
+            await _dbContext.SaveChangesAsync();
+            TempData["StatusMessage"] = "The existing client was linked to this company. No new email confirmation is required.";
+            return RedirectToPage();
         }
 
         var generatedPassword = GeneratePassword();
@@ -208,7 +234,7 @@ public class UsersModel : PageModel
             .Select(item => item.UserId);
 
         var usersQuery = _dbContext.Users
-            .Where(user => user.CompanyId == _tenantContext.CompanyId && !hiddenUserIds.Contains(user.Id));
+            .Where(user => (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)) && !hiddenUserIds.Contains(user.Id));
         if (!string.IsNullOrWhiteSpace(Search))
         {
             var search = Search.Trim();

@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using System.ComponentModel.DataAnnotations;
 
 namespace gsm.Pages;
@@ -61,10 +62,35 @@ public class CreateUserModel : PageModel
 
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
-        if (await _userManager.FindByEmailAsync(Input.Email!) != null)
+        var existingUser = await _userManager.FindByEmailAsync(Input.Email!);
+        if (existingUser != null)
         {
-            ModelState.AddModelError("Input.Email", "An account with this email already exists.");
-            return Page();
+            if (!User.IsInRole("Boss") || !string.Equals(Input.Role, "User", StringComparison.OrdinalIgnoreCase))
+            {
+                ModelState.AddModelError("Input.Email", "An account with this email already exists.");
+                return Page();
+            }
+
+            var alreadyLinked = await _dbContext.UserCompanyMemberships.AnyAsync(membership =>
+                membership.UserId == existingUser.Id && membership.CompanyId == _tenantContext.CompanyId);
+            if (existingUser.CompanyId == _tenantContext.CompanyId || alreadyLinked)
+            {
+                ModelState.AddModelError("Input.Email", "This client is already registered in this company.");
+                return Page();
+            }
+
+            _dbContext.UserCompanyMemberships.Add(new UserCompanyMembership
+            {
+                UserId = existingUser.Id,
+                CompanyId = _tenantContext.CompanyId
+            });
+            existingUser.EmailConfirmed = true;
+            existingUser.Status = UserStatus.Active;
+            if (!string.IsNullOrWhiteSpace(Input.CustomerName)) existingUser.CustomerName = Input.CustomerName.Trim();
+            if (!string.IsNullOrWhiteSpace(Input.PhoneNumber)) existingUser.PhoneNumber = Input.PhoneNumber.Trim();
+            await _dbContext.SaveChangesAsync();
+            TempData["StatusMessage"] = "The existing client was linked to this company. No new email confirmation is required.";
+            return RedirectToPage();
         }
 
         var generatedPassword = GeneratePassword();

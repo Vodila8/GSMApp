@@ -40,6 +40,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<Company> Companies => Set<Company>();
 
+    public DbSet<UserCompanyMembership> UserCompanyMemberships => Set<UserCompanyMembership>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
@@ -54,5 +56,7 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
         builder.Entity<ServiceOrderLine>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<OrderStage>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<OrderAdjustment>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
+        builder.Entity<UserCompanyMembership>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
+        builder.Entity<UserCompanyMembership>().HasIndex(item => new { item.UserId, item.CompanyId }).IsUnique();
     }
 }

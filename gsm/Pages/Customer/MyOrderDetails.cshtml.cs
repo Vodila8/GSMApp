@@ -23,6 +23,7 @@ public class MyOrderDetailsModel : PageModel
     public async Task<IActionResult> OnGetAsync(int id)
     {
         Order = await _dbContext.ServiceOrders
+            .IgnoreQueryFilters()
             .Include(order => order.Customer)
             .Include(order => order.Lines)
             .Include(order => order.Stages.OrderBy(stage => stage.SortOrder))
@@ -40,6 +41,7 @@ public class MyOrderDetailsModel : PageModel
         }
 
         BossEmail = await _dbContext.Users
+            .IgnoreQueryFilters()
             .Where(user => user.CompanyId == Order.CompanyId &&
                            _dbContext.UserRoles.Any(userRole => userRole.UserId == user.Id &&
                                _dbContext.Roles.Any(role => role.Id == userRole.RoleId && role.Name == "Boss")))

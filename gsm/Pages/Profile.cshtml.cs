@@ -67,6 +67,11 @@ public class ProfileModel : PageModel
             .Include(device => device.Photos)
             .Where(device => device.CustomerId == user.Id)
             .ToListAsync();
+        var memberships = await _dbContext.UserCompanyMemberships
+            .IgnoreQueryFilters()
+            .Where(membership => membership.UserId == user.Id)
+            .ToListAsync();
+        _dbContext.UserCompanyMemberships.RemoveRange(memberships);
         foreach (var device in devices)
         {
             foreach (var photo in device.Photos)

@@ -22,6 +22,7 @@ public class MyOrdersModel : PageModel
     {
         var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
         var query = _dbContext.ServiceOrders
+            .IgnoreQueryFilters()
             .Include(order => order.Stages)
             .OrderByDescending(order => order.CreatedAt)
             .AsQueryable();

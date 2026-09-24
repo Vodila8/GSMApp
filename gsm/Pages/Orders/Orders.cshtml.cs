@@ -307,7 +307,7 @@ public class OrdersModel : PageModel
             .Select(item => item.UserId);
 
         Customers = await _dbContext.Users
-            .Where(user => user.CompanyId == _tenantContext.CompanyId && user.Status == UserStatus.Active && !employeeIds.Contains(user.Id))
+            .Where(user => (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)) && user.Status == UserStatus.Active && !employeeIds.Contains(user.Id))
             .OrderBy(user => user.CustomerName ?? user.Email)
             .ToListAsync();
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
@@ -396,7 +396,7 @@ public class OrdersModel : PageModel
 
     public class OrderInput
     {
-          public string? CustomerId { get; set; }
+        public string? CustomerId { get; set; }
         public int? CustomerDeviceId { get; set; }
         public string? NewDeviceType { get; set; }
         public string? NewDeviceModelAndSerialNumber { get; set; }
