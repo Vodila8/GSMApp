@@ -8,16 +8,15 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/gsm.styles.css" asp-append-version="true" />
 </head>
-<body>
+<body class="@(Context.Request.Query.ContainsKey("embedded") ? "embedded-page" : "")">
     @{
         var isIdentityPage = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
-        var isEmbedded = Context.Request.Query.ContainsKey("embedded");
         var currentRole = User.IsInRole("Boss") ? "Boss" :
             User.IsInRole("Administrator") ? "Administrator" :
             User.IsInRole("Technician") ? "Technician" : "User";
     }
 
-    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage && !isEmbedded)
+    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage && !Context.Request.Query.ContainsKey("embedded"))
     {
         <div class="app-shell">
             <aside class="sidebar" aria-label="Main navigation">
@@ -70,7 +69,7 @@
             <dialog id="global-sale-dialog" class="create-user-dialog warehouse-sale-dialog global-warehouse-dialog">
                 <form method="post" action="/Warehouse?handler=SellBatch" class="create-user-modal-form" id="global-sale-form">
                     @Html.AntiForgeryToken()
-                    <div class="create-user-modal-header global-window-header"><h2>Sell items</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div></div>
+                    <div class="create-user-modal-header global-window-header"><h2>Sell items</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div></div>
                     <div class="user-form-row"><label for="global-sale-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-sale-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /><div class="global-partner-options" id="global-sale-partner-options" hidden></div></div></div>
                     <div class="user-form-row"><label for="global-sale-date">Sale date</label><input id="global-sale-date" name="BatchSaleDate" type="date" value="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" /></div>
                     <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode or part name" /></div>
@@ -82,7 +81,7 @@
             <dialog id="global-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog global-warehouse-dialog">
                 <form method="post" action="/Warehouse?handler=SaveDelivery" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
                     @Html.AntiForgeryToken()
-                    <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
+                    <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
                     <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div></div>
                     <div class="table-responsive"><table class="table warehouse-table warehouse-delivery-table"><thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th>Photos</th><th></th></tr></thead><tbody id="global-delivery-items"></tbody></table></div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="global-add-delivery-row">+ Add item</button>
@@ -92,7 +91,7 @@
             <dialog id="global-partner-dialog" class="create-user-dialog global-partner-dialog">
                 <form method="post" action="/Warehouse?handler=CreatePartner" class="create-user-modal-form" id="global-partner-form">
                     @Html.AntiForgeryToken()
-                    <div class="create-user-modal-header"><h2>Add partner</h2><button type="button" class="create-user-close" data-close-global-partner aria-label="Close">×</button></div>
+                    <div class="create-user-modal-header global-window-header"><h2>Add partner</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-global-partner aria-label="Close">×</button></div></div>
                     <div class="user-form-row"><label for="global-partner-name">Name</label><input id="global-partner-name" name="NewPartner.Name" required /></div>
                     <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-egn">EGN</label><input id="global-partner-egn" name="NewPartner.Egn" /></div><div><label for="global-partner-bulstat">Bulstat</label><input id="global-partner-bulstat" name="NewPartner.Bulstat" /></div></div>
                     <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-phone">Phone</label><input id="global-partner-phone" name="NewPartner.Phone" type="tel" /></div><div><label for="global-partner-email">Email</label><input id="global-partner-email" name="NewPartner.Email" type="email" /></div></div>
@@ -100,9 +99,10 @@
                 </form>
             </dialog>
             <dialog id="global-reference-dialog" class="global-reference-dialog global-warehouse-dialog">
-                <div class="create-user-modal-header global-window-header"><h2>Warehouse Reference</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-reference aria-label="Close">×</button></div></div>
+                <div class="create-user-modal-header global-window-header"><h2>Warehouse Reference</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-reference aria-label="Close">×</button></div></div>
                 <iframe src="/WarehouseReport?embedded=true" title="Warehouse Reference" class="global-reference-frame"></iframe>
             </dialog>
+            <div id="global-window-taskbar" class="global-window-taskbar" aria-label="Minimized windows"></div>
             <script>
                 (() => {
                     const saleDialog = document.getElementById('global-sale-dialog');
@@ -117,9 +117,32 @@
                     const deliveryPartnerInput = document.getElementById('global-delivery-partner-input');
                     const deliveryPartnerOptions = document.getElementById('global-delivery-partner-options');
                     const deliveryItemsBody = document.getElementById('global-delivery-items');
-                    function setupGlobalWindow(dialog) {
+                    function setupGlobalWindow(dialog, key, title) {
                         const header = dialog.querySelector('.global-window-header');
                         const maximize = dialog.querySelector('[data-maximize-global]');
+                        const minimize = dialog.querySelector('[data-minimize-global]');
+                        const taskbar = document.getElementById('global-window-taskbar');
+                        const taskButton = document.createElement('button');
+                        taskButton.type = 'button';
+                        taskButton.className = 'global-taskbar-window';
+                        taskButton.textContent = title;
+                        taskButton.dataset.windowKey = key;
+                        taskButton.hidden = true;
+                        taskbar.appendChild(taskButton);
+                        minimize.addEventListener('click', event => {
+                            event.stopPropagation();
+                            dialog.dataset.minimized = 'true';
+                            dialog.close();
+                            taskButton.hidden = false;
+                        });
+                        taskButton.addEventListener('click', () => {
+                            dialog.dataset.minimized = 'false';
+                            taskButton.hidden = true;
+                            dialog.showModal();
+                        });
+                        dialog.addEventListener('close', () => {
+                            if (dialog.dataset.minimized !== 'true') taskButton.hidden = true;
+                        });
                         let dragging = false;
                         let startX = 0;
                         let startY = 0;
@@ -156,8 +179,10 @@
                         header.addEventListener('pointerup', () => { dragging = false; });
                         header.addEventListener('pointercancel', () => { dragging = false; });
                     }
-                    setupGlobalWindow(saleDialog);
-                    setupGlobalWindow(deliveryDialog);
+                    setupGlobalWindow(saleDialog, 'sale', 'Sell items');
+                    setupGlobalWindow(deliveryDialog, 'delivery', 'Delivery');
+                    setupGlobalWindow(referenceDialog, 'reference', 'Reference');
+                    setupGlobalWindow(partnerDialog, 'partner', 'Add partner');
                     setupGlobalWindow(referenceDialog);
                     let catalog = [];
                     let partners = [];

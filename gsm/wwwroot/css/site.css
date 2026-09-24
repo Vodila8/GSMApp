@@ -896,6 +896,15 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .global-reference-dialog { width: min(1500px, calc(100% - 2rem)); height: min(90vh, 900px); max-width: none; max-height: none; padding: 1rem; margin: auto; overflow: hidden; border: 0; border-radius: .75rem; background: #fff; box-shadow: 0 20px 60px rgb(15 23 42 / 25%); }
 .global-reference-dialog .global-window-header { margin-bottom: .75rem; }
 .global-reference-frame { display: block; width: 100%; height: calc(100% - 3.25rem); border: 0; }
+.embedded-page .user-form-page { padding: 0; }
+.embedded-page .warehouse-list { width: 100%; max-width: none; min-height: 100%; margin: 0; padding: 1rem; border: 0; border-radius: 0; box-shadow: none; }
+.embedded-page .back-link { display: none; }
+.global-window-minimize { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; color: #64748b; font: inherit; border: 0; border-radius: .35rem; background: transparent; cursor: pointer; }
+.global-window-minimize:hover { color: #0f172a; background: #eaf1f7; }
+.global-window-taskbar { position: fixed; z-index: 1000; right: 1rem; bottom: 1rem; left: calc(250px + 1rem); display: flex; gap: .5rem; align-items: center; pointer-events: none; }
+.global-taskbar-window { pointer-events: auto; padding: .6rem .85rem; color: #fff; font: inherit; font-size: .78rem; font-weight: 700; background: var(--ops-navy); border: 1px solid #33466f; border-radius: .45rem; box-shadow: 0 8px 18px rgb(15 23 42 / 20%); cursor: pointer; }
+.global-taskbar-window:hover { background: var(--ops-navy-soft); }
+@media (max-width: 700px) { .global-window-taskbar { left: 1rem; } }
 .global-partner-combobox { position: relative; }
 .global-partner-combobox > input[type="search"] { display: block; width: 100%; min-height: 42px; padding: .6rem .75rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .5rem; outline: none; }
 .global-partner-combobox > input[type="search"]:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
