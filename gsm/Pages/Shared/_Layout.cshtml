@@ -207,7 +207,7 @@
                             const state = previousState.get(row.dataset.id);
                             const partNameMatches = item.partName.toLowerCase().includes(term);
                             const barcodeMatches = term !== '' && (item.barcode || '').trim().toLowerCase() === term;
-                            row.hidden = term !== '' && !partNameMatches && !barcodeMatches;
+                            row.hidden = term !== '' && !partNameMatches && !barcodeMatches && !state?.checked;
                             if (state) {
                                 row.querySelector('.global-sale-select').checked = state.checked;
                                 row.querySelector('.global-sale-quantity').value = state.quantity;
