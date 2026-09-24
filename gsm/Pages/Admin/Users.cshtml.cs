@@ -220,6 +220,8 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostSetPasswordAsync(string id)
     {
+        foreach (var key in ModelState.Keys.Where(key => key.StartsWith(nameof(CreateUser), StringComparison.OrdinalIgnoreCase)).ToList())
+            ModelState.Remove(key);
         if (!ModelState.IsValid)
         {
             await OnGetAsync();
