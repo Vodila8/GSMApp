@@ -16,8 +16,7 @@
 
         <form method="get" class="warehouse-report-filters">
             <div><label for="report-type">Report</label><select id="report-type" name="Type">@if (Model.IsDeliveryReport) { <option value="sales">Sales</option><option value="deliveries" selected>Deliveries</option> } else { <option value="sales" selected>Sales</option><option value="deliveries">Deliveries</option> }</select></div>
-            <div><label for="report-from">From date</label><input id="report-from" name="FromDate" type="date" value="@Model.FromDate?.ToString("yyyy-MM-dd")" /></div>
-            <div><label for="report-to">To date</label><input id="report-to" name="ToDate" type="date" value="@Model.ToDate?.ToString("yyyy-MM-dd")" /></div>
+            <div class="warehouse-report-date-range"><label for="report-date-range-button">Date range</label><input id="report-from" name="FromDate" type="hidden" value="@Model.FromDate?.ToString("yyyy-MM-dd")" /><input id="report-to" name="ToDate" type="hidden" value="@Model.ToDate?.ToString("yyyy-MM-dd")" /><button type="button" id="report-date-range-button" class="date-range-button">Select date range</button><span id="report-date-range-value" class="date-range-value">No dates selected</span></div>
             <div><label for="report-product">Product number</label><input id="report-product" name="ProductNumber" value="@Model.ProductNumber" placeholder="Product number" /></div>
             <button class="btn btn-primary" type="submit">Filter</button>
             <a class="btn btn-outline-secondary" href="/WarehouseReport">Clear</a>
@@ -54,3 +53,62 @@
         }
     </section>
 </div>
+
+<dialog class="range-calendar" id="report-range-calendar">
+    <div class="range-calendar-header"><button type="button" id="report-previous-month" aria-label="Previous month">‹</button><strong id="report-calendar-month"></strong><button type="button" id="report-next-month" aria-label="Next month">›</button></div>
+    <div class="calendar-weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="calendar-days" id="report-calendar-days"></div>
+    <p class="calendar-help">Choose the start date, then the end date.</p>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="report-clear-range">Clear dates</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="report-close-calendar">Close</button>
+</dialog>
+
+@section Scripts {
+<script>
+    const reportCalendar = document.getElementById('report-range-calendar');
+    const reportCalendarDays = document.getElementById('report-calendar-days');
+    const reportCalendarMonth = document.getElementById('report-calendar-month');
+    const reportFrom = document.getElementById('report-from');
+    const reportTo = document.getElementById('report-to');
+    const reportRangeButton = document.getElementById('report-date-range-button');
+    const reportRangeValue = document.getElementById('report-date-range-value');
+    let reportStart = reportFrom.value;
+    let reportEnd = reportTo.value;
+    let reportMonth = new Date(`${reportStart || new Date().toISOString().slice(0, 10)}T12:00:00`);
+    const reportIsoDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+    const reportFormatDate = value => value ? new Intl.DateTimeFormat('en-GB').format(new Date(`${value}T12:00:00`)) : '';
+    function updateReportRange() {
+        const text = reportStart ? `${reportFormatDate(reportStart)}${reportEnd ? ` — ${reportFormatDate(reportEnd)}` : ''}` : 'Select date range';
+        reportRangeButton.textContent = text;
+        reportRangeValue.textContent = reportStart ? text : 'No dates selected';
+    }
+    function renderReportCalendar() {
+        const year = reportMonth.getFullYear();
+        const month = reportMonth.getMonth();
+        reportCalendarMonth.textContent = reportMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+        reportCalendarDays.innerHTML = '';
+        const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+        const count = new Date(year, month + 1, 0).getDate();
+        for (let i = 0; i < offset; i++) reportCalendarDays.insertAdjacentHTML('beforeend', '<span></span>');
+        for (let day = 1; day <= count; day++) {
+            const value = reportIsoDate(new Date(year, month, day));
+            const selected = value === reportStart || value === reportEnd;
+            const inRange = reportStart && reportEnd && value > reportStart && value < reportEnd;
+            reportCalendarDays.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${selected ? ' selected' : ''}${inRange ? ' in-range' : ''}" data-date="${value}">${day}</button>`);
+        }
+    }
+    reportRangeButton.addEventListener('click', () => { reportMonth = new Date(`${reportStart || reportIsoDate(new Date())}T12:00:00`); renderReportCalendar(); reportCalendar.showModal(); });
+    reportCalendarDays.addEventListener('click', event => {
+        if (!event.target.matches('.calendar-day')) return;
+        const value = event.target.dataset.date;
+        if (!reportStart || reportEnd || value < reportStart) { reportStart = value; reportEnd = ''; }
+        else reportEnd = value;
+        reportFrom.value = reportStart; reportTo.value = reportEnd; updateReportRange(); renderReportCalendar();
+    });
+    document.getElementById('report-previous-month').addEventListener('click', () => { reportMonth.setMonth(reportMonth.getMonth() - 1); renderReportCalendar(); });
+    document.getElementById('report-next-month').addEventListener('click', () => { reportMonth.setMonth(reportMonth.getMonth() + 1); renderReportCalendar(); });
+    document.getElementById('report-clear-range').addEventListener('click', () => { reportStart = ''; reportEnd = ''; reportFrom.value = ''; reportTo.value = ''; updateReportRange(); renderReportCalendar(); });
+    document.getElementById('report-close-calendar').addEventListener('click', () => reportCalendar.close());
+    updateReportRange();
+</script>
+}
