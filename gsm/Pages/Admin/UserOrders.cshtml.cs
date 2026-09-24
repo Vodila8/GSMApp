@@ -34,6 +34,7 @@ public class UserOrdersModel : PageModel
 
     public async Task<IActionResult> OnPostSetPasswordAsync(string id)
     {
+        if (User.IsInRole("Boss")) return Forbid();
         foreach (var key in ModelState.Keys.Where(key => key.StartsWith(nameof(Input), StringComparison.OrdinalIgnoreCase)).ToList())
             ModelState.Remove(key);
         if (!ModelState.IsValid)

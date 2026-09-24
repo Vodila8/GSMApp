@@ -9,17 +9,20 @@
         <a class="back-link" href="/Users">← Back to users</a>
         <h1 class="warehouse-title">@(Model.Customer!.CustomerName ?? Model.Customer.Email)</h1>
         <p class="text-muted">@Model.Customer.Email</p>
-        <form method="post" asp-page-handler="SetPassword" asp-route-id="@Model.Customer.Id" class="user-password-card">
-            <div>
-                <strong>Account password</strong>
-                <span>Set a new password for this user.</span>
-            </div>
-            <div class="user-password-card-actions">
-                <input asp-for="Password.NewPassword" autocomplete="new-password" placeholder="New password" />
-                <button type="submit" class="btn btn-primary">Update password</button>
-            </div>
-            <span asp-validation-for="Password.NewPassword" class="text-danger"></span>
-        </form>
+        @if (!User.IsInRole("Boss"))
+        {
+            <form method="post" asp-page-handler="SetPassword" asp-route-id="@Model.Customer.Id" class="user-password-card">
+                <div>
+                    <strong>Account password</strong>
+                    <span>Set a new password for this user.</span>
+                </div>
+                <div class="user-password-card-actions">
+                    <input asp-for="Password.NewPassword" autocomplete="new-password" placeholder="New password" />
+                    <button type="submit" class="btn btn-primary">Update password</button>
+                </div>
+                <span asp-validation-for="Password.NewPassword" class="text-danger"></span>
+            </form>
+        }
         @if (TempData["StatusMessage"] is string statusMessage)
         {
             <div class="alert alert-success">@statusMessage</div>
