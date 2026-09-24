@@ -250,7 +250,8 @@ public class WarehouseModel : PageModel
                 Barcode = NewItem.Barcode?.Trim(),
                 UnitPrice = NewItem.UnitPrice ?? 0,
                 DeliveryPrice = NewItem.DeliveryPrice ?? 0,
-                Quantity = NewItem.Quantity ?? 0
+                Quantity = NewItem.Quantity ?? 0,
+                DeliveryDate = NewItem.DeliveryDate
             };
             _dbContext.WarehouseItems.Add(createdItem);
             auditEntries.Add(new WarehouseAuditEntry
@@ -421,7 +422,8 @@ public class WarehouseModel : PageModel
                 Barcode = input.Barcode?.Trim(),
                 UnitPrice = input.UnitPrice ?? 0,
                 DeliveryPrice = input.DeliveryPrice ?? 0,
-                Quantity = input.Quantity ?? 0
+                Quantity = input.Quantity ?? 0,
+                DeliveryDate = input.DeliveryDate
             };
             _dbContext.WarehouseItems.Add(item);
             createdItems.Add(item);
@@ -862,6 +864,8 @@ public class WarehouseModel : PageModel
         [Range(0, 999999.99)]
         [Display(Name = "Delivery Price (EUR)")]
         public decimal? DeliveryPrice { get; set; }
+
+        public DateOnly? DeliveryDate { get; set; } = DateOnly.FromDateTime(DateTime.Today);
 
         [Range(0, int.MaxValue)]
         [Display(Name = "Quantity")]

@@ -33,5 +33,7 @@ public class WarehouseItem
     [Range(0, int.MaxValue)]
     public int Quantity { get; set; }
 
+    public DateOnly? DeliveryDate { get; set; }
+
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 }

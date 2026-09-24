@@ -209,12 +209,13 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="table-responsive">
             <table class="table warehouse-table warehouse-edit-table warehouse-delivery-table align-middle">
-                <thead><tr><th>No.</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th>Photos</th><th></th></tr></thead>
+                <thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th>Photos</th><th></th></tr></thead>
                 <tbody id="delivery-items-body">
                 @for (var index = 0; index < Model.DeliveryItems.Count; index++)
                 {
                     <tr class="delivery-item-row" data-delivery-row>
                         <td>@(index + 1)</td>
+                        <td><input asp-for="DeliveryItems[index].DeliveryDate" type="date" /></td>
                         <td><input asp-for="DeliveryItems[index].ProductNumber" list="warehouse-product-numbers" /></td>
                         <td><input asp-for="DeliveryItems[index].Quantity" type="number" min="0" step="1" /></td>
                         <td><input asp-for="DeliveryItems[index].PartName" required /></td>
@@ -241,6 +242,7 @@
         <template id="delivery-row-template">
             <tr class="delivery-item-row" data-delivery-row>
                 <td>__number__</td>
+                <td><input name="DeliveryItems[__index__].DeliveryDate" type="date" value="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" /></td>
                 <td><input name="DeliveryItems[__index__].ProductNumber" list="warehouse-product-numbers" /></td>
                 <td><input name="DeliveryItems[__index__].Quantity" type="number" min="0" step="1" /></td>
                 <td><input name="DeliveryItems[__index__].PartName" required /></td>
