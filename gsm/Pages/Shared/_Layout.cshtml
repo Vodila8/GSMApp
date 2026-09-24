@@ -11,12 +11,13 @@
 <body>
     @{
         var isIdentityPage = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
+        var isEmbedded = Context.Request.Query.ContainsKey("embedded");
         var currentRole = User.IsInRole("Boss") ? "Boss" :
             User.IsInRole("Administrator") ? "Administrator" :
             User.IsInRole("Technician") ? "Technician" : "User";
     }
 
-    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage)
+    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage && !isEmbedded)
     {
         <div class="app-shell">
             <aside class="sidebar" aria-label="Main navigation">
@@ -29,7 +30,7 @@
                     {
                         <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
-                        <a class="sidebar-link" href="/WarehouseReport"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Help</span></a>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-reference><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Reference</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
@@ -39,7 +40,7 @@
                     else if (User.IsInRole("Technician"))
                     {
                         <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
-                        <a class="sidebar-link" href="/WarehouseReport"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Help</span></a>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-reference><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Reference</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
                         <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
@@ -98,11 +99,16 @@
                     <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-partner>Cancel</button><button type="submit" class="btn btn-primary">Add partner</button></div>
                 </form>
             </dialog>
+            <dialog id="global-reference-dialog" class="global-reference-dialog global-warehouse-dialog">
+                <div class="create-user-modal-header global-window-header"><h2>Warehouse Reference</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-reference aria-label="Close">×</button></div></div>
+                <iframe src="/WarehouseReport?embedded=true" title="Warehouse Reference" class="global-reference-frame"></iframe>
+            </dialog>
             <script>
                 (() => {
                     const saleDialog = document.getElementById('global-sale-dialog');
                     const deliveryDialog = document.getElementById('global-delivery-dialog');
                     const partnerDialog = document.getElementById('global-partner-dialog');
+                    const referenceDialog = document.getElementById('global-reference-dialog');
                     const saleItemsBody = document.getElementById('global-sale-items');
                     const saleSearch = document.getElementById('global-sale-search');
                     const saleTotal = document.getElementById('global-sale-total');
@@ -152,6 +158,7 @@
                     }
                     setupGlobalWindow(saleDialog);
                     setupGlobalWindow(deliveryDialog);
+                    setupGlobalWindow(referenceDialog);
                     let catalog = [];
                     let partners = [];
                     let deliveryIndex = 0;
@@ -246,6 +253,7 @@
                     document.querySelector('[data-open-global-sale]')?.addEventListener('click', async () => { saleDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
                     document.querySelector('[data-open-global-delivery]')?.addEventListener('click', async () => { deliveryDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
                     document.querySelector('[data-open-global-partner]')?.addEventListener('click', () => partnerDialog.showModal());
+                    document.querySelector('[data-open-global-reference]')?.addEventListener('click', () => referenceDialog.showModal());
                     saleSearch.addEventListener('input', renderSaleItems);
                     saleItemsBody.addEventListener('input', updateSaleTotal);
                     saleItemsBody.addEventListener('change', updateSaleTotal);
@@ -265,6 +273,7 @@
                     document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => saleDialog.close()));
                     document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => deliveryDialog.close()));
                     document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => partnerDialog.close()));
+                    document.querySelectorAll('[data-close-global-reference]').forEach(button => button.addEventListener('click', () => referenceDialog.close()));
                 })();
             </script>
         }
