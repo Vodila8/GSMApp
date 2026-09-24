@@ -68,7 +68,7 @@
                 <form method="post" action="/Warehouse?handler=SellBatch" class="create-user-modal-form" id="global-sale-form">
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Sell items</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div></div>
-                    <div class="user-form-row"><label for="global-sale-partner-search">Partner</label><input id="global-sale-partner-search" type="search" placeholder="Search partner" autocomplete="off" /><select id="global-sale-partner"></select><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /></div>
+                    <div class="user-form-row"><label for="global-sale-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-sale-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /><div class="global-partner-options" id="global-sale-partner-options" hidden></div></div></div>
                     <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode or part name" /></div>
                     <div class="table-responsive"><table class="table warehouse-table global-sale-table"><thead><tr><th>No.</th><th>Select</th><th>Product</th><th>Stock</th><th>Quantity</th><th>Discount (%)</th><th>Notes</th><th>Total</th></tr></thead><tbody id="global-sale-items"></tbody></table></div>
                     <div class="global-modal-total">Total: <strong id="global-sale-total">0.00 EUR</strong></div>
@@ -79,7 +79,7 @@
                 <form method="post" action="/Warehouse?handler=SaveDelivery" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
-                    <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-search">Partner</label><input id="global-delivery-partner-search" type="search" placeholder="Search partner" autocomplete="off" /><select id="global-delivery-partner"></select><input type="hidden" id="global-delivery-partner-id" /></div>
+                    <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div></div>
                     <div class="table-responsive"><table class="table warehouse-table warehouse-delivery-table"><thead><tr><th>No.</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Photos</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead><tbody id="global-delivery-items"></tbody></table></div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="global-add-delivery-row">+ Add item</button>
                     <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-delivery>Cancel</button><button type="submit" class="btn btn-primary">Save delivery</button></div>
@@ -103,9 +103,10 @@
                     const saleItemsBody = document.getElementById('global-sale-items');
                     const saleSearch = document.getElementById('global-sale-search');
                     const saleTotal = document.getElementById('global-sale-total');
-                    const salePartner = document.getElementById('global-sale-partner');
-                    const salePartnerSearch = document.getElementById('global-sale-partner-search');
-                    const deliveryPartnerSearch = document.getElementById('global-delivery-partner-search');
+                    const salePartnerInput = document.getElementById('global-sale-partner-input');
+                    const salePartnerOptions = document.getElementById('global-sale-partner-options');
+                    const deliveryPartnerInput = document.getElementById('global-delivery-partner-input');
+                    const deliveryPartnerOptions = document.getElementById('global-delivery-partner-options');
                     const deliveryItemsBody = document.getElementById('global-delivery-items');
                     function setupGlobalWindow(dialog) {
                         const header = dialog.querySelector('.global-window-header');
@@ -152,14 +153,33 @@
                     let partners = [];
                     let deliveryIndex = 0;
 
-                    const partnerOptions = select => {
-                        select.innerHTML = partners.map(partner => `<option value="${partner.id}">${partner.name}</option>`).join('');
-                    };
-                    const filterPartners = (search, select) => {
-                        const term = search.value.trim().toLowerCase();
-                        [...select.options].forEach(option => { option.hidden = !option.textContent.toLowerCase().includes(term); });
-                        if (select.selectedOptions[0]?.hidden) select.value = '';
-                    };
+                    function renderPartnerOptions(input, options, hidden) {
+                        const term = input.value.trim().toLowerCase();
+                        options.innerHTML = partners
+                            .filter(partner => partner.name.toLowerCase().includes(term))
+                            .map(partner => `<button type="button" class="global-partner-option" data-partner-id="${partner.id}">${partner.name}</button>`)
+                            .join('');
+                        options.hidden = false;
+                        hidden.value = '';
+                    }
+                    function setupPartnerCombobox(input, options, hidden) {
+                        input.addEventListener('focus', () => renderPartnerOptions(input, options, hidden));
+                        input.addEventListener('input', () => renderPartnerOptions(input, options, hidden));
+                        options.addEventListener('click', event => {
+                            const option = event.target.closest('[data-partner-id]');
+                            if (!option) return;
+                            input.value = option.textContent;
+                            hidden.value = option.dataset.partnerId;
+                            options.hidden = true;
+                        });
+                    }
+                    setupPartnerCombobox(salePartnerInput, salePartnerOptions, document.getElementById('global-sale-partner-id'));
+                    setupPartnerCombobox(deliveryPartnerInput, deliveryPartnerOptions, document.getElementById('global-delivery-partner-id'));
+                    document.addEventListener('click', event => {
+                        document.querySelectorAll('[data-partner-combobox]').forEach(combo => {
+                            if (!combo.contains(event.target)) combo.querySelector('.global-partner-options').hidden = true;
+                        });
+                    });
                     function updateSaleTotal() {
                         let total = 0;
                         saleItemsBody.querySelectorAll('tr').forEach(row => {
@@ -215,10 +235,6 @@
                         const response = await fetch('/Warehouse?handler=Options');
                         const data = await response.json();
                         catalog = data.items; partners = data.partners;
-                        const deliveryPartner = document.getElementById('global-delivery-partner');
-                        partnerOptions(salePartner); partnerOptions(deliveryPartner);
-                        document.getElementById('global-sale-partner-id').value = salePartner.value;
-                        document.getElementById('global-delivery-partner-id').value = deliveryPartner.value;
                         renderSaleItems();
                         if (!deliveryItemsBody.children.length) addDeliveryRow();
                     }
@@ -228,10 +244,6 @@
                     saleSearch.addEventListener('input', renderSaleItems);
                     saleItemsBody.addEventListener('input', updateSaleTotal);
                     saleItemsBody.addEventListener('change', updateSaleTotal);
-                    salePartnerSearch.addEventListener('input', () => filterPartners(salePartnerSearch, salePartner));
-                    deliveryPartnerSearch.addEventListener('input', () => filterPartners(deliveryPartnerSearch, document.getElementById('global-delivery-partner')));
-                    salePartner.addEventListener('change', () => { document.getElementById('global-sale-partner-id').value = salePartner.value; });
-                    document.getElementById('global-delivery-partner').addEventListener('change', event => { document.getElementById('global-delivery-partner-id').value = event.target.value; });
                     document.getElementById('global-add-delivery-row').addEventListener('click', addDeliveryRow);
                     deliveryItemsBody.addEventListener('click', event => { if (event.target.closest('.global-remove-delivery') && deliveryItemsBody.children.length > 1) event.target.closest('tr').remove(); });
                     document.getElementById('global-sale-form').addEventListener('submit', () => {

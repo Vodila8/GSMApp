@@ -846,5 +846,11 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .global-window-maximize { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; color: #64748b; font: inherit; border: 0; border-radius: .35rem; background: transparent; cursor: pointer; }
 .global-window-maximize:hover { color: #0f172a; background: #eaf1f7; }
 .global-partner-dialog { width: min(620px, calc(100% - 2rem)) !important; max-width: none !important; margin: auto; }
+.global-partner-combobox { position: relative; }
+.global-partner-combobox > input[type="search"] { display: block; width: 100%; min-height: 42px; padding: .6rem .75rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .5rem; outline: none; }
+.global-partner-combobox > input[type="search"]:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
+.global-partner-options { position: absolute; z-index: 20; top: calc(100% + .25rem); right: 0; left: 0; max-height: 220px; overflow-y: auto; padding: .25rem; background: #fff; border: 1px solid var(--ops-border); border-radius: .5rem; box-shadow: 0 12px 25px rgb(15 23 42 / 15%); }
+.global-partner-option { display: block; width: 100%; padding: .55rem .65rem; color: var(--ops-text); text-align: left; background: transparent; border: 0; border-radius: .35rem; cursor: pointer; }
+.global-partner-option:hover { color: #fff; background: var(--ops-blue); }
 
 .agent-setup-steps { padding-left: 1.15rem; margin: .7rem 0 0; color: #475569; font-size: .86rem; line-height: 1.65; }
