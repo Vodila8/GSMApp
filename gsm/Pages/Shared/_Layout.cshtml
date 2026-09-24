@@ -117,6 +117,8 @@
                     const deliveryPartnerInput = document.getElementById('global-delivery-partner-input');
                     const deliveryPartnerOptions = document.getElementById('global-delivery-partner-options');
                     const deliveryItemsBody = document.getElementById('global-delivery-items');
+                    const windowStateStorageKey = 'gsm-global-window-state';
+                    const savedWindowState = JSON.parse(localStorage.getItem(windowStateStorageKey) || '{}');
                     function setupGlobalWindow(dialog, key, title) {
                         const header = dialog.querySelector('.global-window-header');
                         const maximize = dialog.querySelector('[data-maximize-global]');
@@ -127,17 +129,20 @@
                         taskButton.className = 'global-taskbar-window';
                         taskButton.textContent = title;
                         taskButton.dataset.windowKey = key;
-                        taskButton.hidden = true;
+                        taskButton.hidden = !savedWindowState[key]?.minimized;
                         taskbar.appendChild(taskButton);
                         minimize.addEventListener('click', event => {
                             event.stopPropagation();
+                            saveWindowState(key, title, dialog);
                             dialog.dataset.minimized = 'true';
                             dialog.close();
                             taskButton.hidden = false;
                         });
-                        taskButton.addEventListener('click', () => {
+                        taskButton.addEventListener('click', async () => {
                             dialog.dataset.minimized = 'false';
                             taskButton.hidden = true;
+                            if (key === 'sale' || key === 'delivery') await loadCatalog();
+                            restoreWindowValues(key);
                             dialog.showModal();
                         });
                         dialog.addEventListener('close', () => {
@@ -186,6 +191,32 @@
                     let catalog = [];
                     let partners = [];
                     let deliveryIndex = 0;
+                    const saveWindowState = (key, title, dialog) => {
+                        savedWindowState[key] = { title, minimized: true, values: [...dialog.querySelectorAll('input[name], select[name], textarea[name]')].filter(input => input.type !== 'file').map(input => ({ name: input.name, value: input.value, checked: input.checked })) };
+                        if (key === 'sale') { savedWindowState[key].search = saleSearch.value; savedWindowState[key].partner = salePartnerInput.value; savedWindowState[key].partnerId = document.getElementById('global-sale-partner-id').value; savedWindowState[key].saleRows = [...saleItemsBody.querySelectorAll('tr')].map(row => ({ id: row.dataset.id, checked: row.querySelector('.global-sale-select')?.checked, quantity: row.querySelector('.global-sale-quantity')?.value, discount: row.querySelector('.global-sale-discount')?.value, note: row.querySelector('.global-sale-note')?.value })); }
+                        if (key === 'delivery') { savedWindowState[key].partner = deliveryPartnerInput.value; savedWindowState[key].partnerId = document.getElementById('global-delivery-partner-id').value; savedWindowState[key].deliveryRows = [...deliveryItemsBody.querySelectorAll('tr')].map(row => [...row.querySelectorAll('input[name]')].filter(input => input.type !== 'file').map(input => ({ name: input.name.split('.').pop(), value: input.value })); }
+                        localStorage.setItem(windowStateStorageKey, JSON.stringify(savedWindowState));
+                    };
+                    const clearWindowState = key => { delete savedWindowState[key]; localStorage.setItem(windowStateStorageKey, JSON.stringify(savedWindowState)); };
+                    function restoreWindowValues(key) {
+                        const state = savedWindowState[key];
+                        if (!state) return;
+                        state.values?.forEach(saved => document.querySelectorAll(`[name="${CSS.escape(saved.name)}"]`).forEach(input => { input.value = saved.value; input.checked = saved.checked; }));
+                        if (key === 'sale') {
+                            saleSearch.value = state.search || '';
+                            salePartnerInput.value = state.partner || '';
+                            document.getElementById('global-sale-partner-id').value = state.partnerId || '';
+                            renderSaleItems();
+                            state.saleRows?.forEach(saved => { const row = saleItemsBody.querySelector(`[data-id="${saved.id}"]`); if (row) { row.querySelector('.global-sale-select').checked = saved.checked; row.querySelector('.global-sale-quantity').value = saved.quantity; row.querySelector('.global-sale-discount').value = saved.discount; row.querySelector('.global-sale-note').value = saved.note || ''; } });
+                            updateSaleTotal();
+                        }
+                        if (key === 'delivery') {
+                            deliveryPartnerInput.value = state.partner || '';
+                            document.getElementById('global-delivery-partner-id').value = state.partnerId || '';
+                            while (deliveryItemsBody.children.length < (state.deliveryRows?.length || 0)) addDeliveryRow();
+                            state.deliveryRows?.forEach((saved, index) => saved.forEach(value => { const input = deliveryItemsBody.children[index]?.querySelector(`input[name$=".${value.name}"]`); if (input) input.value = value.value; }));
+                        }
+                    }
 
                     function renderPartnerOptions(input, options, hidden) {
                         const term = input.value.trim().toLowerCase();
@@ -294,10 +325,10 @@
                             const partnerId = document.createElement('input'); partnerId.type = 'hidden'; partnerId.name = `DeliveryItems[${index}].PartnerId`; partnerId.value = partner.value; document.getElementById('global-delivery-form').appendChild(partnerId);
                         });
                     });
-                    document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => saleDialog.close()));
-                    document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => deliveryDialog.close()));
-                    document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => partnerDialog.close()));
-                    document.querySelectorAll('[data-close-global-reference]').forEach(button => button.addEventListener('click', () => referenceDialog.close()));
+                    document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => { clearWindowState('sale'); saleDialog.close(); }));
+                    document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => { clearWindowState('delivery'); deliveryDialog.close(); }));
+                    document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => { clearWindowState('partner'); partnerDialog.close(); }));
+                    document.querySelectorAll('[data-close-global-reference]').forEach(button => button.addEventListener('click', () => { clearWindowState('reference'); referenceDialog.close(); }));
                 })();
             </script>
         }
