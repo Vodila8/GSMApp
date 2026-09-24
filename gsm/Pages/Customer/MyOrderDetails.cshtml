@@ -3,50 +3,71 @@
 @{
     ViewData["Title"] = "Order Details";
     var stages = Model.Order!.Stages.OrderBy(stage => stage.SortOrder).ToList();
+    var currentStage = stages.LastOrDefault(stage => !stage.EndDate.HasValue) ?? stages.LastOrDefault();
+    var isCompleted = stages.Any(stage => stage.IsFixed && stage.Name == "End" && stage.EndDate.HasValue);
 }
 
 <div class="user-form-page">
-    <section class="warehouse-list order-details">
-        <a class="back-link" href="/MyOrders">← Back to orders</a>
-        <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
-        <div class="order-device-card">
-            <span class="order-device-label">Device</span>
-            <strong>@Model.Order.Device</strong>
-            @if (!string.IsNullOrWhiteSpace(Model.Order.DeviceModelAndSerialNumber))
-            {
-                <span>@Model.Order.DeviceModelAndSerialNumber</span>
-            }
-            <span class="order-total-price">Total: @Model.Order.TotalPrice.ToString("0.00") EUR</span>
+    <section class="warehouse-list customer-order-details-page">
+        <div class="customer-order-header">
+            <div>
+                <a class="back-link" href="/MyOrders">← Back to orders</a>
+                <span class="dashboard-kicker customer-order-kicker">LIVE STATUS STEPPER</span>
+                <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
+                <p class="customer-order-subtitle">Your repair status is updated by the service team.</p>
+            </div>
+            <span class="customer-order-status @(isCompleted ? "completed" : "in-repair")">@(isCompleted ? "COMPLETED" : "IN REPAIR")</span>
         </div>
 
-        <h2 class="order-section-title">Order Progress</h2>
-        <ol class="order-timeline">
-            @foreach (var stage in stages)
-            {
-                var isCompleted = stage.EndDate.HasValue;
-                var isCurrent = !isCompleted && stage.StartDate.HasValue;
-                var stageState = isCompleted ? "completed" : isCurrent ? "current" : "pending";
-                <li class="timeline-stage @stageState">
-                    <div class="timeline-marker">@(isCompleted ? "✓" : stage.SortOrder.ToString())</div>
-                    <div class="timeline-content">
-                        <strong>@stage.Name</strong>
-                        <span>
-                            @if (stage.StartDate.HasValue)
+        <div class="customer-order-grid">
+            <section class="customer-order-panel customer-order-progress-panel">
+                <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">↻</span><div><h2>Live Status Stepper</h2><p>Follow the progress of your device repair.</p></div></div>
+                <ol class="customer-order-stepper">
+                @foreach (var stage in stages)
+                {
+                    var stageCompleted = stage.EndDate.HasValue;
+                    var stageCurrent = !stageCompleted && currentStage?.Id == stage.Id;
+                    <li class="customer-order-step @(stageCompleted ? "completed" : stageCurrent ? "current" : "pending")">
+                        <div class="customer-order-step-marker">@(stageCompleted ? "✓" : stage.SortOrder + 1)</div>
+                        <div class="customer-order-step-content">
+                            <strong>@stage.Name</strong>
+                            <span>@(stageCompleted ? $"Completed {stage.EndDate:dd MMM yyyy}" : stageCurrent ? "Currently in progress" : "Waiting to start")</span>
+                            @if (!stageCompleted && stage.StartDate.HasValue)
                             {
-                                @stage.StartDate.Value.ToString("dd MMM yyyy")
-                                @if (stage.EndDate.HasValue && stage.EndDate != stage.StartDate)
-                                {
-                                    <span> — @stage.EndDate.Value.ToString("dd MMM yyyy")</span>
-                                }
+                                <small>Started @stage.StartDate.Value.ToString("dd MMM yyyy")</small>
                             }
-                            else
+                        </div>
+                    </li>
+                }
+                </ol>
+            </section>
+
+            <div class="customer-order-side-column">
+                <section class="customer-order-panel customer-order-invoice-panel">
+                    <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">▣</span><div><h2>Device &amp; Service Invoice</h2><p>Summary of your repair order.</p></div></div>
+                    <dl class="customer-order-facts">
+                        <dt>Device category</dt><dd>@(Model.Order.Device ?? "Not specified")</dd>
+                        <dt>Model / serial number</dt><dd>@(Model.Order.DeviceModelAndSerialNumber ?? "Not specified")</dd>
+                        <dt>Problem / repair</dt><dd>@(Model.Order.ProblemOrRepair ?? "Not specified")</dd>
+                        <dt>Estimated total</dt><dd class="customer-order-price">@Model.Order.TotalPrice.ToString("0.00") EUR</dd>
+                    </dl>
+                    @if (Model.Order.Lines.Count > 0)
+                    {
+                        <div class="customer-order-lines">
+                            @foreach (var line in Model.Order.Lines)
                             {
-                                <span>Dates will be added soon</span>
+                                <div><span>@line.Description × @line.Quantity</span><strong>@((line.UnitPrice * line.Quantity).ToString("0.00")) EUR</strong></div>
                             }
-                        </span>
-                    </div>
-                </li>
-            }
-        </ol>
+                        </div>
+                    }
+                </section>
+
+                <section class="customer-order-panel customer-order-support-panel">
+                    <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">?</span><div><h2>Operations &amp; Support Desk</h2><p>Need questions regarding your repair?</p></div></div>
+                    <p>Our service team can provide an update about your device and repair status.</p>
+                    <a class="customer-order-support-email" href="mailto:@Model.BossEmail">✉ @Model.BossEmail</a>
+                </section>
+            </div>
+        </div>
     </section>
 </div>
