@@ -491,5 +491,13 @@
         {
             <text>warehouseSaleDialog.showModal();</text>
         }
+        @if (Model.ShowEditModal)
+        {
+            <text>warehouseEditDialog.showModal();</text>
+        }
+        @if (Model.ShowAddModal)
+        {
+            <text>warehouseItemDialog.showModal();</text>
+        }
     </script>
 }

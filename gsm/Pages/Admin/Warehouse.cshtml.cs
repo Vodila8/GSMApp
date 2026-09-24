@@ -53,6 +53,8 @@ public class WarehouseModel : PageModel
 
     public bool ShowSaleModal { get; private set; }
     public bool ShowDeliveryModal { get; private set; }
+    public bool ShowEditModal { get; private set; }
+    public bool ShowAddModal { get; private set; }
     public List<string> ProductNumbers { get; private set; } = [];
     public List<WarehousePartner> Partners { get; private set; } = [];
 
@@ -81,12 +83,16 @@ public class WarehouseModel : PageModel
         return new JsonResult(new { items, partners });
     }
 
-    public async Task OnGetAsync(string? sell = null, string? delivery = null)
+    public async Task OnGetAsync(string? sell = null, string? delivery = null, string? edit = null, string? add = null)
     {
         ShowSaleModal = string.Equals(sell, "1", StringComparison.OrdinalIgnoreCase) ||
                         bool.TryParse(sell, out var showSale) && showSale;
         ShowDeliveryModal = string.Equals(delivery, "1", StringComparison.OrdinalIgnoreCase) ||
                            bool.TryParse(delivery, out var showDelivery) && showDelivery;
+        ShowEditModal = string.Equals(edit, "1", StringComparison.OrdinalIgnoreCase) ||
+                        bool.TryParse(edit, out var showEdit) && showEdit;
+        ShowAddModal = string.Equals(add, "1", StringComparison.OrdinalIgnoreCase) ||
+                       bool.TryParse(add, out var showAdd) && showAdd;
         await LoadItemsAsync();
         NewItem.ProductNumber ??= await GetNextProductNumberAsync();
     }
