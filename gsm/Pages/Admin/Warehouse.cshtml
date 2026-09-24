@@ -46,10 +46,10 @@
                         <th>Quantity</th>
                         <th>Part name</th>
                         <th>Partner</th>
-                        <th>Photos</th>
                         <th>Barcode</th>
                         <th>Unit price (EUR)</th>
                         <th>Delivery price (EUR)</th>
+                        <th>Photos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -61,25 +61,21 @@
                         <td>@Model.Items[index].Quantity</td>
                         <td>@Model.Items[index].PartName</td>
                         <td>@(Model.Items[index].PartnerName ?? "—")</td>
-                        <td>
-                            <div class="warehouse-photo-list">
-                            @foreach (var photo in Model.Items[index].Photos)
-                            {
-                                <div class="warehouse-photo-item">
-                                    <a href="/uploads/warehouse/@photo.FileName" target="_blank">
-                                        <img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" />
-                                    </a>
-                                </div>
-                            }
-                            @if (Model.Items[index].Photos.Count == 0)
-                            {
-                                <span>—</span>
-                            }
-                            </div>
-                        </td>
                         <td>@(string.IsNullOrWhiteSpace(Model.Items[index].Barcode) ? "—" : Model.Items[index].Barcode)</td>
                         <td>@Model.Items[index].UnitPrice.ToString("0.00")</td>
                         <td>@Model.Items[index].DeliveryPrice.ToString("0.00")</td>
+                        <td>
+                            <div class="warehouse-photo-list">
+                                @foreach (var photo in Model.Items[index].Photos)
+                                {
+                                    <div class="warehouse-photo-item"><a href="/uploads/warehouse/@photo.FileName" target="_blank"><img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" /></a></div>
+                                }
+                                @if (Model.Items[index].Photos.Count == 0)
+                                {
+                                    <span>—</span>
+                                }
+                            </div>
+                        </td>
                     </tr>
                 }
                 </tbody>
@@ -103,10 +99,10 @@
                         <th>Product number</th>
                         <th>Quantity</th>
                         <th>Part name</th>
-                        <th>Photos</th>
                         <th>Barcode</th>
                         <th>Unit price</th>
                         <th>Delivery price</th>
+                        <th>Photos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -117,27 +113,20 @@
                         <td><input asp-for="Items[index].ProductNumber" list="warehouse-product-numbers" /></td>
                         <td><input asp-for="Items[index].Quantity" type="number" min="0" step="1" /></td>
                         <td><input asp-for="Items[index].PartName" /></td>
+                        <td><input asp-for="Items[index].Barcode" /></td>
+                        <td><input asp-for="Items[index].UnitPrice" type="number" min="0" step="0.01" /></td>
+                        <td><input asp-for="Items[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
                         <td>
                             <div class="warehouse-photo-picker" data-photo-picker>
-                                <label class="warehouse-photo-add">Choose photos
-                                    <input asp-for="Items[index].NewPhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple />
-                                </label>
+                                <label class="warehouse-photo-add">Choose photos<input asp-for="Items[index].NewPhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label>
                                 <div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview>
                                 @foreach (var photo in Model.Items[index].Photos)
                                 {
-                                    <div class="warehouse-photo-item" data-existing-photo-id="@photo.Id">
-                                        <a href="/uploads/warehouse/@photo.FileName" target="_blank">
-                                            <img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" />
-                                        </a>
-                                        <button type="button" class="warehouse-photo-delete" data-remove-existing-photo="@photo.Id" title="Remove photo" aria-label="Remove photo">×</button>
-                                    </div>
+                                    <div class="warehouse-photo-item" data-existing-photo-id="@photo.Id"><a href="/uploads/warehouse/@photo.FileName" target="_blank"><img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" /></a><button type="button" class="warehouse-photo-delete" data-remove-existing-photo="@photo.Id" title="Remove photo" aria-label="Remove photo">×</button></div>
                                 }
                                 </div>
                             </div>
                         </td>
-                        <td><input asp-for="Items[index].Barcode" /></td>
-                        <td><input asp-for="Items[index].UnitPrice" type="number" min="0" step="0.01" /></td>
-                        <td><input asp-for="Items[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
                     </tr>
                 }
                 </tbody>
@@ -220,7 +209,7 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="table-responsive">
             <table class="table warehouse-table warehouse-edit-table warehouse-delivery-table align-middle">
-                <thead><tr><th>No.</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Photos</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead>
+                <thead><tr><th>No.</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th>Photos</th><th></th></tr></thead>
                 <tbody id="delivery-items-body">
                 @for (var index = 0; index < Model.DeliveryItems.Count; index++)
                 {
@@ -239,10 +228,10 @@
                             </select>
                             <input asp-for="DeliveryItems[index].NewPartnerName" class="delivery-new-partner" placeholder="New partner name" />
                         </td>
-                        <td><div class="warehouse-photo-picker" data-photo-picker><label class="warehouse-photo-add">Choose photos<input asp-for="DeliveryItems[index].Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div></div></td>
                         <td><input asp-for="DeliveryItems[index].Barcode" /></td>
                         <td><input asp-for="DeliveryItems[index].UnitPrice" type="number" min="0" step="0.01" /></td>
                         <td><input asp-for="DeliveryItems[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
+                        <td><div class="warehouse-photo-picker" data-photo-picker><label class="warehouse-photo-add">Choose photos<input asp-for="DeliveryItems[index].Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div></div></td>
                         <td><button type="button" class="btn btn-link text-danger remove-delivery-row">×</button></td>
                     </tr>
                 }
@@ -256,7 +245,6 @@
                 <td><input name="DeliveryItems[__index__].Quantity" type="number" min="0" step="1" /></td>
                 <td><input name="DeliveryItems[__index__].PartName" required /></td>
                 <td><select name="DeliveryItems[__index__].PartnerId" class="delivery-partner-select"><option value="">Add new partner</option>@foreach (var partner in Model.Partners) { <option value="@partner.Id">@partner.Name</option> }</select><input name="DeliveryItems[__index__].NewPartnerName" class="delivery-new-partner" placeholder="New partner name" /></td>
-                <td><div class="warehouse-photo-picker" data-photo-picker><label class="warehouse-photo-add">Choose photos<input name="DeliveryItems[__index__].Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div></div></td>
                 <td><input name="DeliveryItems[__index__].Barcode" /></td>
                 <td><input name="DeliveryItems[__index__].UnitPrice" type="number" min="0" step="0.01" /></td>
                 <td><input name="DeliveryItems[__index__].DeliveryPrice" type="number" min="0" step="0.01" /></td>
