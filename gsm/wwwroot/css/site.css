@@ -898,7 +898,9 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .global-reference-frame { display: block; width: 100%; height: calc(100% - 3.25rem); border: 0; }
 .embedded-page .user-form-page { padding: 0; }
 .embedded-page .warehouse-list { width: 100%; max-width: none; min-height: 100%; margin: 0; padding: 1rem; border: 0; border-radius: 0; box-shadow: none; }
-.embedded-page .back-link { display: none; }
+.embedded-page .back-link, .embedded-page .dashboard-heading { display: none; }
+.embedded-page .warehouse-report-filters .warehouse-report-date-range .date-range-button { width: 100%; min-height: 40px; }
+.embedded-page .warehouse-report-filters .warehouse-report-date-range .date-range-value { display: none; }
 .global-window-minimize { display: grid; place-items: center; width: 2rem; height: 2rem; padding: 0; color: #64748b; font: inherit; border: 0; border-radius: .35rem; background: transparent; cursor: pointer; }
 .global-window-minimize:hover { color: #0f172a; background: #eaf1f7; }
 .global-window-taskbar { position: fixed; z-index: 1000; right: 1rem; bottom: 1rem; left: calc(250px + 1rem); display: flex; gap: .5rem; align-items: center; pointer-events: none; }

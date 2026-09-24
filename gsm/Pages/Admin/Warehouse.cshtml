@@ -86,9 +86,9 @@
 
 <dialog id="warehouse-edit-dialog" class="warehouse-edit-dialog">
     <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="warehouse-edit-form">
-        <div class="create-user-modal-header">
+        <div class="create-user-modal-header global-window-header">
             <h2>Edit warehouse</h2>
-            <button type="button" class="create-user-close" data-close-warehouse-edit aria-label="Close">×</button>
+            <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="edit" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-edit aria-label="Close">×</button></div>
         </div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="table-responsive">
@@ -141,9 +141,9 @@
 
 <dialog id="warehouse-item-dialog" class="create-user-dialog">
     <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="create-user-modal-form">
-        <div class="create-user-modal-header">
+        <div class="create-user-modal-header global-window-header">
             <h2>Add warehouse item</h2>
-            <button type="button" class="create-user-close" data-close-warehouse-item aria-label="Close">×</button>
+            <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="item" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-item aria-label="Close">×</button></div>
         </div>
         <div class="text-muted mb-3">A product number is generated automatically, but you can choose an existing number or enter a new one.</div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
@@ -202,9 +202,9 @@
 
 <dialog id="warehouse-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog">
     <form method="post" asp-page-handler="SaveDelivery" enctype="multipart/form-data" class="warehouse-edit-form">
-        <div class="create-user-modal-header">
+        <div class="create-user-modal-header global-window-header">
             <h2>Warehouse delivery</h2>
-            <button type="button" class="create-user-close" data-close-warehouse-delivery aria-label="Close">×</button>
+            <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="delivery" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-delivery aria-label="Close">×</button></div>
         </div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="table-responsive">
@@ -330,6 +330,25 @@
         const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
         const warehouseSaleDialog = document.getElementById('warehouse-sale-dialog');
         const warehouseDeliveryDialog = document.getElementById('warehouse-delivery-dialog');
+        const localTaskbar = document.getElementById('global-window-taskbar');
+
+        function setupLocalWindow(dialog, key, title) {
+            const minimize = dialog.querySelector('[data-minimize-local]');
+            const header = dialog.querySelector('.global-window-header');
+            const taskButton = document.createElement('button');
+            taskButton.type = 'button';
+            taskButton.className = 'global-taskbar-window';
+            taskButton.textContent = title;
+            taskButton.hidden = true;
+            localTaskbar.appendChild(taskButton);
+            minimize.addEventListener('click', () => { dialog.dataset.minimized = 'true'; dialog.close(); taskButton.hidden = false; });
+            taskButton.addEventListener('click', () => { dialog.dataset.minimized = 'false'; taskButton.hidden = true; dialog.showModal(); });
+            dialog.addEventListener('close', () => { if (dialog.dataset.minimized !== 'true') taskButton.hidden = true; });
+            header.addEventListener('pointerdown', event => { if (event.target.closest('button')) return; });
+        }
+        setupLocalWindow(warehouseEditDialog, 'edit', 'Edit warehouse');
+        setupLocalWindow(warehouseItemDialog, 'item', 'Add item');
+        setupLocalWindow(warehouseDeliveryDialog, 'delivery', 'Delivery');
 
         function setupPartnerChoice(selectId, partnerIdId, newNameId, newNameFieldId) {
             const select = document.getElementById(selectId);
