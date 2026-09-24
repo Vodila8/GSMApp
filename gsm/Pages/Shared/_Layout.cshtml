@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/gsm.styles.css" asp-append-version="true" />
 </head>
-<body class="@(Context.Request.Query.ContainsKey("embedded") ? "embedded-page" : "")">
+<body class="@(Context.Request.Query["embedded"].Count > 0 ? "embedded-page" : "")">
     @{
         var isIdentityPage = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
         var currentRole = User.IsInRole("Boss") ? "Boss" :
@@ -16,7 +16,7 @@
             User.IsInRole("Technician") ? "Technician" : "User";
     }
 
-    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage && !Context.Request.Query.ContainsKey("embedded"))
+    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage && Context.Request.Query["embedded"].Count == 0)
     {
         <div class="app-shell">
             <aside class="sidebar" aria-label="Main navigation">
@@ -100,7 +100,7 @@
             </dialog>
             <dialog id="global-reference-dialog" class="global-reference-dialog global-warehouse-dialog">
                 <div class="create-user-modal-header global-window-header"><h2>Warehouse Reference</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-reference aria-label="Close">×</button></div></div>
-                <iframe src="/WarehouseReport?embedded=true" title="Warehouse Reference" class="global-reference-frame"></iframe>
+                <iframe src="/WarehouseReport?embedded=1" title="Warehouse Reference" class="global-reference-frame"></iframe>
             </dialog>
             <div id="global-window-taskbar" class="global-window-taskbar" aria-label="Minimized windows"></div>
             <script>
