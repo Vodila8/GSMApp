@@ -9,7 +9,7 @@
         <a class="back-link" href="/Users">← Back to users</a>
         <h1 class="warehouse-title">@(Model.Customer!.CustomerName ?? Model.Customer.Email)</h1>
         <p class="text-muted">@Model.Customer.Email</p>
-        @if (!User.IsInRole("Boss"))
+        @if (!User.IsInRole("Boss") && !User.IsInRole("Administrator"))
         {
             <form method="post" asp-page-handler="SetPassword" asp-route-id="@Model.Customer.Id" class="user-password-card">
                 <div>
