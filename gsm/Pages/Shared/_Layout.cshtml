@@ -24,6 +24,7 @@
                     @if (User.IsInRole("Boss") || User.IsInRole("Administrator") || User.IsInRole("Technician"))
                     {
                         <a class="sidebar-link" href="/"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20H4v-8.5Zm3 5.5h3v-3h4v3h3v-4.1l-5-4.05-5 4.05V17Z" /></svg><span>Home</span></a>
+                        <a class="sidebar-link" href="/OrderOverview"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">▤</span><span>Orders</span></a>
                     }
                     @if (User.IsInRole("Boss") || User.IsInRole("Administrator"))
                     {
