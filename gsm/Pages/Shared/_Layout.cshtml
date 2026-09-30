@@ -346,6 +346,12 @@
             const button = event.currentTarget;
             const sidebar = button.closest('.sidebar');
             const collapsed = sidebar.classList.toggle('mobile-menu-collapsed');
+            const menu = sidebar.querySelector('.sidebar-menu');
+            const account = sidebar.querySelector('.sidebar-user');
+            const logout = sidebar.querySelector('.sidebar-logout');
+            menu.style.display = collapsed ? 'none' : '';
+            account.style.display = collapsed ? 'none' : '';
+            logout.style.display = collapsed ? 'none' : '';
             button.setAttribute('aria-expanded', String(!collapsed));
         });
     </script>
