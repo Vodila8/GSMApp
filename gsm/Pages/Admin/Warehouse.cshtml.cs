@@ -432,8 +432,7 @@ public class WarehouseModel : PageModel
         DeliveryItems = DeliveryItems.Where(item =>
             !string.IsNullOrWhiteSpace(item.PartName) ||
             !string.IsNullOrWhiteSpace(item.ProductNumber) ||
-            item.Quantity.HasValue ||
-            item.Photos.Count > 0).ToList();
+            item.Quantity.HasValue).ToList();
         if (DeliveryItems.Count == 0)
         {
             DeliveryItems.Add(new NewWarehouseItemInput());
@@ -457,20 +456,12 @@ public class WarehouseModel : PageModel
                 ModelState.AddModelError($"DeliveryItems[{index}].UnitPrice", "Unit price must be between 0 and 999999.99.");
             if (input.DeliveryPrice is < 0 || input.DeliveryPrice > 999999.99m)
                 ModelState.AddModelError($"DeliveryItems[{index}].DeliveryPrice", "Delivery price must be between 0 and 999999.99.");
-            if (input.Photos.Count(photo => photo.Length > 0) > 10)
-                ModelState.AddModelError($"DeliveryItems[{index}].Photos", "You can upload up to 10 photos at a time.");
-            foreach (var photo in input.Photos.Where(photo => photo.Length > 0))
-            {
-                if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
-                    ModelState.AddModelError($"DeliveryItems[{index}].Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
-            }
-
-            if (input.PartnerId.HasValue && !string.IsNullOrWhiteSpace(input.NewPartnerName))
-                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select an existing partner or enter a new partner, not both.");
-            else if (input.PartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == input.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
+            if (!input.PartnerId.HasValue)
+                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select an existing partner.");
+            else if (!string.IsNullOrWhiteSpace(input.NewPartnerName))
+                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "New partners cannot be created from delivery.");
+            else if (!await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == input.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
                 ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select a valid partner.");
-            else if (!input.PartnerId.HasValue && string.IsNullOrWhiteSpace(input.NewPartnerName))
-                ModelState.AddModelError($"DeliveryItems[{index}].PartnerId", "Select an existing partner or enter a new partner.");
         }
 
         if (!ModelState.IsValid)
@@ -487,22 +478,6 @@ public class WarehouseModel : PageModel
 
         foreach (var input in DeliveryItems)
         {
-            WarehousePartner? newPartner = null;
-            if (!string.IsNullOrWhiteSpace(input.NewPartnerName))
-            {
-                newPartner = await _dbContext.WarehousePartners.FirstOrDefaultAsync(partner =>
-                    partner.CompanyId == _tenantContext.CompanyId && partner.Name == input.NewPartnerName.Trim());
-                if (newPartner == null)
-                {
-                    newPartner = new WarehousePartner
-                    {
-                        CompanyId = _tenantContext.CompanyId,
-                        Name = input.NewPartnerName.Trim()
-                    };
-                    _dbContext.WarehousePartners.Add(newPartner);
-                }
-            }
-
             var productNumber = string.IsNullOrWhiteSpace(input.ProductNumber)
                 ? nextProductNumber++.ToString()
                 : NormalizeProductNumber(input.ProductNumber);
@@ -510,7 +485,6 @@ public class WarehouseModel : PageModel
             {
                 CompanyId = _tenantContext.CompanyId,
                 PartnerId = input.PartnerId,
-                Partner = newPartner,
                 PartName = input.PartName!.Trim(),
                 ProductNumber = productNumber,
                 Barcode = input.Barcode?.Trim(),
@@ -538,12 +512,6 @@ public class WarehouseModel : PageModel
         }
 
         _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
-        await _dbContext.SaveChangesAsync();
-        foreach (var (item, input) in createdItems.Zip(DeliveryItems))
-        {
-            if (input.Photos.Any(photo => photo.Length > 0))
-                await SavePhotosAsync(item, input.Photos.Where(photo => photo.Length > 0));
-        }
         await _dbContext.SaveChangesAsync();
 
         TempData["StatusMessage"] = $"Delivered {createdItems.Count} item(s).";
