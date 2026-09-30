@@ -4,6 +4,7 @@ using System.Security.Cryptography;
 using System.Text;
 using gsm.Data;
 using gsm.Services;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -21,19 +22,22 @@ public class UsersModel : PageModel
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<UsersModel> _logger;
+    private readonly IWebHostEnvironment _environment;
 
     public UsersModel(
         ApplicationDbContext dbContext,
         TenantContext tenantContext,
         UserManager<ApplicationUser> userManager,
         IEmailSender emailSender,
-        ILogger<UsersModel> logger)
+        ILogger<UsersModel> logger,
+        IWebHostEnvironment environment)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _userManager = userManager;
         _emailSender = emailSender;
         _logger = logger;
+        _environment = environment;
     }
 
     [BindProperty]
@@ -208,6 +212,36 @@ public class UsersModel : PageModel
             return RedirectToPage();
         }
 
+        var deletedPhotoPaths = new List<string>();
+        var orders = await _dbContext.ServiceOrders
+            .IgnoreQueryFilters()
+            .Where(order => order.CustomerId == user.Id)
+            .ToListAsync();
+        foreach (var order in orders)
+        {
+            order.CustomerId = null;
+            order.CustomerDeviceId = null;
+            order.Customer = null;
+            order.CustomerDevice = null;
+        }
+
+        var devices = await _dbContext.CustomerDevices
+            .IgnoreQueryFilters()
+            .Include(device => device.Photos)
+            .Where(device => device.CustomerId == user.Id)
+            .ToListAsync();
+        foreach (var device in devices)
+        {
+            foreach (var photo in device.Photos)
+                deletedPhotoPaths.Add(Path.Combine(_environment.WebRootPath, "uploads", "customer-devices", photo.FileName));
+        }
+        _dbContext.CustomerDevices.RemoveRange(devices);
+        var remainingMemberships = await _dbContext.UserCompanyMemberships
+            .IgnoreQueryFilters()
+            .Where(membership => membership.UserId == user.Id)
+            .ToListAsync();
+        _dbContext.UserCompanyMemberships.RemoveRange(remainingMemberships);
+
         var result = await _userManager.DeleteAsync(user);
         if (!result.Succeeded)
         {
@@ -216,6 +250,10 @@ public class UsersModel : PageModel
             return Page();
         }
 
+        foreach (var path in deletedPhotoPaths)
+        {
+            if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
         _logger.LogInformation("User {Email} was deleted by {AdministratorId}.", user.Email, currentUserId);
         TempData["StatusMessage"] = $"User {user.Email} was deleted.";
         return RedirectToPage();
