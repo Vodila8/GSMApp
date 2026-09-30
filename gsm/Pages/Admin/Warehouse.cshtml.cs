@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.EntityFrameworkCore;
 
 namespace gsm.Pages;
@@ -886,6 +887,7 @@ public class WarehouseModel : PageModel
         public int? PartnerId { get; set; }
         public string? PartnerName { get; set; }
         public List<WarehousePhotoInput> Photos { get; set; } = [];
+        [ValidateNever]
         public List<IFormFile> NewPhotos { get; set; } = [];
         public List<int> DeletedPhotoIds { get; set; } = [];
 
@@ -942,6 +944,7 @@ public class WarehouseModel : PageModel
     {
         public int? PartnerId { get; set; }
         public string? NewPartnerName { get; set; }
+        [ValidateNever]
         public List<IFormFile> Photos { get; set; } = [];
 
         [Display(Name = "Part Name")]
