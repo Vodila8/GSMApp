@@ -842,12 +842,13 @@ body { background: var(--ops-bg); color: var(--ops-text); }
   .global-warehouse-dialog.is-maximized { left: 0 !important; }
   .global-warehouse-dialog { min-width: 0; min-height: 0; resize: none; }
   .app-shell { display: block; }
-  .sidebar { display: block; min-height: auto; padding: .75rem; }
-  .sidebar-menu { display: flex; flex-direction: row; gap: .3rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: thin; }
+  .sidebar { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: start; gap: .5rem; min-height: auto; padding: .75rem; }
+  .sidebar-menu { display: flex; flex-direction: row; min-width: 0; gap: .3rem; overflow-x: auto; padding-bottom: .25rem; scrollbar-width: thin; }
+  .mobile-sidebar-toggle { width: auto; min-height: 42px; margin: 0; white-space: nowrap; }
   .sidebar-link { flex: 0 0 auto; width: auto; white-space: nowrap; }
   .sidebar-link[href="/"] { margin-bottom: 0; font-size: .84rem; }
-  .sidebar-user { position: static; margin-top: .55rem; }
-  .sidebar-logout { position: static; margin-top: .4rem; }
+  .sidebar-user { grid-column: 1 / -1; position: static; margin-top: .55rem; }
+  .sidebar-logout { grid-column: 1 / -1; position: static; margin-top: .4rem; }
   .sidebar-logout-button { width: auto; padding: .55rem .75rem; }
   .app-content { width: 100%; }
   .user-form-page { padding: .75rem; }
