@@ -923,7 +923,14 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .global-window-taskbar { position: fixed; z-index: 1000; right: 1rem; bottom: 1rem; left: calc(250px + 1rem); display: flex; gap: .5rem; align-items: center; pointer-events: none; }
 .global-taskbar-window { pointer-events: auto; padding: .6rem .85rem; color: #fff; font: inherit; font-size: .78rem; font-weight: 700; background: var(--ops-navy); border: 1px solid #33466f; border-radius: .45rem; box-shadow: 0 8px 18px rgb(15 23 42 / 20%); cursor: pointer; }
 .global-taskbar-window:hover { background: var(--ops-navy-soft); }
-@media (max-width: 700px) { .global-window-taskbar { left: 1rem; } }
+@media (max-width: 700px) {
+  .global-window-taskbar { left: 1rem; }
+  .global-warehouse-dialog,
+  .warehouse-sale-dialog,
+  .warehouse-delivery-dialog,
+  .global-reference-dialog { top: .5rem !important; right: .5rem !important; bottom: .5rem !important; left: .5rem !important; width: calc(100% - 1rem) !important; min-width: 0 !important; max-width: none !important; height: calc(100dvh - 1rem) !important; max-height: calc(100dvh - 1rem) !important; margin: 0 !important; }
+  .global-reference-frame { height: calc(100% - 3.25rem); }
+}
 .sidebar-link,
 .sidebar-link:hover,
 .sidebar-link:focus,
