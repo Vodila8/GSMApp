@@ -116,9 +116,9 @@ public class WarehouseModel : PageModel
             ModelState.AddModelError("NewItem.PartnerId", "Select an existing partner or enter a new partner.");
         else if (NewItem.PartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == NewItem.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
             ModelState.AddModelError("NewItem.PartnerId", "Select a valid partner.");
-        if (NewItem.Photos.Count > 10)
+        if (NewItem.Photos.Count(photo => photo.Length > 0) > 10)
             ModelState.AddModelError("NewItem.Photos", "You can upload up to 10 photos at a time.");
-        foreach (var photo in NewItem.Photos)
+        foreach (var photo in NewItem.Photos.Where(photo => photo.Length > 0))
         {
             if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
                 ModelState.AddModelError("NewItem.Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
@@ -169,9 +169,9 @@ public class WarehouseModel : PageModel
             UserEmail = User.Identity?.Name ?? "Unknown user"
         });
         await _dbContext.SaveChangesAsync();
-        if (NewItem.Photos.Count > 0)
+        if (NewItem.Photos.Any(photo => photo.Length > 0))
         {
-            await SavePhotosAsync(item, NewItem.Photos);
+            await SavePhotosAsync(item, NewItem.Photos.Where(photo => photo.Length > 0));
             await _dbContext.SaveChangesAsync();
         }
         TempData["StatusMessage"] = $"Added {item.PartName} to warehouse.";
@@ -213,11 +213,11 @@ public class WarehouseModel : PageModel
             ModelState.AddModelError("NewItem.ProductNumber", "Product number must contain digits only.");
         }
 
-        if (NewItem.Photos.Count > 10)
+        if (NewItem.Photos.Count(photo => photo.Length > 0) > 10)
         {
             ModelState.AddModelError("NewItem.Photos", "You can upload up to 10 photos at a time.");
         }
-        foreach (var photo in NewItem.Photos)
+        foreach (var photo in NewItem.Photos.Where(photo => photo.Length > 0))
         {
             if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
             {
@@ -226,11 +226,11 @@ public class WarehouseModel : PageModel
         }
         for (var index = 0; index < Items.Count; index++)
         {
-            if (Items[index].NewPhotos.Count > 10)
+            if (Items[index].NewPhotos.Count(photo => photo.Length > 0) > 10)
             {
                 ModelState.AddModelError($"Items[{index}].NewPhotos", "You can upload up to 10 photos at a time.");
             }
-            foreach (var photo in Items[index].NewPhotos)
+            foreach (var photo in Items[index].NewPhotos.Where(photo => photo.Length > 0))
             {
                 if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
                 {
@@ -384,9 +384,9 @@ public class WarehouseModel : PageModel
                 }
             }
 
-            if (input.NewPhotos.Count > 0)
+            if (input.NewPhotos.Any(photo => photo.Length > 0))
             {
-                await SavePhotosAsync(item, input.NewPhotos);
+                await SavePhotosAsync(item, input.NewPhotos.Where(photo => photo.Length > 0));
             }
         }
 
@@ -397,9 +397,9 @@ public class WarehouseModel : PageModel
             if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
         }
 
-        if (createdItem != null && NewItem.Photos.Count > 0)
+        if (createdItem != null && NewItem.Photos.Any(photo => photo.Length > 0))
         {
-            await SavePhotosAsync(createdItem, NewItem.Photos);
+            await SavePhotosAsync(createdItem, NewItem.Photos.Where(photo => photo.Length > 0));
             await _dbContext.SaveChangesAsync();
         }
 
@@ -457,9 +457,9 @@ public class WarehouseModel : PageModel
                 ModelState.AddModelError($"DeliveryItems[{index}].UnitPrice", "Unit price must be between 0 and 999999.99.");
             if (input.DeliveryPrice is < 0 || input.DeliveryPrice > 999999.99m)
                 ModelState.AddModelError($"DeliveryItems[{index}].DeliveryPrice", "Delivery price must be between 0 and 999999.99.");
-            if (input.Photos.Count > 10)
+            if (input.Photos.Count(photo => photo.Length > 0) > 10)
                 ModelState.AddModelError($"DeliveryItems[{index}].Photos", "You can upload up to 10 photos at a time.");
-            foreach (var photo in input.Photos)
+            foreach (var photo in input.Photos.Where(photo => photo.Length > 0))
             {
                 if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
                     ModelState.AddModelError($"DeliveryItems[{index}].Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
@@ -541,8 +541,8 @@ public class WarehouseModel : PageModel
         await _dbContext.SaveChangesAsync();
         foreach (var (item, input) in createdItems.Zip(DeliveryItems))
         {
-            if (input.Photos.Count > 0)
-                await SavePhotosAsync(item, input.Photos);
+            if (input.Photos.Any(photo => photo.Length > 0))
+                await SavePhotosAsync(item, input.Photos.Where(photo => photo.Length > 0));
         }
         await _dbContext.SaveChangesAsync();
 
