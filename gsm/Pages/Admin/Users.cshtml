@@ -31,7 +31,7 @@
                     <div class="order-card">
                         <a href="/UserOrders/@user.Id">
                             <strong>@user.Name</strong>
-                            @if (User.IsInRole("Boss"))
+                            @if (User.IsInRole("Boss") || User.IsInRole("Administrator"))
                             {
                                 <span>Customer ID: @(user.CustomerNumber ?? "—")</span>
                             }
