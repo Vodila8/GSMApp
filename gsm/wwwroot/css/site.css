@@ -921,6 +921,15 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .global-taskbar-window { pointer-events: auto; padding: .6rem .85rem; color: #fff; font: inherit; font-size: .78rem; font-weight: 700; background: var(--ops-navy); border: 1px solid #33466f; border-radius: .45rem; box-shadow: 0 8px 18px rgb(15 23 42 / 20%); cursor: pointer; }
 .global-taskbar-window:hover { background: var(--ops-navy-soft); }
 @media (max-width: 700px) { .global-window-taskbar { left: 1rem; } }
+.sidebar-link,
+.sidebar-link:hover,
+.sidebar-link:focus,
+.sidebar-link:visited { font-family: inherit; font-size: .84rem !important; font-weight: 600 !important; letter-spacing: 0; color: var(--ops-blue) !important; }
+.sidebar-link[href="/"],
+.sidebar-link[href="/"]:hover,
+.sidebar-link[href="/"]:focus { font-size: .84rem !important; font-weight: 600 !important; color: var(--ops-blue) !important; }
+.sidebar-link-icon { flex: 0 0 1.25rem; width: 1.25rem; height: 1.25rem; }
+.sidebar-action-icon { font-size: 1.05rem !important; font-weight: 700 !important; }
 .global-partner-combobox { position: relative; }
 .global-partner-combobox > input[type="search"] { display: block; width: 100%; min-height: 42px; padding: .6rem .75rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .5rem; outline: none; }
 .global-partner-combobox > input[type="search"]:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
