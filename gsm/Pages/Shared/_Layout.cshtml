@@ -20,6 +20,7 @@
     {
         <div class="app-shell">
             <aside class="sidebar" aria-label="Main navigation">
+                <button type="button" class="mobile-sidebar-toggle" data-toggle-mobile-sidebar aria-expanded="true">☰ <span>Menu</span></button>
                 <nav class="sidebar-menu">
                     @if (User.IsInRole("Boss") || User.IsInRole("Administrator") || User.IsInRole("Technician"))
                     {
@@ -340,6 +341,14 @@
         </div>
     }
 
+    <script>
+        document.querySelector('[data-toggle-mobile-sidebar]')?.addEventListener('click', event => {
+            const button = event.currentTarget;
+            const sidebar = button.closest('.sidebar');
+            const collapsed = sidebar.classList.toggle('mobile-menu-collapsed');
+            button.setAttribute('aria-expanded', String(!collapsed));
+        });
+    </script>
     <script src="~/lib/jquery/dist/jquery.min.js"></script>
     <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
     <script src="~/js/site.js" asp-append-version="true"></script>

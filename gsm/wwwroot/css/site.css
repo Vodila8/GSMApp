@@ -123,6 +123,7 @@ body {
   flex-direction: column;
   gap: .5rem;
 }
+.mobile-sidebar-toggle { display: none; }
 
 .sidebar-link {
   display: block;
@@ -834,6 +835,8 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 }
 
 @media (max-width: 700px) {
+  .mobile-sidebar-toggle { display: flex; align-items: center; gap: .55rem; width: 100%; padding: .6rem .75rem; margin-bottom: .55rem; color: #fff; font: inherit; font-size: .85rem; font-weight: 700; text-align: left; background: var(--ops-navy-soft); border: 1px solid #26365d; border-radius: .45rem; cursor: pointer; }
+  .sidebar.mobile-menu-collapsed .sidebar-menu { display: none; }
   .global-warehouse-dialog.is-maximized { left: 0 !important; }
   .global-warehouse-dialog { min-width: 0; min-height: 0; resize: none; }
   .app-shell { display: block; }
