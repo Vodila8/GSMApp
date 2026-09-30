@@ -19,6 +19,7 @@ public class MyOrderDetailsModel : PageModel
 
     public ServiceOrder? Order { get; private set; }
     public string BossEmail { get; private set; } = "support unavailable";
+    public string BossPhone { get; private set; } = "support unavailable";
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -40,13 +41,15 @@ public class MyOrderDetailsModel : PageModel
             return Forbid();
         }
 
-        BossEmail = await _dbContext.Users
+        var bossContact = await _dbContext.Users
             .IgnoreQueryFilters()
             .Where(user => user.CompanyId == Order.CompanyId &&
                            _dbContext.UserRoles.Any(userRole => userRole.UserId == user.Id &&
                                _dbContext.Roles.Any(role => role.Id == userRole.RoleId && role.Name == "Boss")))
-            .Select(user => user.Email)
-            .FirstOrDefaultAsync() ?? "support unavailable";
+            .Select(user => new { user.Email, user.PhoneNumber })
+            .FirstOrDefaultAsync();
+        BossEmail = bossContact?.Email ?? "support unavailable";
+        BossPhone = bossContact?.PhoneNumber ?? "support unavailable";
 
         return Page();
     }
