@@ -91,6 +91,7 @@
             <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="edit" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-edit aria-label="Close">×</button></div>
         </div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="warehouse-edit-search"><label for="warehouse-edit-search-input">Search items</label><input id="warehouse-edit-search-input" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
         <div class="table-responsive">
             <table class="table warehouse-table warehouse-edit-table align-middle">
                 <thead>
@@ -330,6 +331,7 @@
         const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
         const warehouseSaleDialog = document.getElementById('warehouse-sale-dialog');
         const warehouseDeliveryDialog = document.getElementById('warehouse-delivery-dialog');
+        const warehouseEditSearch = document.getElementById('warehouse-edit-search-input');
         const localTaskbar = document.getElementById('global-window-taskbar');
 
         function setupLocalWindow(dialog, key, title) {
@@ -419,6 +421,13 @@
             });
         }
 
+        warehouseEditSearch?.addEventListener('input', () => {
+            const term = warehouseEditSearch.value.trim().toLowerCase();
+            document.querySelectorAll('.warehouse-edit-table tbody tr').forEach(row => {
+                const values = [...row.querySelectorAll('input:not([type="hidden"])')].map(input => input.value.toLowerCase()).join(' ');
+                row.hidden = term !== '' && !values.includes(term);
+            });
+        });
         const saleProduct = document.getElementById('sale-product-select');
         const saleQuantity = document.getElementById('sale-quantity');
         const saleDiscount = document.getElementById('sale-discount');
@@ -514,7 +523,7 @@
         {
             <text>warehouseEditDialog.showModal();</text>
         }
-        @if (Model.ShowAddModal)
+        @if (Model.ShowAddModal || Model.ShowItemModal)
         {
             <text>warehouseItemDialog.showModal();</text>
         }

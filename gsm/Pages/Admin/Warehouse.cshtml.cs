@@ -54,6 +54,7 @@ public class WarehouseModel : PageModel
     public bool ShowSaleModal { get; private set; }
     public bool ShowDeliveryModal { get; private set; }
     public bool ShowEditModal { get; private set; }
+    public bool ShowItemModal { get; private set; }
     public bool ShowAddModal { get; private set; }
     public List<string> ProductNumbers { get; private set; } = [];
     public List<WarehousePartner> Partners { get; private set; } = [];
@@ -99,6 +100,7 @@ public class WarehouseModel : PageModel
 
     public async Task<IActionResult> OnPostSaveAsync()
     {
+        ShowItemModal = Items.Count == 0;
         for (var index = 0; index < Items.Count; index++)
         {
             if (string.IsNullOrWhiteSpace(Items[index].PartName))

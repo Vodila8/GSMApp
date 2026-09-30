@@ -67,6 +67,8 @@ body {
 .warehouse-report-filters { display: grid; grid-template-columns: minmax(170px, 1fr) repeat(3, minmax(150px, 1fr)) auto auto; gap: .65rem; align-items: end; padding: 1rem; margin-bottom: 1.25rem; background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .65rem; }
 .warehouse-report-filters label { display: block; margin-bottom: .35rem; color: #51627a; font-size: .75rem; font-weight: 700; }
 .warehouse-report-filters input, .warehouse-report-filters select { width: 100%; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); background: #fff; border: 1px solid var(--ops-border); border-radius: .45rem; }
+.warehouse-report-date-range .date-range-button { width: 100%; min-height: 40px; margin: 0; }
+.warehouse-report-date-range .date-range-value { display: none; }
 .warehouse-report-table { width: 100%; min-width: 1400px; table-layout: auto; }
 .warehouse-report-table th { white-space: nowrap; }
 .warehouse-report-table td { white-space: nowrap; }
@@ -303,6 +305,10 @@ body {
 .global-modal-total { display: flex; justify-content: flex-end; gap: .5rem; padding: 1rem 0; color: #475569; font-size: 1.1rem; font-weight: 700; }
 .global-modal-total strong { color: var(--ops-blue-dark); }
 .warehouse-edit-form { padding: 1.5rem; }
+.warehouse-edit-search { display: flex; align-items: end; gap: .6rem; margin-bottom: .75rem; }
+.warehouse-edit-search label { color: var(--ops-muted); font-size: .78rem; font-weight: 700; }
+.warehouse-edit-search input { flex: 1; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; }
+.warehouse-edit-search input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
 .warehouse-edit-table { min-width: 1050px; margin-bottom: 0; }
 .warehouse-edit-table input { width: 100%; min-width: 110px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
 
