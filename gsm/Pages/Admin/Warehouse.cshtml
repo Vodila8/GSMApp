@@ -53,7 +53,6 @@
                         <th>Barcode</th>
                         <th>Unit price (EUR)</th>
                         <th>Delivery price (EUR)</th>
-                        <th>Photos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -68,18 +67,6 @@
                         <td>@(string.IsNullOrWhiteSpace(Model.Items[index].Barcode) ? "—" : Model.Items[index].Barcode)</td>
                         <td>@Model.Items[index].UnitPrice.ToString("0.00")</td>
                         <td>@Model.Items[index].DeliveryPrice.ToString("0.00")</td>
-                        <td>
-                            <div class="warehouse-photo-list">
-                                @foreach (var photo in Model.Items[index].Photos)
-                                {
-                                    <div class="warehouse-photo-item"><a href="/uploads/warehouse/@photo.FileName" target="_blank"><img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" /></a></div>
-                                }
-                                @if (Model.Items[index].Photos.Count == 0)
-                                {
-                                    <span>—</span>
-                                }
-                            </div>
-                        </td>
                     </tr>
                 }
                 </tbody>
@@ -107,7 +94,6 @@
                         <th>Barcode</th>
                         <th>Unit price</th>
                         <th>Delivery price</th>
-                        <th>Photos</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -121,17 +107,6 @@
                         <td><input asp-for="Items[index].Barcode" /></td>
                         <td><input asp-for="Items[index].UnitPrice" type="number" min="0" step="0.01" /></td>
                         <td><input asp-for="Items[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
-                        <td>
-                            <div class="warehouse-photo-picker" data-photo-picker>
-                                <label class="warehouse-photo-add">Choose photos<input asp-for="Items[index].NewPhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label>
-                                <div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview>
-                                @foreach (var photo in Model.Items[index].Photos)
-                                {
-                                    <div class="warehouse-photo-item" data-existing-photo-id="@photo.Id"><a href="/uploads/warehouse/@photo.FileName" target="_blank"><img src="/uploads/warehouse/@photo.FileName" alt="@(photo.OriginalFileName ?? "Warehouse photo")" /></a><button type="button" class="warehouse-photo-delete" data-remove-existing-photo="@photo.Id" title="Remove photo" aria-label="Remove photo">×</button></div>
-                                }
-                                </div>
-                            </div>
-                        </td>
                     </tr>
                 }
                 </tbody>
@@ -180,16 +155,6 @@
             <input asp-for="NewItem.NewPartnerName" placeholder="Partner name" />
         </div>
         <div class="user-form-row"><label asp-for="NewItem.PartName">Part name</label><input asp-for="NewItem.PartName" required /></div>
-        <div class="user-form-row">
-            <label asp-for="NewItem.Photos">Photos</label>
-            <div class="warehouse-photo-picker" data-photo-picker>
-                <label class="warehouse-photo-add">Choose photos
-                    <input asp-for="NewItem.Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple />
-                </label>
-                <div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div>
-            </div>
-            <small class="text-muted">You can select multiple photos. Maximum 10 files, 10 MB each.</small>
-        </div>
         <div class="user-form-row user-form-row-two-columns">
             <div><label asp-for="NewItem.Quantity">Quantity</label><input asp-for="NewItem.Quantity" type="number" min="0" step="1" /></div>
             <div><label asp-for="NewItem.Barcode">Barcode</label><input asp-for="NewItem.Barcode" /></div>
@@ -214,7 +179,7 @@
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
         <div class="table-responsive">
             <table class="table warehouse-table warehouse-edit-table warehouse-delivery-table align-middle">
-                <thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th>Photos</th><th></th></tr></thead>
+                <thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead>
                 <tbody id="delivery-items-body">
                 @for (var index = 0; index < Model.DeliveryItems.Count; index++)
                 {
@@ -237,7 +202,6 @@
                         <td><input asp-for="DeliveryItems[index].Barcode" /></td>
                         <td><input asp-for="DeliveryItems[index].UnitPrice" type="number" min="0" step="0.01" /></td>
                         <td><input asp-for="DeliveryItems[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
-                        <td><div class="warehouse-photo-picker" data-photo-picker><label class="warehouse-photo-add">Choose photos<input asp-for="DeliveryItems[index].Photos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" data-photo-preview></div></div></td>
                         <td><button type="button" class="btn btn-link text-danger remove-delivery-row">×</button></td>
                     </tr>
                 }
@@ -378,53 +342,6 @@
             select.addEventListener('change', useNewPartner);
         }
 
-        function setupPhotoPicker(picker) {
-            const input = picker.querySelector('.warehouse-photo-input');
-            const preview = picker.querySelector('[data-photo-preview]');
-            let files = [];
-
-            const syncFiles = () => {
-                const dataTransfer = new DataTransfer();
-                files.forEach(file => dataTransfer.items.add(file));
-                input.files = dataTransfer.files;
-            };
-
-            const renderFiles = () => {
-                picker.querySelectorAll('[data-new-photo]').forEach(photo => photo.remove());
-                files.forEach((file, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'warehouse-photo-item';
-                    item.dataset.newPhoto = '';
-                    item.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="${file.name}"><button type="button" class="warehouse-photo-delete" data-remove-new-photo="${index}" title="Remove photo" aria-label="Remove photo">×</button>`;
-                    preview.appendChild(item);
-                });
-            };
-
-            input.addEventListener('change', () => {
-                files = Array.from(input.files);
-                renderFiles();
-            });
-            picker.addEventListener('click', event => {
-                const removeButton = event.target.closest('[data-remove-new-photo]');
-                if (removeButton) {
-                    files.splice(Number(removeButton.dataset.removeNewPhoto), 1);
-                    syncFiles();
-                    renderFiles();
-                    return;
-                }
-
-                const existingButton = event.target.closest('[data-remove-existing-photo]');
-                if (existingButton) {
-                    const deletedInput = document.createElement('input');
-                    deletedInput.type = 'hidden';
-                    deletedInput.name = input.name.replace('.NewPhotos', '.DeletedPhotoIds');
-                    deletedInput.value = existingButton.dataset.removeExistingPhoto;
-                    picker.appendChild(deletedInput);
-                    existingButton.closest('[data-existing-photo-id]').remove();
-                }
-            });
-        }
-
         warehouseEditSearch?.addEventListener('input', () => {
             const term = warehouseEditSearch.value.trim().toLowerCase();
             document.querySelectorAll('.warehouse-edit-table tbody tr').forEach(row => {
@@ -479,7 +396,6 @@
             select.addEventListener('change', update);
         }
 
-        document.querySelectorAll('[data-photo-picker]').forEach(setupPhotoPicker);
         document.querySelectorAll('[data-delivery-row]').forEach(row => { setupDeliveryProductRow(row); setupDeliveryPartner(row); });
         const deliveryItemsBody = document.getElementById('delivery-items-body');
         let deliveryIndex = deliveryItemsBody.querySelectorAll('[data-delivery-row]').length;
@@ -489,7 +405,6 @@
                 .replaceAll('__number__', deliveryIndex + 1);
             deliveryItemsBody.insertAdjacentHTML('beforeend', rowMarkup);
             const row = deliveryItemsBody.lastElementChild;
-            setupPhotoPicker(row.querySelector('[data-photo-picker]'));
             setupDeliveryProductRow(row);
             setupDeliveryPartner(row);
             deliveryIndex++;
