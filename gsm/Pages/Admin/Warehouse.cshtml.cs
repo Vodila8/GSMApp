@@ -426,6 +426,7 @@ public class WarehouseModel : PageModel
 
     public async Task<IActionResult> OnPostSaveDeliveryAsync()
     {
+        if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
         ShowDeliveryModal = true;
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
@@ -520,6 +521,7 @@ public class WarehouseModel : PageModel
 
     public async Task<IActionResult> OnPostCreatePartnerAsync()
     {
+        if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
         if (string.IsNullOrWhiteSpace(NewPartner.Name)) ModelState.AddModelError("NewPartner.Name", "Partner name is required.");
         if (NewPartner.Name?.Length > 200) ModelState.AddModelError("NewPartner.Name", "Partner name cannot exceed 200 characters.");
@@ -545,6 +547,7 @@ public class WarehouseModel : PageModel
 
     public async Task<IActionResult> OnPostSellBatchAsync()
     {
+        if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
         var selectedItems = SaleItems.Where(item => item.WarehouseItemId > 0).ToList();
         if (selectedItems.Count == 0)
@@ -637,6 +640,7 @@ public class WarehouseModel : PageModel
 
     public async Task<IActionResult> OnPostSellAsync()
     {
+        if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
         ShowSaleModal = true;
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
