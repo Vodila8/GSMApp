@@ -98,6 +98,85 @@ public class WarehouseModel : PageModel
         NewItem.ProductNumber ??= await GetNextProductNumberAsync();
     }
 
+    public async Task<IActionResult> OnPostAddItemAsync()
+    {
+        ShowItemModal = true;
+        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
+
+        if (string.IsNullOrWhiteSpace(NewItem.PartName))
+            ModelState.AddModelError("NewItem.PartName", "Part name is required.");
+        else if (NewItem.PartName.Length > 200)
+            ModelState.AddModelError("NewItem.PartName", "Part name cannot exceed 200 characters.");
+        if (!string.IsNullOrWhiteSpace(NewItem.ProductNumber) && !NewItem.ProductNumber.All(char.IsDigit))
+            ModelState.AddModelError("NewItem.ProductNumber", "Product number must contain digits only.");
+        if (NewItem.PartnerId.HasValue && !string.IsNullOrWhiteSpace(NewItem.NewPartnerName))
+            ModelState.AddModelError("NewItem.PartnerId", "Select an existing partner or enter a new partner, not both.");
+        else if (!NewItem.PartnerId.HasValue && string.IsNullOrWhiteSpace(NewItem.NewPartnerName))
+            ModelState.AddModelError("NewItem.PartnerId", "Select an existing partner or enter a new partner.");
+        else if (NewItem.PartnerId.HasValue && !await _dbContext.WarehousePartners.AnyAsync(partner => partner.Id == NewItem.PartnerId.Value && partner.CompanyId == _tenantContext.CompanyId))
+            ModelState.AddModelError("NewItem.PartnerId", "Select a valid partner.");
+        if (NewItem.Photos.Count > 10)
+            ModelState.AddModelError("NewItem.Photos", "You can upload up to 10 photos at a time.");
+        foreach (var photo in NewItem.Photos)
+        {
+            if (photo.Length > 10 * 1024 * 1024 || !IsAllowedPhoto(photo))
+                ModelState.AddModelError("NewItem.Photos", "Photos must be JPG, PNG, GIF or WEBP files up to 10 MB each.");
+        }
+
+        if (!ModelState.IsValid)
+        {
+            await LoadItemsAsync();
+            return Page();
+        }
+
+        WarehousePartner? newPartner = null;
+        if (!string.IsNullOrWhiteSpace(NewItem.NewPartnerName))
+        {
+            newPartner = await _dbContext.WarehousePartners.FirstOrDefaultAsync(partner => partner.CompanyId == _tenantContext.CompanyId && partner.Name == NewItem.NewPartnerName.Trim());
+            if (newPartner == null)
+            {
+                newPartner = new WarehousePartner { CompanyId = _tenantContext.CompanyId, Name = NewItem.NewPartnerName.Trim() };
+                _dbContext.WarehousePartners.Add(newPartner);
+            }
+        }
+        var item = new WarehouseItem
+        {
+            CompanyId = _tenantContext.CompanyId,
+            PartnerId = NewItem.PartnerId,
+            Partner = newPartner,
+            PartName = NewItem.PartName!.Trim(),
+            ProductNumber = string.IsNullOrWhiteSpace(NewItem.ProductNumber) ? await GetNextProductNumberAsync() : NormalizeProductNumber(NewItem.ProductNumber),
+            Barcode = NewItem.Barcode?.Trim(),
+            UnitPrice = NewItem.UnitPrice ?? 0,
+            DeliveryPrice = NewItem.DeliveryPrice ?? 0,
+            Quantity = NewItem.Quantity ?? 0,
+            DeliveryDate = NewItem.DeliveryDate
+        };
+        _dbContext.WarehouseItems.Add(item);
+        _dbContext.WarehouseAuditEntries.Add(new WarehouseAuditEntry
+        {
+            CompanyId = _tenantContext.CompanyId,
+            ItemName = item.PartName,
+            ProductNumber = item.ProductNumber,
+            Barcode = item.Barcode,
+            Action = "Item added",
+            QuantityBefore = 0,
+            QuantityAfter = item.Quantity,
+            QuantityChange = item.Quantity,
+            UnitPrice = item.UnitPrice,
+            UserId = User.FindFirstValue(ClaimTypes.NameIdentifier),
+            UserEmail = User.Identity?.Name ?? "Unknown user"
+        });
+        await _dbContext.SaveChangesAsync();
+        if (NewItem.Photos.Count > 0)
+        {
+            await SavePhotosAsync(item, NewItem.Photos);
+            await _dbContext.SaveChangesAsync();
+        }
+        TempData["StatusMessage"] = $"Added {item.PartName} to warehouse.";
+        return RedirectToPage();
+    }
+
     public async Task<IActionResult> OnPostSaveAsync()
     {
         ShowItemModal = Items.Count == 0;
