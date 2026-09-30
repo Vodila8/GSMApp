@@ -122,7 +122,9 @@ public class UsersModel : PageModel
         {
             UserName = CreateUser.Email,
             Email = CreateUser.Email,
-            CustomerNumber = await GenerateCustomerNumberAsync(),
+            CustomerNumber = string.Equals(CreateUser.Role, "User", StringComparison.OrdinalIgnoreCase)
+                ? await GenerateCustomerNumberAsync()
+                : null,
             CustomerName = CreateUser.CustomerName,
             PhoneNumber = CreateUser.PhoneNumber,
             CompanyId = _tenantContext.CompanyId,
@@ -150,14 +152,19 @@ public class UsersModel : PageModel
         var encodedToken = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(emailToken));
         var confirmationUrl = Url.Page("/Account/ConfirmEmail", null,
             new { area = "Identity", userId = user.Id, code = encodedToken }, Request.Scheme);
+        var applicationUrl = Url.Page("/Index", null, null, Request.Scheme);
+        var customerIdLine = user.CustomerNumber is null
+            ? string.Empty
+            : $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>";
         try
         {
             await _emailSender.SendEmailAsync(user.Email!, "Confirm your account",
                 $"Hello {WebUtility.HtmlEncode(CreateUser.CustomerName ?? "there")},<br><br>" +
-                $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>" +
+                customerIdLine +
                 "An account has been created for you. Use this temporary password after confirming your email.<br><br>" +
                 $"<b>Temporary password:</b> {WebUtility.HtmlEncode(generatedPassword)}<br><br>" +
-                $"<a href='{WebUtility.HtmlEncode(confirmationUrl)}'>Confirm email</a>");
+                $"<a href='{WebUtility.HtmlEncode(confirmationUrl)}' style='padding:8px 16px;background:#0d6efd;color:#fff;text-decoration:none;border-radius:4px;'>Confirm email</a><br><br>" +
+                $"<a href='{WebUtility.HtmlEncode(applicationUrl)}' style='padding:8px 16px;background:#198754;color:#fff;text-decoration:none;border-radius:4px;'>Open application</a>");
         }
         catch (Exception exception)
         {

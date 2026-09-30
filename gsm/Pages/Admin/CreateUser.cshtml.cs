@@ -98,7 +98,9 @@ public class CreateUserModel : PageModel
         {
             UserName = Input.Email,
             Email = Input.Email,
-            CustomerNumber = await GenerateCustomerNumberAsync(),
+            CustomerNumber = string.Equals(Input.Role, "User", StringComparison.OrdinalIgnoreCase)
+                ? await GenerateCustomerNumberAsync()
+                : null,
             CustomerName = Input.CustomerName,
             PhoneNumber = Input.PhoneNumber,
             CompanyId = _tenantContext.CompanyId,
@@ -137,13 +139,16 @@ public class CreateUserModel : PageModel
             values: null,
             protocol: Request.Scheme);
 
+        var customerIdLine = user.CustomerNumber is null
+            ? string.Empty
+            : $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>";
         try
         {
             await _emailSender.SendEmailAsync(
                 user.Email!,
                 "Confirm your account",
                 $"Hello {WebUtility.HtmlEncode(Input.CustomerName ?? "there")},<br><br>" +
-                $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>" +
+                customerIdLine +
                 "An account has been created for you. Use the password below to sign in after confirming your email.<br><br>" +
                 $"<b>Temporary password:</b> {WebUtility.HtmlEncode(generatedPassword)}<br><br>" +
                 $"<a href='{WebUtility.HtmlEncode(confirmationUrl)}' style='padding:8px 16px;background:#0d6efd;color:#fff;text-decoration:none;border-radius:4px;'>Confirm email</a><br><br>" +
