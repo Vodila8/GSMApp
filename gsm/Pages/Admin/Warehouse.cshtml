@@ -28,6 +28,10 @@
                 <a class="btn btn-outline-secondary" href="/Warehouse">Clear</a>
             }
         </form>
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success">@statusMessage</div>
+        }
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
         <datalist id="warehouse-product-numbers">

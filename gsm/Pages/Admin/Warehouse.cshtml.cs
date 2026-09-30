@@ -177,6 +177,7 @@ public class WarehouseModel : PageModel
 
         if (!ModelState.IsValid)
         {
+            await LoadItemsAsync();
             return Page();
         }
 
@@ -322,6 +323,8 @@ public class WarehouseModel : PageModel
             await _dbContext.SaveChangesAsync();
         }
 
+        if (createdItem != null)
+            TempData["StatusMessage"] = $"Added {createdItem.PartName} to warehouse.";
         return RedirectToPage();
     }
 
