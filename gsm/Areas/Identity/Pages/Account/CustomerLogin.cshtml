@@ -1,0 +1,40 @@
+@page "/CustomerLogin"
+@model gsm.Areas.Identity.Pages.Account.CustomerLoginModel
+@{
+    ViewData["Title"] = "Customer login";
+}
+
+<div class="auth-page">
+    <div class="auth-card">
+        <h2 class="auth-title">Customer login</h2>
+        <p class="text-muted">Enter your Customer ID and receive a one-time code by email.</p>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        @if (!Model.ShowCodeForm)
+        {
+            <form method="post" asp-page-handler="SendCode">
+                <div class="mb-3">
+                    <label asp-for="CustomerNumber" class="form-label">Customer ID</label>
+                    <input asp-for="CustomerNumber" class="form-control" autocomplete="username" inputmode="numeric" />
+                    <span asp-validation-for="CustomerNumber" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Send code</button>
+            </form>
+        }
+        else
+        {
+            <form method="post" asp-page-handler="VerifyCode">
+                <input asp-for="CustomerNumber" type="hidden" />
+                <div class="mb-3">
+                    <label asp-for="Code" class="form-label">One-time code</label>
+                    <input asp-for="Code" class="form-control" autocomplete="one-time-code" inputmode="numeric" maxlength="6" />
+                    <span asp-validation-for="Code" class="text-danger"></span>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Log in</button>
+            </form>
+            <p class="auth-switch"><a asp-page="/Account/CustomerLogin" asp-route-reset="true">Use another Customer ID</a></p>
+        }
+
+        <p class="auth-switch"><a asp-page="/Account/Login">Back to regular login</a></p>
+    </div>
+</div>
