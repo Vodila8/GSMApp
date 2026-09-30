@@ -14,9 +14,10 @@ public class OrderOverviewModel : PageModel
     public OrderOverviewModel(ApplicationDbContext dbContext) => _dbContext = dbContext;
 
     public string StatusFilter { get; private set; } = "all";
+    public string? OrderNumber { get; private set; }
     public List<OrderListItem> Orders { get; private set; } = [];
 
-    public async Task OnGetAsync(string? status)
+    public async Task OnGetAsync(string? status, string? orderNumber)
     {
         StatusFilter = status?.ToLowerInvariant() switch
         {
@@ -25,12 +26,20 @@ public class OrderOverviewModel : PageModel
             _ => "all"
         };
 
+        OrderNumber = orderNumber?.Trim();
         var today = DateOnly.FromDateTime(DateTime.Now);
         var query = _dbContext.ServiceOrders
             .Include(order => order.Customer)
             .Include(order => order.Stages)
             .OrderByDescending(order => order.CreatedAt)
             .AsQueryable();
+
+        if (!string.IsNullOrWhiteSpace(OrderNumber))
+        {
+            query = int.TryParse(OrderNumber, out var orderId)
+                ? query.Where(order => order.Id == orderId)
+                : query.Where(order => false);
+        }
 
         if (StatusFilter == "completed")
         {

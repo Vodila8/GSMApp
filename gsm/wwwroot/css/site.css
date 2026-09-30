@@ -738,6 +738,11 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .warehouse-title, .dashboard-heading h1 { color: var(--ops-text); font-weight: 800; letter-spacing: -.035em; }
 .dashboard-section { width: min(100% - 2rem, 1100px); margin: 2.25rem auto; }
 .dashboard-heading { margin-bottom: 1.5rem; }
+.home-order-search-form, .order-number-search-form { display: grid; gap: .35rem; margin-bottom: 1.25rem; }
+.home-order-search-form label, .order-number-search-form label { color: var(--ops-muted); font-size: .75rem; font-weight: 700; }
+.home-order-search-form > div, .order-number-search-form > div { display: flex; gap: .6rem; }
+.home-order-search-form input, .order-number-search-form input { flex: 1; min-width: 0; min-height: 40px; padding: .55rem .7rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; }
+.home-order-search-form input:focus, .order-number-search-form input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
 .dashboard-kicker, .repair-form-kicker { color: var(--ops-blue-dark); font-size: .68rem; letter-spacing: .12em; }
 .dashboard-stats { gap: .85rem; }
 .dashboard-stat { border-color: var(--ops-border); box-shadow: none; }

@@ -14,6 +14,10 @@
                 <h1>Repair order overview</h1>
             </div>
         </div>
+        <form method="get" action="/OrderOverview" class="home-order-search-form">
+            <label for="home-order-search">Search order number</label>
+            <div><input id="home-order-search" name="orderNumber" placeholder="Enter order number" inputmode="numeric" /><button class="btn btn-primary" type="submit">Search</button></div>
+        </form>
 
         <div class="dashboard-stats">
             <a class="dashboard-stat dashboard-stat-total" href="/OrderOverview">
