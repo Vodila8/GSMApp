@@ -276,6 +276,15 @@ public class OrdersModel : PageModel
 
     private async Task LoadOptionsAsync()
     {
+        var companyId = _tenantContext.CompanyId;
+        if (string.IsNullOrWhiteSpace(companyId))
+        {
+            Customers = [];
+            WarehouseItems = [];
+            CustomerDevices = [];
+            return;
+        }
+
         // Older customer accounts stored their first device directly on the user record.
         // Copy it once into the reusable devices list so it is available in the selector.
         var usersWithLegacyDevices = await _dbContext.Users
@@ -309,7 +318,7 @@ public class OrdersModel : PageModel
             .Select(item => item.UserId);
 
         Customers = await _dbContext.Users
-            .Where(user => (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)) && user.Status != UserStatus.Rejected && user.Status != UserStatus.Blocked && !employeeIds.Contains(user.Id))
+            .Where(user => (user.CompanyId == companyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == companyId)) && user.Status != UserStatus.Rejected && user.Status != UserStatus.Blocked && !employeeIds.Contains(user.Id))
             .OrderBy(user => user.CustomerName ?? user.Email)
             .ToListAsync();
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
