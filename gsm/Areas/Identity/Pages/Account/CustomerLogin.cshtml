@@ -27,7 +27,7 @@
                 <input asp-for="CustomerNumber" type="hidden" />
                 <div class="mb-3">
                     <label asp-for="Code" class="form-label">One-time code</label>
-                    <input asp-for="Code" class="form-control" autocomplete="one-time-code" inputmode="numeric" maxlength="6" />
+                    <input id="Code" name="Code" class="form-control" autocomplete="one-time-code" inputmode="numeric" maxlength="6" value="" />
                     <span asp-validation-for="Code" class="text-danger"></span>
                 </div>
                 <button type="submit" class="btn btn-primary w-100">Log in</button>
