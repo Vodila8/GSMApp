@@ -31,6 +31,7 @@
                     <div class="order-card">
                         <a href="/UserOrders/@user.Id">
                             <strong>@user.Name</strong>
+                            <span>Customer ID: @(user.CustomerNumber ?? "—")</span>
                             <span>@user.Email</span>
                             <span class="user-card-details">
                                 <span class="user-role">@user.Role</span>

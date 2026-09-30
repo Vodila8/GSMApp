@@ -35,7 +35,7 @@ public class LoginModel : PageModel
         if (ModelState.IsValid)
         {
             var user = await _userManager.FindByEmailAsync(Input.Login)
-                ?? await _userManager.Users.FirstOrDefaultAsync(item => item.PhoneNumber == Input.Login);
+                ?? await _userManager.Users.FirstOrDefaultAsync(item => item.PhoneNumber == Input.Login || item.CustomerNumber == Input.Login);
             if (user == null)
             {
                 ModelState.AddModelError(string.Empty, "Invalid email or password.");

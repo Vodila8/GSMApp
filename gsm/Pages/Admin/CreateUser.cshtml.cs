@@ -98,6 +98,7 @@ public class CreateUserModel : PageModel
         {
             UserName = Input.Email,
             Email = Input.Email,
+            CustomerNumber = await GenerateCustomerNumberAsync(),
             CustomerName = Input.CustomerName,
             PhoneNumber = Input.PhoneNumber,
             CompanyId = _tenantContext.CompanyId,
@@ -142,6 +143,7 @@ public class CreateUserModel : PageModel
                 user.Email!,
                 "Confirm your account",
                 $"Hello {WebUtility.HtmlEncode(Input.CustomerName ?? "there")},<br><br>" +
+                $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>" +
                 "An account has been created for you. Use the password below to sign in after confirming your email.<br><br>" +
                 $"<b>Temporary password:</b> {WebUtility.HtmlEncode(generatedPassword)}<br><br>" +
                 $"<a href='{WebUtility.HtmlEncode(confirmationUrl)}' style='padding:8px 16px;background:#0d6efd;color:#fff;text-decoration:none;border-radius:4px;'>Confirm email</a><br><br>" +
@@ -157,6 +159,17 @@ public class CreateUserModel : PageModel
 
         TempData["StatusMessage"] = "The user was created. A confirmation link and temporary password were sent to the specified email address.";
         return RedirectToPage();
+    }
+
+    private async Task<string> GenerateCustomerNumberAsync()
+    {
+        string number;
+        do
+        {
+            number = RandomNumberGenerator.GetInt32(10000000, 100000000).ToString();
+        }
+        while (await _userManager.Users.AnyAsync(user => user.CustomerNumber == number));
+        return number;
     }
 
     private static string GeneratePassword()

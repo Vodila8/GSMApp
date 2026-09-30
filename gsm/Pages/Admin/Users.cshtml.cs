@@ -105,6 +105,7 @@ public class UsersModel : PageModel
             });
             existingUser.EmailConfirmed = true;
             existingUser.Status = UserStatus.Active;
+            if (string.IsNullOrWhiteSpace(existingUser.CustomerNumber)) existingUser.CustomerNumber = await GenerateCustomerNumberAsync();
             if (!string.IsNullOrWhiteSpace(CreateUser.CustomerName)) existingUser.CustomerName = CreateUser.CustomerName.Trim();
             if (!string.IsNullOrWhiteSpace(CreateUser.PhoneNumber)) existingUser.PhoneNumber = CreateUser.PhoneNumber.Trim();
             await _dbContext.SaveChangesAsync();
@@ -117,6 +118,7 @@ public class UsersModel : PageModel
         {
             UserName = CreateUser.Email,
             Email = CreateUser.Email,
+            CustomerNumber = await GenerateCustomerNumberAsync(),
             CustomerName = CreateUser.CustomerName,
             PhoneNumber = CreateUser.PhoneNumber,
             CompanyId = _tenantContext.CompanyId,
@@ -148,6 +150,7 @@ public class UsersModel : PageModel
         {
             await _emailSender.SendEmailAsync(user.Email!, "Confirm your account",
                 $"Hello {WebUtility.HtmlEncode(CreateUser.CustomerName ?? "there")},<br><br>" +
+                $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>" +
                 "An account has been created for you. Use this temporary password after confirming your email.<br><br>" +
                 $"<b>Temporary password:</b> {WebUtility.HtmlEncode(generatedPassword)}<br><br>" +
                 $"<a href='{WebUtility.HtmlEncode(confirmationUrl)}'>Confirm email</a>");
@@ -290,11 +293,23 @@ public class UsersModel : PageModel
         Users = users.Select(user => new UserListItem
         {
             Id = user.Id,
+            CustomerNumber = user.CustomerNumber,
             Name = user.CustomerName ?? user.Email ?? "Unnamed user",
             Email = user.Email ?? string.Empty,
             PhoneNumber = user.PhoneNumber,
             Role = roleByUserId.GetValueOrDefault(user.Id, "User")
         }).ToList();
+    }
+
+    private async Task<string> GenerateCustomerNumberAsync()
+    {
+        string number;
+        do
+        {
+            number = RandomNumberGenerator.GetInt32(10000000, 100000000).ToString();
+        }
+        while (await _userManager.Users.AnyAsync(user => user.CustomerNumber == number));
+        return number;
     }
 
     private static string GeneratePassword()
@@ -326,6 +341,7 @@ public class UsersModel : PageModel
     public class UserListItem
     {
         public string Id { get; set; } = string.Empty;
+        public string? CustomerNumber { get; set; }
         public string Name { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string? PhoneNumber { get; set; }

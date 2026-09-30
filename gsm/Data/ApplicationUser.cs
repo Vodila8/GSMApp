@@ -14,6 +14,8 @@ public class ApplicationUser : IdentityUser
 
     public string? CustomerName { get; set; }
 
+    public string? CustomerNumber { get; set; }
+
     public string? CompanyId { get; set; }
 
     public string? Device { get; set; }
