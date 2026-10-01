@@ -59,7 +59,12 @@ public class AdminOrderModel : PageModel
 
         var customer = string.IsNullOrWhiteSpace(Input.CustomerId)
             ? null
-            : await _dbContext.Users.FirstOrDefaultAsync(user => user.Id == Input.CustomerId && user.CompanyId == order.CompanyId);
+            : await _dbContext.Users.FirstOrDefaultAsync(user =>
+                user.Id == Input.CustomerId &&
+                (user.CompanyId == order.CompanyId || _dbContext.UserCompanyMemberships.Any(membership =>
+                    membership.UserId == user.Id && membership.CompanyId == order.CompanyId)) &&
+                !_dbContext.UserRoles.Any(userRole => userRole.UserId == user.Id && _dbContext.Roles.Any(role =>
+                    role.Id == userRole.RoleId && (role.Name == "Boss" || role.Name == "Administrator" || role.Name == "Technician"))));
         if (!string.IsNullOrWhiteSpace(Input.CustomerId) && customer == null)
             ModelState.AddModelError("Input.CustomerId", "Select a registered customer.");
 
@@ -67,7 +72,7 @@ public class AdminOrderModel : PageModel
         if (Input.CustomerDeviceId.HasValue)
         {
             device = await _dbContext.CustomerDevices.FirstOrDefaultAsync(item =>
-                item.Id == Input.CustomerDeviceId && item.CustomerId == Input.CustomerId);
+                item.Id == Input.CustomerDeviceId && item.CompanyId == order.CompanyId && item.CustomerId == Input.CustomerId);
             if (device == null)
                 ModelState.AddModelError("Input.CustomerDeviceId", "Select one of this customer's devices.");
         }
@@ -221,8 +226,21 @@ public class AdminOrderModel : PageModel
             .Include(item => item.Adjustments)
             .FirstOrDefaultAsync(item => item.Id == id);
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
-        Customers = await _dbContext.Users.OrderBy(user => user.CustomerName ?? user.Email).ToListAsync();
-        CustomerDevices = await _dbContext.CustomerDevices.Include(item => item.Photos).OrderBy(item => item.DeviceType).ToListAsync();
+        if (Order != null)
+        {
+            Customers = await _dbContext.Users
+                .Where(user => (user.CompanyId == Order.CompanyId || _dbContext.UserCompanyMemberships.Any(membership =>
+                    membership.UserId == user.Id && membership.CompanyId == Order.CompanyId)) &&
+                    !_dbContext.UserRoles.Any(userRole => userRole.UserId == user.Id && _dbContext.Roles.Any(role =>
+                        role.Id == userRole.RoleId && (role.Name == "Boss" || role.Name == "Administrator" || role.Name == "Technician"))))
+                .OrderBy(user => user.CustomerName ?? user.Email)
+                .ToListAsync();
+            CustomerDevices = await _dbContext.CustomerDevices
+                .Where(item => item.CompanyId == Order.CompanyId)
+                .Include(item => item.Photos)
+                .OrderBy(item => item.DeviceType)
+                .ToListAsync();
+        }
         AdbReport = ParseDiagnosticReport(Order?.AdbDiagnosticReport);
         return Order != null;
     }
