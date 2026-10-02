@@ -82,7 +82,7 @@
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
                     <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div></div>
-                    <div class="user-form-row"><label for="global-delivery-search">Search parts in delivery</label><input id="global-delivery-search" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
+                    <div class="user-form-row global-delivery-search"><label for="global-delivery-search">Search parts in delivery</label><input id="global-delivery-search" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
                     <div class="table-responsive"><table class="table warehouse-table warehouse-delivery-table"><thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead><tbody id="global-delivery-items"></tbody></table></div>
                     <div class="global-modal-total">Total: <strong id="global-delivery-total">0.00 EUR</strong></div>
                     <button type="button" class="btn btn-outline-secondary btn-sm" id="global-add-delivery-row">+ Add item</button>
@@ -269,7 +269,7 @@
                             discount: row.querySelector('.global-sale-discount')?.value || 0,
                             note: row.querySelector('.global-sale-note')?.value || ''
                         }]));
-                        saleItemsBody.innerHTML = catalog.map((item, index) => `<tr data-id="${item.id}"><td>${index + 1}</td><td><input class="global-sale-select" type="checkbox"></td><td>${item.partName} · product ${item.productNumber || '—'} · barcode ${item.barcode || '—'}</td><td>${item.quantity}</td><td><input class="global-sale-quantity" type="number" min="1" max="${item.quantity}" value="1"></td><td><input class="global-sale-discount" type="number" min="0" max="100" step="0.01" value="0"></td><td><input class="global-sale-note" type="text" placeholder="Note"></td><td class="global-sale-row-total">0.00 EUR</td></tr>`).join('');
+                        saleItemsBody.innerHTML = catalog.map((item, index) => `<tr data-id="${item.id}"><td>${index + 1}</td><td><input class="global-sale-select" type="checkbox" ${item.quantity <= 0 ? 'disabled' : ''}></td><td>${item.partName} · product ${item.productNumber || '—'} · barcode ${item.barcode || '—'}</td><td>${item.quantity}</td><td><input class="global-sale-quantity" type="number" min="1" max="${Math.max(0, item.quantity)}" value="${item.quantity > 0 ? 1 : 0}" ${item.quantity <= 0 ? 'disabled' : ''}></td><td><input class="global-sale-discount" type="number" min="0" max="100" step="0.01" value="0"></td><td><input class="global-sale-note" type="text" placeholder="Note"></td><td class="global-sale-row-total">0.00 EUR</td></tr>`).join('');
                         saleItemsBody.querySelectorAll('tr').forEach(row => {
                             const item = catalog.find(product => String(product.id) === row.dataset.id);
                             const state = previousState.get(row.dataset.id);
@@ -278,7 +278,7 @@
                             row.hidden = term !== '' && !partNameMatches && !barcodeMatches && !state?.checked;
                             if (state) {
                                 row.querySelector('.global-sale-select').checked = state.checked;
-                                row.querySelector('.global-sale-quantity').value = state.quantity;
+                                row.querySelector('.global-sale-quantity').value = item.quantity > 0 ? Math.min(Math.max(1, Number(state.quantity) || 1), item.quantity) : 0;
                                 row.querySelector('.global-sale-discount').value = state.discount;
                                 row.querySelector('.global-sale-note').value = state.note;
                             }
