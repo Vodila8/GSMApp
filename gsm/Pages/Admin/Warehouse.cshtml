@@ -375,14 +375,21 @@
         saleQuantity.addEventListener('input', updateSaleTotal);
         saleDiscount.addEventListener('input', updateSaleTotal);
         updateSaleTotal();
-        const deliveryCatalog = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.Select(item => new { item.ProductNumber, item.PartName }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        const deliveryCatalog = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.Select(item => new { item.ProductNumber, item.PartName, item.UnitPrice, item.DeliveryPrice }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         function setupDeliveryProductRow(row) {
             const productNumber = row.querySelector('input[name$=".ProductNumber"]');
             const partName = row.querySelector('input[name$=".PartName"]');
             productNumber.addEventListener('input', () => {
                 const value = productNumber.value.trim().toLowerCase().replace(/^p-/, '');
                 const item = deliveryCatalog.find(product => String(product.productNumber || '').trim().toLowerCase().replace(/^p-/, '') === value);
-                if (item) partName.value = item.partName;
+                if (item) {
+                    partName.value = item.partName;
+                    const unitPrice = row.querySelector('input[name$=".UnitPrice"]');
+                    const deliveryPrice = row.querySelector('input[name$=".DeliveryPrice"]');
+                    if (unitPrice) unitPrice.value = item.unitPrice ?? 0;
+                    if (deliveryPrice) deliveryPrice.value = item.deliveryPrice ?? 0;
+                    updateDeliveryTotal();
+                }
             });
         }
         const deliverySearch = document.getElementById('warehouse-delivery-search-input');

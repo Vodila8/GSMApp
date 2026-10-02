@@ -291,7 +291,14 @@
                         productNumber.addEventListener('input', () => {
                             const value = productNumber.value.trim().toLowerCase().replace(/^p-/, '');
                             const item = catalog.find(product => String(product.productNumber || '').trim().toLowerCase().replace(/^p-/, '') === value);
-                            if (item) partName.value = item.partName;
+                            if (item) {
+                                partName.value = item.partName;
+                                const unitPrice = row.querySelector('input[name$=".UnitPrice"]');
+                                const deliveryPrice = row.querySelector('input[name$=".DeliveryPrice"]');
+                                if (unitPrice) unitPrice.value = item.unitPrice ?? 0;
+                                if (deliveryPrice) deliveryPrice.value = item.deliveryPrice ?? 0;
+                                updateDeliveryTotal();
+                            }
                         });
                     }
                     function updateDeliveryTotal() {

@@ -2,6 +2,7 @@
 @model gsm.Pages.WarehouseReportModel
 @{
     ViewData["Title"] = "Warehouse Reference";
+    var reportEmbedded = Request.Query["embedded"] == "1";
 }
 
 <div class="user-form-page">
@@ -15,11 +16,15 @@
         </div>
 
         <form method="get" class="warehouse-report-filters">
+            @if (reportEmbedded)
+            {
+                <input type="hidden" name="embedded" value="1" />
+            }
             <div><label for="report-type">Report</label><select id="report-type" name="Type">@if (Model.IsDeliveryReport) { <option value="sales">Sales</option><option value="deliveries" selected>Deliveries</option> } else { <option value="sales" selected>Sales</option><option value="deliveries">Deliveries</option> }</select></div>
             <div class="warehouse-report-date-range"><label for="report-date-range-button">Date range</label><input id="report-from" name="FromDate" type="hidden" value="@Model.FromDate?.ToString("yyyy-MM-dd")" /><input id="report-to" name="ToDate" type="hidden" value="@Model.ToDate?.ToString("yyyy-MM-dd")" /><button type="button" id="report-date-range-button" class="date-range-button">Select date range</button><span id="report-date-range-value" class="date-range-value">No dates selected</span></div>
             <div><label for="report-product">Product number</label><input id="report-product" name="ProductNumber" value="@Model.ProductNumber" placeholder="Product number" /></div>
             <button class="btn btn-primary" type="submit">Filter</button>
-            <a class="btn btn-outline-secondary" href="/WarehouseReport">Clear</a>
+            <a class="btn btn-outline-secondary" href="/WarehouseReport@(reportEmbedded ? "?embedded=1" : string.Empty)">Clear</a>
         </form>
 
         @if (Model.IsDeliveryReport)

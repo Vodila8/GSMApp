@@ -310,7 +310,7 @@ body {
 .warehouse-edit-search label { color: var(--ops-muted); font-size: .78rem; font-weight: 700; }
 .warehouse-edit-search input { flex: 1; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; }
 .warehouse-edit-search input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
-.warehouse-delivery-search { display: flex; align-items: end; gap: .6rem; margin-bottom: .75rem; }
+.warehouse-delivery-search { display: flex; flex-direction: column; align-items: stretch; gap: .3rem; margin-bottom: .75rem; }
 .warehouse-delivery-search label { color: var(--ops-muted); font-size: .78rem; font-weight: 700; }
 .warehouse-delivery-search input { flex: 1; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; }
 .warehouse-delivery-total { margin: .75rem 0; color: var(--ops-text); font-size: 1rem; text-align: right; }
