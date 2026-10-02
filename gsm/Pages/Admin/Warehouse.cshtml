@@ -177,6 +177,7 @@
             <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="delivery" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-delivery aria-label="Close">×</button></div>
         </div>
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="warehouse-delivery-search"><label for="warehouse-delivery-search-input">Search parts in delivery</label><input id="warehouse-delivery-search-input" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
         <div class="table-responsive">
             <table class="table warehouse-table warehouse-edit-table warehouse-delivery-table align-middle">
                 <thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead>
@@ -191,13 +192,12 @@
                         <td><input asp-for="DeliveryItems[index].PartName" required /></td>
                         <td>
                             <select asp-for="DeliveryItems[index].PartnerId" class="delivery-partner-select">
-                                <option value="">Add new partner</option>
+                                <option value="">Choose partner</option>
                                 @foreach (var partner in Model.Partners)
                                 {
                                     <option value="@partner.Id">@partner.Name</option>
                                 }
                             </select>
-                            <input asp-for="DeliveryItems[index].NewPartnerName" class="delivery-new-partner" placeholder="New partner name" />
                         </td>
                         <td><input asp-for="DeliveryItems[index].Barcode" /></td>
                         <td><input asp-for="DeliveryItems[index].UnitPrice" type="number" min="0" step="0.01" /></td>
@@ -208,6 +208,7 @@
                 </tbody>
             </table>
         </div>
+        <div class="warehouse-delivery-total">Total: <strong id="warehouse-delivery-total-value">0.00 EUR</strong></div>
         <template id="delivery-row-template">
             <tr class="delivery-item-row" data-delivery-row>
                 <td>__number__</td>
@@ -215,7 +216,7 @@
                 <td><input name="DeliveryItems[__index__].ProductNumber" list="warehouse-product-numbers" /></td>
                 <td><input name="DeliveryItems[__index__].Quantity" type="number" min="0" step="1" /></td>
                 <td><input name="DeliveryItems[__index__].PartName" required /></td>
-                <td><select name="DeliveryItems[__index__].PartnerId" class="delivery-partner-select"><option value="">Add new partner</option>@foreach (var partner in Model.Partners) { <option value="@partner.Id">@partner.Name</option> }</select><input name="DeliveryItems[__index__].NewPartnerName" class="delivery-new-partner" placeholder="New partner name" /></td>
+                <td><select name="DeliveryItems[__index__].PartnerId" class="delivery-partner-select"><option value="">Choose partner</option>@foreach (var partner in Model.Partners) { <option value="@partner.Id">@partner.Name</option> }</select></td>
                 <td><input name="DeliveryItems[__index__].Barcode" /></td>
                 <td><input name="DeliveryItems[__index__].UnitPrice" type="number" min="0" step="0.01" /></td>
                 <td><input name="DeliveryItems[__index__].DeliveryPrice" type="number" min="0" step="0.01" /></td>
@@ -384,19 +385,27 @@
                 if (item) partName.value = item.partName;
             });
         }
-        function setupDeliveryPartner(row) {
-            const select = row.querySelector('.delivery-partner-select');
-            const newPartner = row.querySelector('.delivery-new-partner');
-            const update = () => {
-                const isNew = !select.value;
-                newPartner.hidden = !isNew;
-                if (!isNew) newPartner.value = '';
-            };
-            update();
-            select.addEventListener('change', update);
+        const deliverySearch = document.getElementById('warehouse-delivery-search-input');
+        const deliveryTotalValue = document.getElementById('warehouse-delivery-total-value');
+        function updateDeliveryTotal() {
+            let total = 0;
+            document.querySelectorAll('#delivery-items-body [data-delivery-row]').forEach(row => {
+                const quantity = Number(row.querySelector('input[name$=".Quantity"]')?.value || 0);
+                const unitPrice = Number(row.querySelector('input[name$=".UnitPrice"]')?.value || 0);
+                const deliveryPrice = Number(row.querySelector('input[name$=".DeliveryPrice"]')?.value || 0);
+                total += quantity * unitPrice + deliveryPrice;
+            });
+            deliveryTotalValue.textContent = `${total.toFixed(2)} EUR`;
+        }
+        function filterDeliveryRows() {
+            const term = deliverySearch.value.trim().toLowerCase();
+            document.querySelectorAll('#delivery-items-body [data-delivery-row]').forEach(row => {
+                const values = [...row.querySelectorAll('input, select')].map(input => input.value.toLowerCase()).join(' ');
+                row.hidden = term !== '' && !values.includes(term);
+            });
         }
 
-        document.querySelectorAll('[data-delivery-row]').forEach(row => { setupDeliveryProductRow(row); setupDeliveryPartner(row); });
+        document.querySelectorAll('[data-delivery-row]').forEach(row => setupDeliveryProductRow(row));
         const deliveryItemsBody = document.getElementById('delivery-items-body');
         let deliveryIndex = deliveryItemsBody.querySelectorAll('[data-delivery-row]').length;
         document.getElementById('add-delivery-row').addEventListener('click', () => {
@@ -406,14 +415,18 @@
             deliveryItemsBody.insertAdjacentHTML('beforeend', rowMarkup);
             const row = deliveryItemsBody.lastElementChild;
             setupDeliveryProductRow(row);
-            setupDeliveryPartner(row);
             deliveryIndex++;
+            updateDeliveryTotal();
         });
         deliveryItemsBody.addEventListener('click', event => {
             if (event.target.closest('.remove-delivery-row') && deliveryItemsBody.querySelectorAll('[data-delivery-row]').length > 1) {
                 event.target.closest('[data-delivery-row]').remove();
+                updateDeliveryTotal();
             }
         });
+        deliveryItemsBody.addEventListener('input', updateDeliveryTotal);
+        deliverySearch.addEventListener('input', filterDeliveryRows);
+        updateDeliveryTotal();
         warehouseDeliveryDialog.querySelector('form').addEventListener('submit', () => {
             deliveryItemsBody.querySelectorAll('[data-delivery-row]').forEach((row, index) => {
                 row.querySelectorAll('input[name], select[name]').forEach(input => {
