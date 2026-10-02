@@ -316,10 +316,12 @@ body {
 .warehouse-delivery-total { margin: .75rem 0; color: var(--ops-text); font-size: 1rem; text-align: right; }
 .global-delivery-search { display: block !important; }
 .global-delivery-search label { display: block; margin-bottom: .3rem; color: var(--ops-muted); font-size: .78rem; font-weight: 700; }
-.global-delivery-search input { display: block; width: 100%; min-height: 40px; }
+.global-delivery-search input,
+.warehouse-delivery-search input { display: block; width: 100%; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); font: inherit; background: #fff; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; box-sizing: border-box; }
+.global-delivery-search input:focus,
+.warehouse-delivery-search input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
 .warehouse-delivery-search { display: block !important; }
 .warehouse-delivery-search label { display: block; margin-bottom: .3rem; }
-.warehouse-delivery-search input { display: block; width: 100%; }
 .warehouse-edit-table { min-width: 1050px; margin-bottom: 0; }
 .warehouse-edit-table input { width: 100%; min-width: 110px; padding: .45rem .55rem; border: 1px solid #cbd5e1; border-radius: .4rem; }
 
