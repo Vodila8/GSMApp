@@ -20,6 +20,9 @@ public class OrderTrackingModel : PageModel
     public List<StageInput> Stages { get; set; } = [];
 
     public ServiceOrder? Order { get; private set; }
+    public Company? Company { get; private set; }
+    public DateOnly? FinalEndDate => Order?.Stages
+        .FirstOrDefault(stage => stage.IsFixed && stage.Name == "End")?.EndDate;
 
     public async Task<IActionResult> OnGetAsync(int id)
     {
@@ -117,8 +120,13 @@ public class OrderTrackingModel : PageModel
     {
         Order = await _dbContext.ServiceOrders
             .Include(order => order.Customer)
+            .Include(order => order.Lines)
+                .ThenInclude(line => line.WarehouseItem)
             .Include(order => order.Stages.OrderBy(stage => stage.SortOrder))
             .FirstOrDefaultAsync(order => order.Id == id);
+        Company = Order == null
+            ? null
+            : await _dbContext.Companies.FirstOrDefaultAsync(company => company.Id == Order.CompanyId);
         return Order != null;
     }
 

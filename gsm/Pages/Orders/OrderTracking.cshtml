@@ -61,8 +61,63 @@
         </div>
         <button class="btn btn-outline-secondary btn-sm" id="add-stage" type="button">+ Add Stage</button>
         <button class="btn btn-primary" type="submit">Save Stages</button>
+        @if (Model.FinalEndDate.HasValue)
+        {
+            <button class="btn btn-outline-primary" type="button" id="open-warranty-card">Create warranty card</button>
+        }
     </form>
 </div>
+
+@if (Model.FinalEndDate.HasValue)
+{
+    <dialog class="warranty-card-dialog" id="warranty-card-dialog">
+        <div class="create-user-modal-header">
+            <h2>Warranty card</h2>
+            <button type="button" class="create-user-close" id="close-warranty-card" aria-label="Close">×</button>
+        </div>
+        <div class="warranty-card-controls">
+            <label>Warranty start date<input id="warranty-start-date" type="date" value="@Model.FinalEndDate.Value.ToString("yyyy-MM-dd")" readonly /></label>
+            <label>Warranty period
+                <select id="warranty-period-months">
+                    <option value="1">1 month</option>
+                    <option value="3">3 months</option>
+                    <option value="6">6 months</option>
+                    <option value="12" selected>12 months</option>
+                    <option value="24">24 months</option>
+                </select>
+            </label>
+            <label>Warranty expiration date<input id="warranty-end-date" type="date" readonly /></label>
+        </div>
+        <div class="warranty-card-document" id="warranty-card-document">
+            <div class="warranty-card-company">@(Model.Company?.Name ?? "Company")</div>
+            <h3>Warranty card</h3>
+            <p><strong>Order #@Model.Order!.Id</strong></p>
+            <table>
+                <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Device</th><th>Qty.</th><th>Serial number</th><th>Warranty</th></tr></thead>
+                <tbody>
+                @if (Model.Order.Lines.Count == 0)
+                {
+                    <tr><td>1</td><td>—</td><td>@(Model.Order.ProblemOrRepair ?? "Repair service")</td><td>@(Model.Order.Device ?? "—")</td><td>1</td><td>@(Model.Order.DeviceModelAndSerialNumber ?? "—")</td><td class="warranty-months-value"></td></tr>
+                }
+                else
+                {
+                    @for (var index = 0; index < Model.Order.Lines.Count; index++)
+                    {
+                        var line = Model.Order.Lines[index];
+                        <tr><td>@(index + 1)</td><td>@(line.WarehouseItem?.ProductNumber ?? "—")</td><td>@line.Description</td><td>@(Model.Order.Device ?? "—")</td><td>@line.Quantity.ToString("0.000")</td><td>@(Model.Order.DeviceModelAndSerialNumber ?? "—")</td><td class="warranty-months-value"></td></tr>
+                    }
+                }
+                </tbody>
+            </table>
+            <p class="warranty-card-text">The warranty period starts from the date of the warranty card. The warranty service is provided by the company listed above.</p>
+            <div class="warranty-card-signatures"><span>Customer: ................................</span><span>Supplier: ................................</span></div>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" id="print-warranty-card">Print</button>
+            <button type="button" class="btn btn-outline-secondary" id="close-warranty-card-bottom">Close</button>
+        </div>
+    </dialog>
+}
 
 <dialog class="range-calendar" id="range-calendar">
     <div class="range-calendar-header">
@@ -198,4 +253,30 @@
         });
         document.getElementById('close-calendar').addEventListener('click', () => calendar.close());
     </script>
+    @if (Model.FinalEndDate.HasValue)
+    {
+        <script>
+            const warrantyDialog = document.getElementById('warranty-card-dialog');
+            const warrantyStart = document.getElementById('warranty-start-date');
+            const warrantyMonths = document.getElementById('warranty-period-months');
+            const warrantyEnd = document.getElementById('warranty-end-date');
+            const updateWarrantyCard = () => {
+                const date = new Date(`${warrantyStart.value}T12:00:00`);
+                date.setMonth(date.getMonth() + Number(warrantyMonths.value));
+                warrantyEnd.value = toIsoDate(date);
+                document.querySelectorAll('.warranty-months-value').forEach(cell => cell.textContent = `${warrantyMonths.value} months`);
+            };
+            document.getElementById('open-warranty-card').addEventListener('click', () => { updateWarrantyCard(); warrantyDialog.showModal(); });
+            document.getElementById('close-warranty-card').addEventListener('click', () => warrantyDialog.close());
+            document.getElementById('close-warranty-card-bottom').addEventListener('click', () => warrantyDialog.close());
+            warrantyMonths.addEventListener('change', updateWarrantyCard);
+            document.getElementById('print-warranty-card').addEventListener('click', () => {
+                updateWarrantyCard();
+                const printWindow = window.open('', '_blank', 'width=1000,height=800');
+                if (!printWindow) return;
+                printWindow.document.write(`<html><head><title>Warranty card</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}.warranty-card-document{max-width:1000px;margin:auto}.warranty-card-company{text-align:center;font-size:22px;font-weight:700;margin-bottom:12px}.warranty-card-document h3{text-align:center}.warranty-card-document table{width:100%;border-collapse:collapse}.warranty-card-document th,.warranty-card-document td{border:1px solid #111;padding:8px;text-align:center}.warranty-card-text{margin-top:18px;line-height:1.45}.warranty-card-signatures{display:flex;justify-content:space-between;margin-top:55px}</style></head><body>${document.getElementById('warranty-card-document').outerHTML}</body></html>`);
+                printWindow.document.close(); printWindow.focus(); printWindow.print();
+            });
+        </script>
+    }
 }

@@ -471,6 +471,22 @@ body {
 .tracking-form {
   max-width: 1000px;
 }
+.warranty-card-dialog { width: min(1100px, calc(100% - 2rem)); max-width: 1100px; max-height: calc(100vh - 2rem); padding: 0; border: 0; border-radius: .7rem; box-shadow: 0 1.5rem 4rem rgb(15 23 42 / 28%); }
+.warranty-card-dialog::backdrop { background: rgb(15 23 42 / 55%); }
+.warranty-card-dialog .create-user-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--ops-border); }
+.warranty-card-dialog .create-user-modal-header h2 { margin: 0; color: var(--ops-text); font-size: 1.1rem; }
+.warranty-card-controls { display: grid; grid-template-columns: repeat(3, 1fr); gap: .75rem; padding: 1rem 1.25rem; background: #f7fafc; }
+.warranty-card-controls label { color: var(--ops-muted); font-size: .78rem; font-weight: 700; }
+.warranty-card-controls input, .warranty-card-controls select { display: block; width: 100%; min-height: 40px; margin-top: .3rem; padding: .5rem .65rem; color: var(--ops-text); background: #fff; border: 1px solid var(--ops-border); border-radius: .45rem; box-sizing: border-box; }
+.warranty-card-document { margin: 1rem 1.25rem; padding: 1rem; overflow-x: auto; color: #111; background: #fff; border: 1px solid #111; }
+.warranty-card-company { text-align: center; font-size: 1.2rem; font-weight: 700; }
+.warranty-card-document h3 { margin: .5rem 0; text-align: center; }
+.warranty-card-document table { width: 100%; min-width: 700px; border-collapse: collapse; }
+.warranty-card-document th, .warranty-card-document td { padding: .4rem; border: 1px solid #111; font-size: .8rem; text-align: center; }
+.warranty-card-text { line-height: 1.45; }
+.warranty-card-signatures { display: flex; justify-content: space-between; margin-top: 3rem; }
+.warranty-card-dialog .create-user-modal-actions { display: flex; justify-content: flex-end; gap: .5rem; padding: 0 1.25rem 1.25rem; }
+@media (max-width: 700px) { .warranty-card-controls { grid-template-columns: 1fr; } .warranty-card-dialog { width: calc(100% - 1rem); max-height: calc(100dvh - 1rem); } .warranty-card-signatures { flex-direction: column; gap: 1.5rem; } }
 
 .date-range-button {
   width: auto;
