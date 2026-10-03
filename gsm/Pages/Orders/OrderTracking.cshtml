@@ -6,7 +6,13 @@
 
 <div class="user-form-page">
     <form class="warehouse-list tracking-form" method="post" asp-page-handler="Save">
-        <h1 class="warehouse-title">Order Tracking</h1>
+        <div class="tracking-heading">
+            <h1 class="warehouse-title">Order Tracking</h1>
+            @if (Model.FinalEndDate.HasValue)
+            {
+                <button class="btn btn-outline-primary" type="button" id="open-warranty-card">Create warranty card</button>
+            }
+        </div>
         <p class="tracking-order-details">
             <strong>Order #@Model.Order!.Id</strong><br />
             Customer: @(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)<br />
@@ -61,10 +67,6 @@
         </div>
         <button class="btn btn-outline-secondary btn-sm" id="add-stage" type="button">+ Add Stage</button>
         <button class="btn btn-primary" type="submit">Save Stages</button>
-        @if (Model.FinalEndDate.HasValue)
-        {
-            <button class="btn btn-outline-primary" type="button" id="open-warranty-card">Create warranty card</button>
-        }
     </form>
 </div>
 
