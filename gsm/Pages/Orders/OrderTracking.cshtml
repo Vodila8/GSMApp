@@ -88,18 +88,18 @@
             <h3>Warranty card</h3>
             <p><strong>Order #@Model.Order!.Id</strong></p>
             <table>
-                <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Qty.</th><th>Warranty</th></tr></thead>
+                <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Qty.</th><th>Serial number</th><th>Warranty</th></tr></thead>
                 <tbody>
                 @if (Model.Order.Lines.Count == 0)
                 {
-                    <tr><td>1</td><td><input class="warranty-editable" type="text" value="" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.ProblemOrRepair ?? "Repair service")" /></td><td>1</td><td class="warranty-months-value"></td></tr>
+                    <tr><td>1</td><td><input class="warranty-editable" type="text" value="" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.ProblemOrRepair ?? "Repair service")" /></td><td>1</td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td></tr>
                 }
                 else
                 {
                     @for (var index = 0; index < Model.Order.Lines.Count; index++)
                     {
                         var line = Model.Order.Lines[index];
-                        <tr><td>@(index + 1)</td><td><input class="warranty-editable" type="text" value="@(line.WarehouseItem?.ProductNumber ?? "")" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@line.Description" /></td><td>@line.Quantity.ToString("0.000")</td><td class="warranty-months-value"></td></tr>
+                        <tr><td>@(index + 1)</td><td><input class="warranty-editable" type="text" value="@(line.WarehouseItem?.ProductNumber ?? "")" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@line.Description" /></td><td>@line.Quantity.ToString("0.000")</td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td></tr>
                     }
                 }
                 </tbody>
