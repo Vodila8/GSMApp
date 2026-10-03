@@ -8,7 +8,17 @@
     <section class="warehouse-list order-form repair-form admin-order-page">
         <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
         <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
-        <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
+        <div class="admin-order-actions">
+            <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
+            @if (Model.FinalEndDate.HasValue)
+            {
+                <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">@(Model.Order.WarrantyEndDate.HasValue ? "Open warranty card" : "Create warranty card")</a>
+            }
+        </div>
+        @if (Model.Order.WarrantyEndDate.HasValue)
+        {
+            <div class="alert alert-success admin-order-warranty-status">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</div>
+        }
 
         <form method="post" asp-page-handler="ScanAdb" class="mt-3">
             <button class="btn btn-outline-success" type="submit">Scan Phone with ADB</button>

@@ -23,6 +23,8 @@ public class AdminOrderModel : PageModel
     }
 
     public ServiceOrder? Order { get; private set; }
+    public DateOnly? FinalEndDate => Order?.Stages
+        .FirstOrDefault(stage => stage.IsFixed && stage.Name == "End")?.EndDate;
     public List<WarehouseItem> WarehouseItems { get; private set; } = [];
     public List<ApplicationUser> Customers { get; private set; } = [];
     public List<CustomerDevice> CustomerDevices { get; private set; } = [];
@@ -223,7 +225,9 @@ public class AdminOrderModel : PageModel
             .Include(item => item.CustomerDevice!)
                 .ThenInclude(device => device.Photos)
             .Include(item => item.Lines)
+                .ThenInclude(line => line.WarehouseItem)
             .Include(item => item.Adjustments)
+            .Include(item => item.Stages.OrderBy(stage => stage.SortOrder))
             .FirstOrDefaultAsync(item => item.Id == id);
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
         if (Order != null)
