@@ -32,6 +32,12 @@ public class ServiceOrder
 
     public decimal TotalPrice { get; set; }
 
+    public DateOnly? WarrantyStartDate { get; set; }
+
+    public int? WarrantyMonths { get; set; }
+
+    public DateOnly? WarrantyEndDate { get; set; }
+
     public List<ServiceOrderLine> Lines { get; set; } = [];
 
     public List<OrderStage> Stages { get; set; } = [];

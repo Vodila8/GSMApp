@@ -42,6 +42,14 @@
                 </ol>
             </section>
 
+            @if (Model.Order.WarrantyEndDate.HasValue)
+            {
+                <section class="customer-order-panel customer-order-warranty-panel">
+                    <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">✓</span><div><h2>Warranty</h2><p>Your warranty is active.</p></div></div>
+                    <p class="customer-order-warranty-active">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</p>
+                </section>
+            }
+
             <div class="customer-order-side-column">
                 <section class="customer-order-panel customer-order-invoice-panel">
                     <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">▣</span><div><h2>Device &amp; Service Invoice</h2><p>Summary of your repair order.</p></div></div>

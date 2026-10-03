@@ -19,6 +19,9 @@ public class OrderTrackingModel : PageModel
     [BindProperty]
     public List<StageInput> Stages { get; set; } = [];
 
+    [BindProperty]
+    public int WarrantyMonths { get; set; } = 12;
+
     public ServiceOrder? Order { get; private set; }
     public Company? Company { get; private set; }
     public DateOnly? FinalEndDate => Order?.Stages
@@ -31,6 +34,7 @@ public class OrderTrackingModel : PageModel
             return NotFound();
         }
 
+        WarrantyMonths = Order.WarrantyMonths ?? 12;
         Stages = Order!.Stages.Select(stage => new StageInput
         {
             Id = stage.Id,
@@ -96,6 +100,26 @@ public class OrderTrackingModel : PageModel
 
         await _dbContext.SaveChangesAsync();
         TempData["StatusMessage"] = "Order stages have been updated.";
+        return RedirectToPage(new { id });
+    }
+
+    public async Task<IActionResult> OnPostSaveWarrantyAsync(int id)
+    {
+        if (WarrantyMonths < 1 || WarrantyMonths > 120)
+        {
+            ModelState.AddModelError(nameof(WarrantyMonths), "Warranty period must be between 1 and 120 months.");
+            await LoadOrderAsync(id);
+            return Page();
+        }
+
+        if (!await LoadOrderAsync(id) || !FinalEndDate.HasValue)
+            return NotFound();
+
+        Order!.WarrantyStartDate = FinalEndDate.Value;
+        Order.WarrantyMonths = WarrantyMonths;
+        Order.WarrantyEndDate = FinalEndDate.Value.AddMonths(WarrantyMonths);
+        await _dbContext.SaveChangesAsync();
+        TempData["StatusMessage"] = "Warranty information has been saved.";
         return RedirectToPage(new { id });
     }
 

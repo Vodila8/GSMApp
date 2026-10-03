@@ -73,13 +73,14 @@
 @if (Model.FinalEndDate.HasValue)
 {
     <dialog class="warranty-card-dialog" id="warranty-card-dialog">
+        <form method="post" asp-page-handler="SaveWarranty" asp-route-id="@Model.Order!.Id" id="warranty-card-form">
         <div class="create-user-modal-header">
             <h2>Warranty card</h2>
             <button type="button" class="create-user-close" id="close-warranty-card" aria-label="Close">×</button>
         </div>
         <div class="warranty-card-controls">
             <label>Warranty start date<input id="warranty-start-date" type="date" value="@Model.FinalEndDate.Value.ToString("yyyy-MM-dd")" readonly /></label>
-            <label>Warranty period (months)<input id="warranty-period-months" type="number" min="1" step="1" value="12" /></label>
+            <label>Warranty period (months)<input id="warranty-period-months" name="WarrantyMonths" type="number" min="1" max="120" step="1" value="@(Model.Order.WarrantyMonths ?? 12)" /></label>
             <label>Warranty expiration date<input id="warranty-end-date" type="date" readonly /></label>
         </div>
         <div class="warranty-card-document" id="warranty-card-document">
@@ -109,7 +110,9 @@
         <div class="create-user-modal-actions">
             <button type="button" class="btn btn-outline-secondary" id="print-warranty-card">Print</button>
             <button type="button" class="btn btn-outline-secondary" id="close-warranty-card-bottom">Close</button>
+            <button type="submit" class="btn btn-primary">Save warranty</button>
         </div>
+        </form>
     </dialog>
 }
 

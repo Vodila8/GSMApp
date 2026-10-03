@@ -474,6 +474,8 @@ body {
 .tracking-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .tracking-heading .warehouse-title { margin: 0; }
 @media (max-width: 700px) { .tracking-heading { align-items: center; } .tracking-heading .btn { white-space: nowrap; } }
+.customer-order-warranty-panel { border-color: #bbf7d0; background: #f0fdf4; }
+.customer-order-warranty-active { color: #166534; font-size: 1rem; }
 .warranty-card-dialog { width: min(1100px, calc(100% - 2rem)); max-width: 1100px; max-height: calc(100vh - 2rem); padding: 0; border: 0; border-radius: .7rem; box-shadow: 0 1.5rem 4rem rgb(15 23 42 / 28%); }
 .warranty-card-dialog::backdrop { background: rgb(15 23 42 / 55%); }
 .warranty-card-dialog .create-user-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 1.25rem; border-bottom: 1px solid var(--ops-border); }
