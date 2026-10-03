@@ -486,6 +486,8 @@ body {
 .warranty-card-document h3 { margin: .5rem 0; text-align: center; }
 .warranty-card-document table { width: 100%; min-width: 700px; border-collapse: collapse; }
 .warranty-card-document th, .warranty-card-document td { padding: .4rem; border: 1px solid #111; font-size: .8rem; text-align: center; }
+.warranty-editable { width: 100%; min-width: 70px; padding: .25rem; color: #111; background: #fff; border: 1px solid #9ca3af; border-radius: .2rem; box-sizing: border-box; }
+.warranty-editable:focus { border-color: #2563eb; outline: none; box-shadow: 0 0 0 2px rgb(37 99 235 / 15%); }
 .warranty-card-text { line-height: 1.45; }
 .warranty-card-signatures { display: flex; justify-content: space-between; margin-top: 3rem; }
 .warranty-card-dialog .create-user-modal-actions { display: flex; justify-content: flex-end; gap: .5rem; padding: 0 1.25rem 1.25rem; }
