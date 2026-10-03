@@ -31,6 +31,7 @@ public class OrdersModel : PageModel
     public List<ApplicationUser> Customers { get; private set; } = [];
     public List<WarehouseItem> WarehouseItems { get; private set; } = [];
     public List<CustomerDevice> CustomerDevices { get; private set; } = [];
+    public List<WarrantyNotice> ActiveWarranties { get; private set; } = [];
     public string? AdbScanError { get; private set; }
     public AdbDiagnosticDetails? AdbReport { get; private set; }
     public bool HasAdbScan => !string.IsNullOrWhiteSpace(Input.AdbDiagnosticReport);
@@ -326,6 +327,16 @@ public class OrdersModel : PageModel
             .Include(item => item.Photos)
             .OrderBy(item => item.DeviceType)
             .ToListAsync();
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        ActiveWarranties = await _dbContext.ServiceOrders
+            .Where(order => order.CustomerId != null && order.CustomerDeviceId != null && order.WarrantyEndDate >= today)
+            .Select(order => new WarrantyNotice
+            {
+                CustomerId = order.CustomerId!,
+                CustomerDeviceId = order.CustomerDeviceId!.Value,
+                WarrantyEndDate = order.WarrantyEndDate!.Value
+            })
+            .ToListAsync();
     }
 
     private async Task SaveDevicePhotosAsync(CustomerDevice device, IEnumerable<IFormFile> files)
@@ -404,6 +415,13 @@ public class OrdersModel : PageModel
         string BatteryHealth,
         string BatteryTemperature,
         string Storage);
+
+    public class WarrantyNotice
+    {
+        public string CustomerId { get; set; } = string.Empty;
+        public int CustomerDeviceId { get; set; }
+        public DateOnly WarrantyEndDate { get; set; }
+    }
 
     public class OrderInput
     {

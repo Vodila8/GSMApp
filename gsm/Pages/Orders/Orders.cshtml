@@ -42,6 +42,7 @@
                 <span asp-validation-for="Input.CustomerDeviceId" class="text-danger"></span>
             </div>
         </div>
+        <div id="active-warranty-notice" class="active-warranty-notice" hidden role="status"></div>
 
         <div id="new-device-fields" class="user-form-row user-form-row-two-columns" hidden>
             <div>
@@ -242,6 +243,21 @@
                 updateTotal();
             }
         });
+        const activeWarranties = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.ActiveWarranties, new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        const activeWarrantyNotice = document.getElementById('active-warranty-notice');
+        function updateActiveWarrantyNotice() {
+            const customerId = document.getElementById('customer-select').value;
+            const deviceId = Number(deviceSelect.value || 0);
+            const warranty = activeWarranties.find(item => item.customerId === customerId && item.customerDeviceId === deviceId);
+            if (warranty) {
+                const date = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${warranty.warrantyEndDate}T12:00:00`));
+                activeWarrantyNotice.innerHTML = `<strong>Active warranty:</strong> this device is covered until ${date}.`;
+                activeWarrantyNotice.hidden = false;
+            } else {
+                activeWarrantyNotice.hidden = true;
+                activeWarrantyNotice.textContent = '';
+            }
+        }
         const devices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(
             Model.CustomerDevices.Select(device => new
             {
@@ -298,11 +314,13 @@
             });
             newDeviceFields.hidden = deviceSelect.value !== '';
             renderDevicePhotos();
+            updateActiveWarrantyNotice();
         }
         document.getElementById('customer-select').addEventListener('change', loadDevices);
         deviceSelect.addEventListener('change', () => {
             newDeviceFields.hidden = deviceSelect.value !== '';
             renderDevicePhotos();
+            updateActiveWarrantyNotice();
         });
         devicePhotoInput.addEventListener('change', () => {
             devicePhotoFiles = Array.from(devicePhotoInput.files);
