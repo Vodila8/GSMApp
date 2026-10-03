@@ -27,8 +27,11 @@ public class OrderTrackingModel : PageModel
     public DateOnly? FinalEndDate => Order?.Stages
         .FirstOrDefault(stage => stage.IsFixed && stage.Name == "End")?.EndDate;
 
-    public async Task<IActionResult> OnGetAsync(int id)
+    public bool OpenWarranty { get; private set; }
+
+    public async Task<IActionResult> OnGetAsync(int id, bool openWarranty = false)
     {
+        OpenWarranty = openWarranty;
         if (!await LoadOrderAsync(id))
         {
             return NotFound();

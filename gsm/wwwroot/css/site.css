@@ -477,6 +477,11 @@ body {
 .customer-order-warranty-panel { border-color: #bbf7d0; background: #f0fdf4; }
 .admin-order-actions { display: flex; flex-wrap: wrap; gap: .5rem; align-items: center; }
 .admin-order-warranty-status { max-width: 30rem; margin-top: .75rem; }
+.admin-warranty-dialog { width: min(1150px, calc(100% - 2rem)); height: min(850px, calc(100vh - 2rem)); padding: 0; border: 0; border-radius: .7rem; box-shadow: 0 1.5rem 4rem rgb(15 23 42 / 28%); }
+.admin-warranty-dialog::backdrop { background: rgb(15 23 42 / 55%); }
+.admin-warranty-dialog-header { display: flex; align-items: center; justify-content: space-between; height: 3.25rem; padding: 0 1rem; color: var(--ops-text); border-bottom: 1px solid var(--ops-border); }
+.admin-warranty-frame { display: block; width: 100%; height: calc(100% - 3.25rem); border: 0; }
+@media (max-width: 700px) { .admin-warranty-dialog { width: calc(100% - 1rem); height: calc(100dvh - 1rem); } }
 .customer-order-warranty-active { color: #166534; font-size: 1rem; }
 .customer-order-warranty-value strong { color: #0f9f72; }
 .customer-order-warranty-value span { color: var(--ops-muted); }
