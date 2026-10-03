@@ -42,22 +42,25 @@
                 </ol>
             </section>
 
-            @if (Model.Order.WarrantyEndDate.HasValue)
-            {
-                <section class="customer-order-panel customer-order-warranty-panel">
-                    <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">✓</span><div><h2>Warranty</h2><p>Your warranty is active.</p></div></div>
-                    <p class="customer-order-warranty-active">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</p>
-                </section>
-            }
-
             <div class="customer-order-side-column">
                 <section class="customer-order-panel customer-order-invoice-panel">
                     <div class="customer-order-panel-heading"><span class="customer-order-panel-icon">▣</span><div><h2>Device &amp; Service Invoice</h2><p>Summary of your repair order.</p></div></div>
                     <dl class="customer-order-facts">
                         <dt>Device category</dt><dd>@(Model.Order.Device ?? "Not specified")</dd>
                         <dt>Model / serial number</dt><dd>@(Model.Order.DeviceModelAndSerialNumber ?? "Not specified")</dd>
+                        <dt>Registered warranty status</dt>
+                        <dd class="customer-order-warranty-value">
+                            @if (Model.Order.WarrantyEndDate.HasValue)
+                            {
+                                <strong>Active until @Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>
+                            }
+                            else
+                            {
+                                <span>Not registered</span>
+                            }
+                        </dd>
                         <dt>Problem / repair</dt><dd>@(Model.Order.ProblemOrRepair ?? "Not specified")</dd>
-                        <dt>Estimated total</dt><dd class="customer-order-price">@Model.Order.TotalPrice.ToString("0.00") EUR</dd>
+                        <dt>@(Model.Order.WarrantyEndDate.HasValue ? "Total billing (covered under warranty)" : "Estimated total")</dt><dd class="customer-order-price">@Model.Order.TotalPrice.ToString("0.00") EUR</dd>
                     </dl>
                     @if (Model.Order.Lines.Count > 0)
                     {
