@@ -269,10 +269,7 @@
             document.getElementById('close-warranty-card').addEventListener('click', () => warrantyDialog.close());
             document.getElementById('close-warranty-card-bottom').addEventListener('click', () => warrantyDialog.close());
             warrantyMonths.addEventListener('change', updateWarrantyCard);
-            @if (Model.OpenWarranty)
-            {
-                <text>updateWarrantyCard(); warrantyDialog.showModal();</text>
-            }
+            if (new URLSearchParams(window.location.search).get('openWarranty') === '1') { updateWarrantyCard(); warrantyDialog.showModal(); }
             document.getElementById('print-warranty-card').addEventListener('click', () => {
                 updateWarrantyCard();
                 document.querySelectorAll('#warranty-card-document input').forEach(input => input.setAttribute('value', input.value));

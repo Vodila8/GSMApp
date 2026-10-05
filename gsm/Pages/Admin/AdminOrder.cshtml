@@ -103,7 +103,7 @@
             </tbody></table></div>
             <button id="add-service" class="btn btn-outline-secondary btn-sm" type="button">+ Add Service</button>
             <div class="order-total">Total: <strong id="edit-order-total">0.00 EUR</strong></div>
-            <button class="btn btn-primary" type="submit">Save Order Changes</button>
+            <div class="admin-order-form-actions"><button class="btn btn-primary" type="submit">Save Order Changes</button><button class="btn btn-primary" type="button" id="print-admin-order">Print order</button></div>
         </form>
     </section>
 </div>
@@ -181,6 +181,19 @@ function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySe
 accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { if (button.dataset.accessory === 'Other') button.classList.add('selected'); else button.classList.toggle('selected'); syncAccessories(); } });
 accessoryOther.addEventListener('input', syncAccessories);
 document.getElementById('edit-order-form').addEventListener('submit', syncAccessories);
+const printText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+document.getElementById('print-admin-order').addEventListener('click', () => {
+    const customer = customerSelect.selectedOptions[0]?.textContent.trim() || 'Not specified';
+    const device = deviceSelect.selectedOptions[0]?.textContent.trim() || document.querySelector('[name="Input.NewDeviceType"]')?.value || 'Not specified';
+    const serial = document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]')?.value || '';
+    const problem = document.querySelector('[name="Input.ProblemOrRepair"]')?.value || 'Not specified';
+    const parts = [...document.querySelectorAll('.part-row')].map(row => `<tr><td>Part</td><td>${printText(row.querySelector('.part-select')?.selectedOptions[0]?.textContent.trim())}</td><td>${printText(row.querySelector('.line-quantity')?.value)}</td><td>${printText(row.querySelector('.line-price')?.value)} EUR</td></tr>`);
+    const services = [...document.querySelectorAll('.service-row')].map(row => `<tr><td>Service</td><td>${printText(row.querySelector('[name$=".Description"]')?.value)}</td><td>1</td><td>${printText(row.querySelector('.service-price')?.value)} EUR</td></tr>`);
+    const printWindow = window.open('', '_blank', 'width=1000,height=800');
+    if (!printWindow) return;
+    printWindow.document.write(`<html><head><title>Repair order</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}h1{border-bottom:2px solid #111;padding-bottom:12px}dl{display:grid;grid-template-columns:180px 1fr;gap:8px}dt{font-weight:700}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #111;padding:8px;text-align:left}.total{text-align:right;font-size:18px;font-weight:700;margin-top:18px}.signatures{display:flex;justify-content:space-between;margin-top:70px}</style></head><body><h1>Repair order #@Model.Order.Id</h1><dl><dt>Customer</dt><dd>${printText(customer)}</dd><dt>Device</dt><dd>${printText(device)}</dd><dt>Serial number</dt><dd>${printText(serial || 'Not specified')}</dd><dt>Problem / repair</dt><dd>${printText(problem)}</dd></dl><table><thead><tr><th>Type</th><th>Description</th><th>Qty.</th><th>Price</th></tr></thead><tbody>${parts.concat(services).join('') || '<tr><td colspan="4">No parts or services</td></tr>'}</tbody></table><div class="total">Total: ${document.getElementById('edit-order-total').textContent}</div><div class="signatures"><span>Customer: ................................</span><span>Service employee: ................................</span></div></body></html>`);
+    printWindow.document.close(); printWindow.focus(); printWindow.print();
+});
 loadDevices(); total();
 </script>
 }
