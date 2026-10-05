@@ -332,6 +332,7 @@ public class OrdersModel : PageModel
             .Where(order => order.CustomerId != null && order.CustomerDeviceId != null && order.WarrantyEndDate >= today)
             .Select(order => new WarrantyNotice
             {
+                OrderId = order.Id,
                 CustomerId = order.CustomerId!,
                 CustomerDeviceId = order.CustomerDeviceId!.Value,
                 WarrantyEndDate = order.WarrantyEndDate!.Value
@@ -418,6 +419,7 @@ public class OrdersModel : PageModel
 
     public class WarrantyNotice
     {
+        public int OrderId { get; set; }
         public string CustomerId { get; set; } = string.Empty;
         public int CustomerDeviceId { get; set; }
         public DateOnly WarrantyEndDate { get; set; }

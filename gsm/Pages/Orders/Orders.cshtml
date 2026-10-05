@@ -261,8 +261,7 @@
                 const date = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${warranty.warrantyEndDate}T12:00:00`));
                 activeWarrantyNotice.innerHTML = `<strong>Active warranty:</strong> this device is covered until ${date}. <button type="button" class="btn btn-outline-success btn-sm active-warranty-button">View warranty</button>`;
                 activeWarrantyNotice.querySelector('.active-warranty-button').addEventListener('click', () => {
-                    document.getElementById('active-warranty-date').textContent = date;
-                    document.getElementById('active-warranty-dialog').showModal();
+                    window.open(`/OrderTracking/${warranty.orderId}?embedded=1&openWarranty=1`, '_blank', 'noopener,noreferrer');
                 });
                 activeWarrantyNotice.hidden = false;
             } else {
