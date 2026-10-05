@@ -24,6 +24,7 @@ builder.Services.AddScoped<SmtpEmailSender>();
 builder.Services.AddScoped<IEmailSender, RabbitMqEmailSender>();
 builder.Services.AddScoped<AdbDiagnosticService>();
 builder.Services.AddHostedService<RabbitMqEmailWorker>();
+builder.Services.AddHostedService<OrderStageNotificationWorker>();
 
 builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
 {

@@ -90,6 +90,10 @@ public class OrderTrackingModel : PageModel
             var stage = input.Id > 0
                 ? databaseStages[input.Id]
                 : new OrderStage { CompanyId = companyId, ServiceOrderId = id, IsFixed = false };
+            if (stage.EndDate != input.EndDate)
+            {
+                stage.CompletionNotificationSent = false;
+            }
             stage.StartDate = input.StartDate;
             stage.EndDate = input.EndDate;
             stage.SortOrder = index;

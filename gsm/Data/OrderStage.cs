@@ -23,4 +23,6 @@ public class OrderStage
     public DateOnly? EndDate { get; set; }
 
     public bool IsFixed { get; set; }
+
+    public bool CompletionNotificationSent { get; set; }
 }
