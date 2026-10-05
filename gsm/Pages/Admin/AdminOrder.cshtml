@@ -198,7 +198,12 @@ document.getElementById('print-admin-order').addEventListener('click', () => {
     if (!printWindow) return;
     printWindow.document.write(`<html><head><title>Repair order</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}h1{border-bottom:2px solid #111;padding-bottom:12px}dl{display:grid;grid-template-columns:180px 1fr;gap:8px}dt{font-weight:700}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #111;padding:8px;text-align:left}.total{text-align:right;font-size:18px;font-weight:700;margin-top:18px}.qr{text-align:right;margin-top:18px}.qr img{width:110px;height:110px}.qr span{display:block;font-size:11px}.terms{margin-top:24px;font-size:12px;line-height:1.45}.terms h2{font-size:16px}.signatures{display:flex;justify-content:space-between;margin-top:70px}</style></head><body><h1>Repair order #@Model.Order.Id</h1><dl><dt>Customer</dt><dd>${printText(customer)}</dd><dt>Phone</dt><dd>${printText(phone)}</dd><dt>Device</dt><dd>${printText(device)}</dd><dt>Serial number</dt><dd>${printText(serial || 'Not specified')}</dd><dt>Problem / repair</dt><dd>${printText(problem)}</dd></dl><table><thead><tr><th>Type</th><th>Description</th><th>Qty.</th><th>Price</th></tr></thead><tbody>${parts.concat(services).join('') || '<tr><td colspan="4">No parts or services</td></tr>'}</tbody></table><div class="total">Total: ${document.getElementById('edit-order-total').textContent}</div><div class="qr"><img src="${qrCodeUrl}" alt="QR code to order page"><span>Scan to open this order online</span></div><div class="terms">${serviceTerms}</div><div class="signatures"><span>Customer: ................................</span><span>Service employee: ................................</span></div></body></html>`);
     printWindow.onafterprint = () => printWindow.close();
-    printWindow.document.close(); printWindow.focus(); printWindow.print();
+    printWindow.document.close();
+    let printed = false;
+    const startPrint = () => { if (printed) return; printed = true; printWindow.focus(); printWindow.print(); };
+    const qrImage = printWindow.document.querySelector('.qr img');
+    if (qrImage) { qrImage.onload = startPrint; qrImage.onerror = startPrint; }
+    setTimeout(startPrint, 1500);
 });
 loadDevices(); total();
 </script>
