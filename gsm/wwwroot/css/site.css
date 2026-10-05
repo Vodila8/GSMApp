@@ -476,6 +476,7 @@ body {
 .tracking-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; }
 .tracking-heading .warehouse-title { margin: 0; }
 @media (max-width: 700px) { .tracking-heading { align-items: center; } .tracking-heading .btn { white-space: nowrap; } }
+.warranty-only-page { display: none; }
 .customer-order-warranty-panel { border-color: #bbf7d0; background: #f0fdf4; }
 .active-warranty-notice { display: flex; align-items: center; gap: .6rem; margin: .75rem 0; padding: .75rem 1rem; color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: .45rem; }
 .active-warranty-dialog { width: min(420px, calc(100% - 2rem)); padding: 0; border: 0; border-radius: .7rem; box-shadow: 0 1.5rem 4rem rgb(15 23 42 / 28%); }

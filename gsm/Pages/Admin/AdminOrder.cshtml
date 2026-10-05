@@ -116,6 +116,7 @@
 const adminWarrantyDialog = document.getElementById('admin-warranty-dialog');
 document.getElementById('open-admin-warranty')?.addEventListener('click', () => adminWarrantyDialog.showModal());
 document.getElementById('close-admin-warranty')?.addEventListener('click', () => adminWarrantyDialog.close());
+window.addEventListener('message', event => { if (event.data?.type === 'close-warranty-card') adminWarrantyDialog.close(); });
 let partIndex = @Model.Parts.Count, serviceIndex = @Model.Services.Count;
 const partsBody = document.getElementById('parts-body'), servicesBody = document.getElementById('services-body');
 function total() { let value = 0; document.querySelectorAll('.part-row').forEach(r => value += (parseFloat(r.querySelector('.line-price').value) || 0) * (parseInt(r.querySelector('.line-quantity').value) || 0)); document.querySelectorAll('.service-price').forEach(i => value += parseFloat(i.value) || 0); document.getElementById('edit-order-total').textContent = value.toFixed(2) + ' EUR'; }
