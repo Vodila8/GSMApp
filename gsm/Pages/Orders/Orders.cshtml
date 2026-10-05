@@ -43,6 +43,11 @@
             </div>
         </div>
         <div id="active-warranty-notice" class="active-warranty-notice" hidden role="status"></div>
+        <dialog id="active-warranty-dialog" class="active-warranty-dialog">
+            <div class="create-user-modal-header"><h2>Existing warranty</h2><button type="button" class="create-user-close" id="close-active-warranty" aria-label="Close">×</button></div>
+            <p>This device already has an active warranty. The warranty is valid until <strong id="active-warranty-date"></strong>.</p>
+            <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" id="close-active-warranty-bottom">Close</button></div>
+        </dialog>
 
         <div id="new-device-fields" class="user-form-row user-form-row-two-columns" hidden>
             <div>
@@ -251,7 +256,11 @@
             const warranty = activeWarranties.find(item => item.customerId === customerId && item.customerDeviceId === deviceId);
             if (warranty) {
                 const date = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${warranty.warrantyEndDate}T12:00:00`));
-                activeWarrantyNotice.innerHTML = `<strong>Active warranty:</strong> this device is covered until ${date}.`;
+                activeWarrantyNotice.innerHTML = `<strong>Active warranty:</strong> this device is covered until ${date}. <button type="button" class="btn btn-outline-success btn-sm active-warranty-button">View warranty</button>`;
+                activeWarrantyNotice.querySelector('.active-warranty-button').addEventListener('click', () => {
+                    document.getElementById('active-warranty-date').textContent = date;
+                    document.getElementById('active-warranty-dialog').showModal();
+                });
                 activeWarrantyNotice.hidden = false;
             } else {
                 activeWarrantyNotice.hidden = true;
@@ -273,6 +282,9 @@
         const devicePhotoPicker = document.getElementById('device-photo-picker');
         const devicePhotoInput = document.getElementById('device-photos');
         const devicePhotoPreview = document.getElementById('device-photo-preview');
+        const activeWarrantyDialog = document.getElementById('active-warranty-dialog');
+        document.getElementById('close-active-warranty').addEventListener('click', () => activeWarrantyDialog.close());
+        document.getElementById('close-active-warranty-bottom').addEventListener('click', () => activeWarrantyDialog.close());
         let devicePhotoFiles = [];
         const deletedDevicePhotoIds = new Set();
 
