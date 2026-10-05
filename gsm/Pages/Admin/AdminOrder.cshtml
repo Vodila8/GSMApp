@@ -7,7 +7,7 @@
 <div class="user-form-page">
     <section class="warehouse-list order-form repair-form admin-order-page">
         <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
-        <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
+        <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />Phone: @(Model.Order.Customer?.PhoneNumber ?? "Not specified")<br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
         <div class="admin-order-actions">
             <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
             <a class="btn btn-outline-primary btn-sm" href="/CreateRepair">Create repair</a>
@@ -185,6 +185,7 @@ document.getElementById('edit-order-form').addEventListener('submit', syncAccess
 const printText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 document.getElementById('print-admin-order').addEventListener('click', () => {
     const customer = customerSelect.selectedOptions[0]?.textContent.trim() || 'Not specified';
+    const phone = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Order.Customer?.PhoneNumber ?? "Not specified"));
     const device = deviceSelect.selectedOptions[0]?.textContent.trim() || document.querySelector('[name="Input.NewDeviceType"]')?.value || 'Not specified';
     const serial = document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]')?.value || '';
     const problem = document.querySelector('[name="Input.ProblemOrRepair"]')?.value || 'Not specified';
@@ -192,7 +193,7 @@ document.getElementById('print-admin-order').addEventListener('click', () => {
     const services = [...document.querySelectorAll('.service-row')].map(row => `<tr><td>Service</td><td>${printText(row.querySelector('[name$=".Description"]')?.value)}</td><td>1</td><td>${printText(row.querySelector('.service-price')?.value)} EUR</td></tr>`);
     const printWindow = window.open('', '_blank', 'width=1000,height=800');
     if (!printWindow) return;
-    printWindow.document.write(`<html><head><title>Repair order</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}h1{border-bottom:2px solid #111;padding-bottom:12px}dl{display:grid;grid-template-columns:180px 1fr;gap:8px}dt{font-weight:700}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #111;padding:8px;text-align:left}.total{text-align:right;font-size:18px;font-weight:700;margin-top:18px}.signatures{display:flex;justify-content:space-between;margin-top:70px}</style></head><body><h1>Repair order #@Model.Order.Id</h1><dl><dt>Customer</dt><dd>${printText(customer)}</dd><dt>Device</dt><dd>${printText(device)}</dd><dt>Serial number</dt><dd>${printText(serial || 'Not specified')}</dd><dt>Problem / repair</dt><dd>${printText(problem)}</dd></dl><table><thead><tr><th>Type</th><th>Description</th><th>Qty.</th><th>Price</th></tr></thead><tbody>${parts.concat(services).join('') || '<tr><td colspan="4">No parts or services</td></tr>'}</tbody></table><div class="total">Total: ${document.getElementById('edit-order-total').textContent}</div><div class="signatures"><span>Customer: ................................</span><span>Service employee: ................................</span></div></body></html>`);
+    printWindow.document.write(`<html><head><title>Repair order</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}h1{border-bottom:2px solid #111;padding-bottom:12px}dl{display:grid;grid-template-columns:180px 1fr;gap:8px}dt{font-weight:700}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #111;padding:8px;text-align:left}.total{text-align:right;font-size:18px;font-weight:700;margin-top:18px}.signatures{display:flex;justify-content:space-between;margin-top:70px}</style></head><body><h1>Repair order #@Model.Order.Id</h1><dl><dt>Customer</dt><dd>${printText(customer)}</dd><dt>Phone</dt><dd>${printText(phone)}</dd><dt>Device</dt><dd>${printText(device)}</dd><dt>Serial number</dt><dd>${printText(serial || 'Not specified')}</dd><dt>Problem / repair</dt><dd>${printText(problem)}</dd></dl><table><thead><tr><th>Type</th><th>Description</th><th>Qty.</th><th>Price</th></tr></thead><tbody>${parts.concat(services).join('') || '<tr><td colspan="4">No parts or services</td></tr>'}</tbody></table><div class="total">Total: ${document.getElementById('edit-order-total').textContent}</div><div class="signatures"><span>Customer: ................................</span><span>Service employee: ................................</span></div></body></html>`);
     printWindow.onafterprint = () => printWindow.close();
     printWindow.document.close(); printWindow.focus(); printWindow.print();
 });
