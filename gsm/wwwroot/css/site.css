@@ -446,6 +446,8 @@ body {
 .repair-form .order-total { display: flex; justify-content: space-between; align-items: center; max-width: 420px; padding: 1rem 1.1rem; margin: 1.75rem 0 1rem; color: #475569; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: .65rem; }
 .repair-form .order-total strong { color: #1d4ed8; font-size: 1.35rem; }
 .repair-form .btn-primary { min-width: 190px; padding: .7rem 1rem; font-weight: 700; border-radius: .5rem; box-shadow: 0 5px 12px rgb(37 99 235 / 22%); }
+.repair-form-actions { display: flex; justify-content: flex-end; gap: .6rem; margin-top: .75rem; }
+@media (max-width: 700px) { .repair-form-actions { flex-wrap: wrap; } }
 
 .adb-report { padding: 1.25rem; margin-top: 1rem; color: #1e293b; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: .75rem; }
 .adb-report-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding-bottom: 1rem; border-bottom: 1px solid #dbeafe; }
