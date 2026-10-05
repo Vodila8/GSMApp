@@ -276,6 +276,7 @@
                 const printWindow = window.open('', '_blank', 'width=1000,height=800');
                 if (!printWindow) return;
                 printWindow.document.write(`<html><head><title>Warranty card</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}.warranty-card-document{max-width:1000px;margin:auto}.warranty-card-company{text-align:center;font-size:22px;font-weight:700;margin-bottom:12px}.warranty-card-document h3{text-align:center}.warranty-card-document table{width:100%;border-collapse:collapse}.warranty-card-document th,.warranty-card-document td{border:1px solid #111;padding:8px;text-align:center}.warranty-card-text{margin-top:18px;line-height:1.45}.warranty-card-signatures{display:flex;justify-content:space-between;margin-top:55px}</style></head><body>${document.getElementById('warranty-card-document').outerHTML}</body></html>`);
+                printWindow.onafterprint = () => printWindow.close();
                 printWindow.document.close(); printWindow.focus(); printWindow.print();
             });
         </script>
