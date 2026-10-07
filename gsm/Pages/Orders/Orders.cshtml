@@ -360,11 +360,14 @@
         }
 
         function syncDeviceDetails() {
+            const selectedOption = deviceSelect.selectedOptions[0];
             const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
+            const deviceType = selectedDevice?.deviceType || selectedOption?.dataset.deviceType || '';
+            const serial = selectedDevice?.modelAndSerialNumber || selectedOption?.dataset.serial || '';
             newDeviceFields.hidden = false;
-            if (selectedDevice) {
-                newDeviceType.value = selectedDevice.deviceType || '';
-                newDeviceSerial.value = selectedDevice.modelAndSerialNumber || '';
+            if (deviceSelect.value) {
+                newDeviceType.value = deviceType;
+                newDeviceSerial.value = serial;
                 newDeviceType.disabled = true;
                 newDeviceSerial.readOnly = true;
             } else {
@@ -388,6 +391,8 @@
             devices.filter(device => device.customerId === customerId).forEach(device => {
                 const label = device.deviceType + (device.modelAndSerialNumber ? ' — ' + device.modelAndSerialNumber : '');
                 const option = new Option(label, device.id);
+                option.dataset.deviceType = device.deviceType || '';
+                option.dataset.serial = device.modelAndSerialNumber || '';
                 if (String(device.id) === selectedId) option.selected = true;
                 deviceSelect.add(option);
             });
