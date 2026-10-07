@@ -424,10 +424,10 @@ public class WarehouseModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostSaveDeliveryAsync(bool global = false)
+    public async Task<IActionResult> OnPostSaveDeliveryAsync(bool globalDelivery = false)
     {
         if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
-        ShowDeliveryModal = !global;
+        ShowDeliveryModal = !globalDelivery;
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
         DeliveryItems = DeliveryItems.Where(item =>

@@ -78,7 +78,7 @@
                 </form>
             </dialog>
             <dialog id="global-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog global-warehouse-dialog">
-                <form method="post" action="/Warehouse?handler=SaveDelivery&amp;global=1" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
+                <form method="post" action="/Warehouse?handler=SaveDelivery&amp;globalDelivery=1" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
                     <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div></div>
