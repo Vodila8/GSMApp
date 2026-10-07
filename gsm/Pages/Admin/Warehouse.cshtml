@@ -348,9 +348,8 @@
             let total = 0;
             document.querySelectorAll('#delivery-items-body [data-delivery-row]').forEach(row => {
                 const quantity = Number(row.querySelector('input[name$=".Quantity"]')?.value || 0);
-                const unitPrice = Number(row.querySelector('input[name$=".UnitPrice"]')?.value || 0);
                 const deliveryPrice = Number(row.querySelector('input[name$=".DeliveryPrice"]')?.value || 0);
-                total += quantity * unitPrice + deliveryPrice;
+                total += quantity * deliveryPrice;
             });
             deliveryTotalValue.textContent = `${total.toFixed(2)} EUR`;
         }
