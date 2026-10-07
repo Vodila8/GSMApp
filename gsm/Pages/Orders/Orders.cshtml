@@ -366,8 +366,9 @@
         const escapePrintText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
         document.getElementById('print-repair').addEventListener('click', () => {
             const customer = document.getElementById('customer-select').selectedOptions[0]?.textContent.trim() || 'Not specified';
+            const selectedDevice = devices.find(device => String(device.id) === document.getElementById('device-select').value);
             const device = document.getElementById('device-select').selectedOptions[0]?.textContent.trim() || document.querySelector('[name="Input.NewDeviceType"]')?.value || 'Not specified';
-            const serial = document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]')?.value || '';
+            const serial = selectedDevice?.modelAndSerialNumber || document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]')?.value || '';
             const problem = document.querySelector('[name="Input.ProblemOrRepair"]')?.value || 'Not specified';
             const parts = [...document.querySelectorAll('#parts-body tr')].map(row => {
                 const select = row.querySelector('.part-select');
