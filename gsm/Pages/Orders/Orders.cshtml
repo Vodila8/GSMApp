@@ -398,6 +398,13 @@
             updateActiveWarrantyNotice();
         };
         ['change', 'input', 'click', 'blur'].forEach(eventName => deviceSelect.addEventListener(eventName, () => setTimeout(refreshDeviceSelection, 0)));
+        let lastDeviceSelection = deviceSelect.value;
+        setInterval(() => {
+            if (deviceSelect.value !== lastDeviceSelection) {
+                lastDeviceSelection = deviceSelect.value;
+                refreshDeviceSelection();
+            }
+        }, 250);
         devicePhotoInput.addEventListener('change', () => {
             devicePhotoFiles = Array.from(devicePhotoInput.files);
             renderDevicePhotos();
