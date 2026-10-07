@@ -320,6 +320,7 @@ body {
 .warehouse-delivery-search input { display: block; width: 100%; min-height: 40px; padding: .5rem .65rem; color: var(--ops-text); font: inherit; background: #fff; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; box-sizing: border-box; }
 .global-delivery-search input:focus,
 .warehouse-delivery-search input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
+#warehouse-delivery-dialog { display: none !important; }
 .warehouse-delivery-search { display: block !important; }
 .warehouse-delivery-search label { display: block; margin-bottom: .3rem; }
 .warehouse-edit-table { min-width: 1050px; margin-bottom: 0; }

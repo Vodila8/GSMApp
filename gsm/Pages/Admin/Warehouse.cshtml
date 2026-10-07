@@ -170,64 +170,6 @@
     </form>
 </dialog>
 
-<dialog id="warehouse-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog">
-    <form method="post" asp-page-handler="SaveDelivery" enctype="multipart/form-data" class="warehouse-edit-form">
-        <div class="create-user-modal-header global-window-header">
-            <h2>Warehouse delivery</h2>
-            <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="delivery" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-delivery aria-label="Close">×</button></div>
-        </div>
-        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
-        <div class="warehouse-delivery-search"><label for="warehouse-delivery-search-input">Search parts in delivery</label><input id="warehouse-delivery-search-input" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
-        <div class="table-responsive">
-            <table class="table warehouse-table warehouse-edit-table warehouse-delivery-table align-middle">
-                <thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Partner</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead>
-                <tbody id="delivery-items-body">
-                @for (var index = 0; index < Model.DeliveryItems.Count; index++)
-                {
-                    <tr class="delivery-item-row" data-delivery-row>
-                        <td>@(index + 1)</td>
-                        <td><input asp-for="DeliveryItems[index].DeliveryDate" type="date" /></td>
-                        <td><input asp-for="DeliveryItems[index].ProductNumber" list="warehouse-product-numbers" /></td>
-                        <td><input asp-for="DeliveryItems[index].Quantity" type="number" min="0" step="1" /></td>
-                        <td><input asp-for="DeliveryItems[index].PartName" required /></td>
-                        <td>
-                            <select asp-for="DeliveryItems[index].PartnerId" class="delivery-partner-select">
-                                <option value="">Choose partner</option>
-                                @foreach (var partner in Model.Partners)
-                                {
-                                    <option value="@partner.Id">@partner.Name</option>
-                                }
-                            </select>
-                        </td>
-                        <td><input asp-for="DeliveryItems[index].Barcode" /></td>
-                        <td><input asp-for="DeliveryItems[index].UnitPrice" type="number" min="0" step="0.01" /></td>
-                        <td><input asp-for="DeliveryItems[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
-                        <td><button type="button" class="btn btn-link text-danger remove-delivery-row">×</button></td>
-                    </tr>
-                }
-                </tbody>
-            </table>
-        </div>
-        <div class="warehouse-delivery-total">Total: <strong id="warehouse-delivery-total-value">0.00 EUR</strong></div>
-        <template id="delivery-row-template">
-            <tr class="delivery-item-row" data-delivery-row>
-                <td>__number__</td>
-                <td><input name="DeliveryItems[__index__].DeliveryDate" type="date" value="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" /></td>
-                <td><input name="DeliveryItems[__index__].ProductNumber" list="warehouse-product-numbers" /></td>
-                <td><input name="DeliveryItems[__index__].Quantity" type="number" min="0" step="1" /></td>
-                <td><input name="DeliveryItems[__index__].PartName" required /></td>
-                <td><select name="DeliveryItems[__index__].PartnerId" class="delivery-partner-select"><option value="">Choose partner</option>@foreach (var partner in Model.Partners) { <option value="@partner.Id">@partner.Name</option> }</select></td>
-                <td><input name="DeliveryItems[__index__].Barcode" /></td>
-                <td><input name="DeliveryItems[__index__].UnitPrice" type="number" min="0" step="0.01" /></td>
-                <td><input name="DeliveryItems[__index__].DeliveryPrice" type="number" min="0" step="0.01" /></td>
-                <td><button type="button" class="btn btn-link text-danger remove-delivery-row">×</button></td>
-            </tr>
-        </template>
-        <button type="button" id="add-delivery-row" class="btn btn-outline-secondary btn-sm">+ Add item</button>
-        <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-warehouse-delivery>Cancel</button><button type="submit" class="btn btn-primary">Save delivery</button></div>
-    </form>
-</dialog>
-
 <dialog id="warehouse-sale-dialog" class="create-user-dialog warehouse-sale-dialog">
     <form method="post" asp-page-handler="Sell" class="create-user-modal-form">
         <div class="create-user-modal-header">
@@ -319,7 +261,6 @@
         }
         setupLocalWindow(warehouseEditDialog, 'edit', 'Edit warehouse');
         setupLocalWindow(warehouseItemDialog, 'item', 'Add item');
-        setupLocalWindow(warehouseDeliveryDialog, 'delivery', 'Delivery');
 
         function setupPartnerChoice(selectId, partnerIdId, newNameId, newNameFieldId) {
             const select = document.getElementById(selectId);
@@ -375,6 +316,7 @@
         saleQuantity.addEventListener('input', updateSaleTotal);
         saleDiscount.addEventListener('input', updateSaleTotal);
         updateSaleTotal();
+        if (warehouseDeliveryDialog) {
         const deliveryCatalog = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.Select(item => new { item.ProductNumber, item.PartName, item.Barcode, item.UnitPrice, item.DeliveryPrice }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         function setupDeliveryProductRow(row) {
             const productNumber = row.querySelector('input[name$=".ProductNumber"]');
@@ -449,6 +391,7 @@
                 });
             });
         });
+        }
         setupPartnerChoice('new-item-partner-select', 'new-item-partner-id', 'NewItem_NewPartnerName', 'new-item-partner-name-field');
         setupPartnerChoice('sale-partner-select', 'sale-partner-id', 'Sale_NewPartnerName', 'sale-partner-name-field');
         document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
@@ -457,11 +400,6 @@
         document.querySelectorAll('[data-close-warehouse-edit]').forEach(button => button.addEventListener('click', () => warehouseEditDialog.close()));
         document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
         document.querySelectorAll('[data-close-warehouse-sale]').forEach(button => button.addEventListener('click', () => warehouseSaleDialog.close()));
-        document.querySelectorAll('[data-close-warehouse-delivery]').forEach(button => button.addEventListener('click', () => warehouseDeliveryDialog.close()));
-        @if (Model.ShowDeliveryModal)
-        {
-            <text>warehouseDeliveryDialog.showModal();</text>
-        }
         @if (Model.ShowSaleModal)
         {
             <text>warehouseSaleDialog.showModal();</text>
