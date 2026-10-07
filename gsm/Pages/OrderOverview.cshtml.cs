@@ -36,9 +36,14 @@ public class OrderOverviewModel : PageModel
 
         if (!string.IsNullOrWhiteSpace(OrderNumber))
         {
-            query = int.TryParse(OrderNumber, out var orderId)
-                ? query.Where(order => order.Id == orderId)
-                : query.Where(order => false);
+            var searchTerm = OrderNumber;
+            var hasOrderId = int.TryParse(searchTerm, out var orderId);
+            query = query.Where(order =>
+                (hasOrderId && order.Id == orderId) ||
+                (order.Customer != null &&
+                 (EF.Functions.ILike(order.Customer.CustomerName ?? string.Empty, $"%{searchTerm}%") ||
+                  EF.Functions.ILike(order.Customer.Email ?? string.Empty, $"%{searchTerm}%") ||
+                  EF.Functions.ILike(order.Customer.PhoneNumber ?? string.Empty, $"%{searchTerm}%"))));
         }
 
         if (StatusFilter == "completed")
