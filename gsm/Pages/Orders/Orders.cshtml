@@ -42,7 +42,7 @@
             </div>
             <div>
                 <label asp-for="Input.CustomerDeviceId">Device</label>
-                <select asp-for="Input.CustomerDeviceId" id="device-select"></select>
+                <select asp-for="Input.CustomerDeviceId" id="device-select"><option value="">Add new device</option></select>
                 <span asp-validation-for="Input.CustomerDeviceId" class="text-danger"></span>
             </div>
         </div>
@@ -359,6 +359,12 @@
             const selectedId = '@Model.Input.CustomerDeviceId';
             deviceSelect.innerHTML = '<option value="">Add new device</option>';
             deviceSelect.value = '';
+            if (!customerId) {
+                newDeviceFields.hidden = false;
+                renderDevicePhotos();
+                updateActiveWarrantyNotice();
+                return;
+            }
             devices.filter(device => device.customerId === customerId).forEach(device => {
                 const label = device.deviceType + (device.modelAndSerialNumber ? ' — ' + device.modelAndSerialNumber : '');
                 const option = new Option(label, device.id);
