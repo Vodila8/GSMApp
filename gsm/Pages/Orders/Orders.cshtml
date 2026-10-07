@@ -392,11 +392,12 @@
             updateActiveWarrantyNotice();
         }
         document.getElementById('customer-select').addEventListener('change', loadDevices);
-        deviceSelect.addEventListener('change', () => {
+        const refreshDeviceSelection = () => {
             syncDeviceDetails();
             renderDevicePhotos();
             updateActiveWarrantyNotice();
-        });
+        };
+        ['change', 'input', 'click', 'blur'].forEach(eventName => deviceSelect.addEventListener(eventName, () => setTimeout(refreshDeviceSelection, 0)));
         devicePhotoInput.addEventListener('change', () => {
             devicePhotoFiles = Array.from(devicePhotoInput.files);
             renderDevicePhotos();
