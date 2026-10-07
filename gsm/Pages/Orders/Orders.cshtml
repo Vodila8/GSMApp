@@ -358,6 +358,7 @@
             const customerId = document.getElementById('customer-select').value;
             const selectedId = '@Model.Input.CustomerDeviceId';
             deviceSelect.innerHTML = '<option value="">Add new device</option>';
+            deviceSelect.value = '';
             devices.filter(device => device.customerId === customerId).forEach(device => {
                 const label = device.deviceType + (device.modelAndSerialNumber ? ' — ' + device.modelAndSerialNumber : '');
                 const option = new Option(label, device.id);
