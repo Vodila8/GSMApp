@@ -360,16 +360,11 @@
         }
 
         function syncDeviceDetails() {
-            const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
-            if (selectedDevice) {
-                newDeviceFields.hidden = true;
-                newDeviceType.disabled = true;
-                newDeviceSerial.readOnly = true;
-            } else {
-                newDeviceFields.hidden = false;
-                newDeviceType.disabled = false;
-                newDeviceSerial.readOnly = false;
-            }
+            const existingDeviceSelected = Boolean(deviceSelect.value);
+            newDeviceFields.hidden = existingDeviceSelected;
+            newDeviceFields.style.setProperty('display', existingDeviceSelected ? 'none' : '', 'important');
+            newDeviceType.disabled = existingDeviceSelected;
+            newDeviceSerial.readOnly = existingDeviceSelected;
         }
         function loadDevices() {
             const customerId = document.getElementById('customer-select').value;
