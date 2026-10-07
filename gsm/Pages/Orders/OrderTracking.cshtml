@@ -204,7 +204,8 @@
                 const value = toIsoDate(new Date(year, month, day));
                 const selected = value === rangeStart || value === rangeEnd;
                 const inRange = rangeStart && rangeEnd && value > rangeStart && value < rangeEnd;
-                calendarDays.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${selected ? ' selected' : ''}${inRange ? ' in-range' : ''}" data-date="${value}">${day}</button>`);
+                const today = value === toIsoDate(new Date());
+                calendarDays.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${selected ? ' selected' : ''}${inRange ? ' in-range' : ''}${today ? ' today' : ''}" data-date="${value}">${day}</button>`);
             }
         }
         function attachRangeButton(button) {
