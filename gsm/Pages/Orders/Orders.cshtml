@@ -259,7 +259,10 @@
         function updateActiveWarrantyNotice() {
             const customerId = document.getElementById('customer-select').value;
             const deviceId = Number(deviceSelect.value || 0);
-            const warranty = activeWarranties.find(item => item.customerId === customerId && item.customerDeviceId === deviceId);
+            const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
+            const serial = selectedDevice?.modelAndSerialNumber?.trim().toLowerCase();
+            const warranty = activeWarranties.find(item => item.customerId === customerId &&
+                (item.customerDeviceId === deviceId || (serial && item.deviceModelAndSerialNumber?.trim().toLowerCase() === serial)));
             if (warranty) {
                 const date = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${warranty.warrantyEndDate}T12:00:00`));
                 activeWarrantyNotice.innerHTML = `<strong>Active warranty:</strong> this device is covered until ${date}. <button type="button" class="btn btn-outline-success btn-sm active-warranty-button">View warranty</button>`;

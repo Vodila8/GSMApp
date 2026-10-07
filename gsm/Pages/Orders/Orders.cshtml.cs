@@ -329,12 +329,15 @@ public class OrdersModel : PageModel
             .ToListAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         ActiveWarranties = await _dbContext.ServiceOrders
-            .Where(order => order.CustomerId != null && order.CustomerDeviceId != null && order.WarrantyEndDate >= today)
+            .Where(order => order.CustomerId != null && order.WarrantyEndDate >= today)
             .Select(order => new WarrantyNotice
             {
                 OrderId = order.Id,
                 CustomerId = order.CustomerId!,
-                CustomerDeviceId = order.CustomerDeviceId!.Value,
+                CustomerDeviceId = order.CustomerDeviceId ?? 0,
+                DeviceModelAndSerialNumber = order.CustomerDevice != null
+                    ? order.CustomerDevice.ModelAndSerialNumber
+                    : order.DeviceModelAndSerialNumber,
                 WarrantyEndDate = order.WarrantyEndDate!.Value
             })
             .ToListAsync();
@@ -422,6 +425,7 @@ public class OrdersModel : PageModel
         public int OrderId { get; set; }
         public string CustomerId { get; set; } = string.Empty;
         public int CustomerDeviceId { get; set; }
+        public string? DeviceModelAndSerialNumber { get; set; }
         public DateOnly WarrantyEndDate { get; set; }
     }
 
