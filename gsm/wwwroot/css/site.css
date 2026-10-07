@@ -426,6 +426,7 @@ body {
 .repair-section-title { display: flex; gap: .6rem; align-items: center; margin: 0 0 1.25rem; color: #1e293b; font-size: 1.05rem; font-weight: 750; }
 .repair-section-title span { display: grid; place-items: center; width: 1.6rem; height: 1.6rem; color: #fff; font-size: .8rem; background: #2563eb; border-radius: 50%; }
 .repair-form .user-form-row { margin-bottom: 1rem; }
+.repair-form [hidden] { display: none !important; }
 .repair-form .user-form-row:last-child { margin-bottom: 0; }
 .repair-form label { display: block; margin-bottom: .45rem; color: #334155; font-size: .88rem; font-weight: 700; }
 .repair-form input,
