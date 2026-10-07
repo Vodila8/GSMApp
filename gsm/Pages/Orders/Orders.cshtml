@@ -360,17 +360,13 @@
         }
 
         function syncDeviceDetails() {
-            const selectedOption = deviceSelect.selectedOptions[0];
             const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
-            const deviceType = selectedDevice?.deviceType || selectedOption?.dataset.deviceType || '';
-            const serial = selectedDevice?.modelAndSerialNumber || selectedOption?.dataset.serial || '';
-            newDeviceFields.hidden = false;
-            if (deviceSelect.value) {
-                newDeviceType.value = deviceType;
-                newDeviceSerial.value = serial;
+            if (selectedDevice) {
+                newDeviceFields.hidden = true;
                 newDeviceType.disabled = true;
                 newDeviceSerial.readOnly = true;
             } else {
+                newDeviceFields.hidden = false;
                 newDeviceType.disabled = false;
                 newDeviceSerial.readOnly = false;
             }
