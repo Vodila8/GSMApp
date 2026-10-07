@@ -516,7 +516,7 @@ public class WarehouseModel : PageModel
         await _dbContext.SaveChangesAsync();
 
         TempData["StatusMessage"] = $"Delivered {createdItems.Count} item(s).";
-        return RedirectToRefererOrWarehouse();
+        return RedirectToPage();
     }
 
     public async Task<IActionResult> OnPostCreatePartnerAsync()
