@@ -25,11 +25,7 @@
         <div class="user-form-row user-form-row-two-columns">
             <div>
                 <label asp-for="Input.CustomerId">Customer</label>
-                <div class="customer-combobox" id="customer-combobox">
-                    <input id="customer-search" class="customer-search-input" type="search" placeholder="Search by name, email or phone" autocomplete="off" />
-                    <div id="customer-options" class="customer-options" hidden></div>
-                </div>
-                <select asp-for="Input.CustomerId" id="customer-select" class="customer-select-hidden">
+                <select asp-for="Input.CustomerId" id="customer-select">
                     <option value="">Select customer</option>
                     @foreach (var customer in Model.Customers)
                     {
@@ -287,42 +283,10 @@
             }),
             new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         const customerSelect = document.getElementById('customer-select');
-        const customerSearch = document.getElementById('customer-search');
         const deviceSelect = document.getElementById('device-select');
         const newDeviceFields = document.getElementById('new-device-fields');
         const newDeviceType = document.querySelector('[name="Input.NewDeviceType"]');
         const newDeviceSerial = document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]');
-        const customerOptions = document.getElementById('customer-options');
-        function renderCustomerOptions() {
-            const term = customerSearch.value.trim().toLowerCase();
-            customerOptions.innerHTML = '';
-            [...customerSelect.options].filter(option => option.value).forEach(option => {
-                const searchable = (option.dataset.search || option.textContent || '').toLowerCase();
-                if (term && !searchable.includes(term)) return;
-                const item = document.createElement('button');
-                item.type = 'button';
-                item.className = 'customer-option';
-                item.textContent = option.textContent.trim();
-                item.dataset.customerId = option.value;
-                customerOptions.appendChild(item);
-            });
-            customerOptions.hidden = customerOptions.children.length === 0;
-        }
-        function selectCustomer(customerId) {
-            customerSelect.value = customerId;
-            customerSearch.value = customerSelect.selectedOptions[0]?.textContent.trim() || '';
-            customerOptions.hidden = true;
-            loadDevices();
-        }
-        customerSearch.addEventListener('focus', renderCustomerOptions);
-        customerSearch.addEventListener('input', renderCustomerOptions);
-        customerOptions.addEventListener('click', event => {
-            const option = event.target.closest('.customer-option');
-            if (option) selectCustomer(option.dataset.customerId);
-        });
-        document.addEventListener('click', event => {
-            if (!event.target.closest('#customer-combobox')) customerOptions.hidden = true;
-        });
         const devicePhotoPicker = document.getElementById('device-photo-picker');
         const devicePhotoInput = document.getElementById('device-photos');
         const devicePhotoPreview = document.getElementById('device-photo-preview');
@@ -430,7 +394,6 @@
             }
         });
         document.querySelectorAll('.part-select').forEach(select => { if (select.value) select.dispatchEvent(new Event('change')); });
-        if (customerSelect.value) customerSearch.value = customerSelect.selectedOptions[0]?.textContent.trim() || '';
         loadDevices();
         updateTotal();
         const escapePrintText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
