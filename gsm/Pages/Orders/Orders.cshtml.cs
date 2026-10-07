@@ -329,6 +329,7 @@ public class OrdersModel : PageModel
             .ToListAsync();
         var today = DateOnly.FromDateTime(DateTime.UtcNow);
         ActiveWarranties = await _dbContext.ServiceOrders
+            .Include(order => order.CustomerDevice)
             .Where(order => order.CustomerId != null && order.WarrantyEndDate >= today)
             .Select(order => new WarrantyNotice
             {
