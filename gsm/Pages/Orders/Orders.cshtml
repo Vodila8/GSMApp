@@ -287,6 +287,8 @@
         const customerSearch = document.getElementById('customer-search');
         const deviceSelect = document.getElementById('device-select');
         const newDeviceFields = document.getElementById('new-device-fields');
+        const newDeviceType = document.querySelector('[name="Input.NewDeviceType"]');
+        const newDeviceSerial = document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]');
         const customerOptions = document.getElementById('customer-options');
         function renderCustomerOptions() {
             const term = customerSearch.value.trim().toLowerCase();
@@ -354,13 +356,28 @@
             });
         }
 
+        function syncDeviceDetails() {
+            const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
+            newDeviceFields.hidden = false;
+            if (selectedDevice) {
+                newDeviceType.value = selectedDevice.deviceType || '';
+                newDeviceSerial.value = selectedDevice.modelAndSerialNumber || '';
+                newDeviceType.disabled = true;
+                newDeviceSerial.readOnly = true;
+            } else {
+                newDeviceType.disabled = false;
+                newDeviceSerial.readOnly = false;
+            }
+        }
         function loadDevices() {
             const customerId = document.getElementById('customer-select').value;
             const selectedId = '@Model.Input.CustomerDeviceId';
             deviceSelect.innerHTML = '<option value="">Add new device</option>';
             deviceSelect.value = '';
             if (!customerId) {
-                newDeviceFields.hidden = false;
+                newDeviceType.value = '';
+                newDeviceSerial.value = '';
+                syncDeviceDetails();
                 renderDevicePhotos();
                 updateActiveWarrantyNotice();
                 return;
@@ -371,13 +388,13 @@
                 if (String(device.id) === selectedId) option.selected = true;
                 deviceSelect.add(option);
             });
-            newDeviceFields.hidden = deviceSelect.value !== '';
+            syncDeviceDetails();
             renderDevicePhotos();
             updateActiveWarrantyNotice();
         }
         document.getElementById('customer-select').addEventListener('change', loadDevices);
         deviceSelect.addEventListener('change', () => {
-            newDeviceFields.hidden = deviceSelect.value !== '';
+            syncDeviceDetails();
             renderDevicePhotos();
             updateActiveWarrantyNotice();
         });
