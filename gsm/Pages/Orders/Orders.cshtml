@@ -25,11 +25,12 @@
         <div class="user-form-row user-form-row-two-columns">
             <div>
                 <label asp-for="Input.CustomerId">Customer</label>
+                <input id="customer-search" class="customer-search-input" type="search" placeholder="Search by name, email or phone" autocomplete="off" />
                 <select asp-for="Input.CustomerId" id="customer-select">
                     <option value="">Select customer</option>
                     @foreach (var customer in Model.Customers)
                     {
-                        <option value="@customer.Id" data-device="@customer.Device" data-device-details="@customer.DeviceModelAndSerialNumber">
+                        <option value="@customer.Id" data-device="@customer.Device" data-device-details="@customer.DeviceModelAndSerialNumber" data-search="@(customer.CustomerName) @(customer.Email) @(customer.PhoneNumber)">
                             @(customer.CustomerName ?? customer.Email) — @customer.Email
                         </option>
                     }
@@ -279,8 +280,23 @@
                 photos = device.Photos.Select(photo => new { photo.Id, photo.FileName, photo.OriginalFileName })
             }),
             new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        const customerSelect = document.getElementById('customer-select');
+        const customerSearch = document.getElementById('customer-search');
         const deviceSelect = document.getElementById('device-select');
         const newDeviceFields = document.getElementById('new-device-fields');
+        function filterCustomers() {
+            const term = customerSearch.value.trim().toLowerCase();
+            [...customerSelect.options].forEach((option, index) => {
+                if (index === 0) return;
+                const searchable = (option.dataset.search || option.textContent || '').toLowerCase();
+                option.hidden = term !== '' && !searchable.includes(term);
+            });
+            if (customerSelect.selectedOptions[0]?.hidden) {
+                customerSelect.value = '';
+                loadDevices();
+            }
+        }
+        customerSearch.addEventListener('input', filterCustomers);
         const devicePhotoPicker = document.getElementById('device-photo-picker');
         const devicePhotoInput = document.getElementById('device-photos');
         const devicePhotoPreview = document.getElementById('device-photo-preview');

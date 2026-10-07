@@ -430,6 +430,7 @@ body {
 .repair-form input,
 .repair-form select,
 .repair-form textarea { display: block; width: 100%; min-height: 42px; padding: .6rem .75rem; color: #1e293b; background: #fff; border: 1px solid #cbd5e1; border-radius: .5rem; outline: none; transition: border-color .15s, box-shadow .15s; }
+.repair-form .customer-search-input { margin-bottom: .45rem; }
 .repair-form textarea { min-height: 86px; resize: vertical; }
 .repair-form input:focus,
 .repair-form select:focus,
