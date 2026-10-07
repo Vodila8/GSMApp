@@ -430,7 +430,12 @@ body {
 .repair-form input,
 .repair-form select,
 .repair-form textarea { display: block; width: 100%; min-height: 42px; padding: .6rem .75rem; color: #1e293b; background: #fff; border: 1px solid #cbd5e1; border-radius: .5rem; outline: none; transition: border-color .15s, box-shadow .15s; }
-.repair-form .customer-search-input { margin-bottom: .45rem; }
+.repair-form .customer-select-hidden { display: none; }
+.customer-combobox { position: relative; }
+.customer-combobox .customer-search-input { margin-bottom: 0; }
+.customer-options { position: absolute; z-index: 20; top: calc(100% + .25rem); right: 0; left: 0; max-height: 220px; overflow-y: auto; padding: .25rem; background: #fff; border: 1px solid #cbd5e1; border-radius: .5rem; box-shadow: 0 12px 30px rgb(15 23 42 / 18%); }
+.customer-option { display: block; width: 100%; padding: .6rem .7rem; color: #1e293b; font: inherit; text-align: left; background: #fff; border: 0; border-radius: .35rem; cursor: pointer; }
+.customer-option:hover, .customer-option:focus { color: #1d4ed8; background: #eff6ff; outline: none; }
 .repair-form textarea { min-height: 86px; resize: vertical; }
 .repair-form input:focus,
 .repair-form select:focus,

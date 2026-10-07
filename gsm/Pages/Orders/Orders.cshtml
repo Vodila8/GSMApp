@@ -25,8 +25,11 @@
         <div class="user-form-row user-form-row-two-columns">
             <div>
                 <label asp-for="Input.CustomerId">Customer</label>
-                <input id="customer-search" class="customer-search-input" type="search" placeholder="Search by name, email or phone" autocomplete="off" />
-                <select asp-for="Input.CustomerId" id="customer-select">
+                <div class="customer-combobox" id="customer-combobox">
+                    <input id="customer-search" class="customer-search-input" type="search" placeholder="Search by name, email or phone" autocomplete="off" />
+                    <div id="customer-options" class="customer-options" hidden></div>
+                </div>
+                <select asp-for="Input.CustomerId" id="customer-select" class="customer-select-hidden">
                     <option value="">Select customer</option>
                     @foreach (var customer in Model.Customers)
                     {
@@ -284,19 +287,37 @@
         const customerSearch = document.getElementById('customer-search');
         const deviceSelect = document.getElementById('device-select');
         const newDeviceFields = document.getElementById('new-device-fields');
-        function filterCustomers() {
+        const customerOptions = document.getElementById('customer-options');
+        function renderCustomerOptions() {
             const term = customerSearch.value.trim().toLowerCase();
-            [...customerSelect.options].forEach((option, index) => {
-                if (index === 0) return;
+            customerOptions.innerHTML = '';
+            [...customerSelect.options].filter(option => option.value).forEach(option => {
                 const searchable = (option.dataset.search || option.textContent || '').toLowerCase();
-                option.hidden = term !== '' && !searchable.includes(term);
+                if (term && !searchable.includes(term)) return;
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'customer-option';
+                item.textContent = option.textContent.trim();
+                item.dataset.customerId = option.value;
+                customerOptions.appendChild(item);
             });
-            if (customerSelect.selectedOptions[0]?.hidden) {
-                customerSelect.value = '';
-                loadDevices();
-            }
+            customerOptions.hidden = customerOptions.children.length === 0;
         }
-        customerSearch.addEventListener('input', filterCustomers);
+        function selectCustomer(customerId) {
+            customerSelect.value = customerId;
+            customerSearch.value = customerSelect.selectedOptions[0]?.textContent.trim() || '';
+            customerOptions.hidden = true;
+            loadDevices();
+        }
+        customerSearch.addEventListener('focus', renderCustomerOptions);
+        customerSearch.addEventListener('input', renderCustomerOptions);
+        customerOptions.addEventListener('click', event => {
+            const option = event.target.closest('.customer-option');
+            if (option) selectCustomer(option.dataset.customerId);
+        });
+        document.addEventListener('click', event => {
+            if (!event.target.closest('#customer-combobox')) customerOptions.hidden = true;
+        });
         const devicePhotoPicker = document.getElementById('device-photo-picker');
         const devicePhotoInput = document.getElementById('device-photos');
         const devicePhotoPreview = document.getElementById('device-photo-preview');
@@ -378,6 +399,7 @@
             }
         });
         document.querySelectorAll('.part-select').forEach(select => { if (select.value) select.dispatchEvent(new Event('change')); });
+        if (customerSelect.value) customerSearch.value = customerSelect.selectedOptions[0]?.textContent.trim() || '';
         loadDevices();
         updateTotal();
         const escapePrintText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
