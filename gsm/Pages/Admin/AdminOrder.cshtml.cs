@@ -51,6 +51,16 @@ public class AdminOrderModel : PageModel
             .FirstOrDefaultAsync(item => item.Id == id);
         if (order == null) return NotFound();
 
+        if (User.IsInRole("Technician"))
+        {
+            Input.CustomerId = order.CustomerId;
+            Input.CustomerDeviceId = order.CustomerDeviceId;
+            Input.NewDeviceType = null;
+            Input.NewDeviceModelAndSerialNumber = null;
+            Input.DevicePhotos = [];
+            Input.DeletedDevicePhotoIds = [];
+        }
+
         if (Input.DevicePhotos.Count > 10)
             ModelState.AddModelError("Input.DevicePhotos", "You can upload up to 10 photos at a time.");
         foreach (var photo in Input.DevicePhotos)

@@ -69,14 +69,36 @@
             <section class="repair-section">
                 <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
                 <div class="user-form-row user-form-row-two-columns">
-                    <div><label asp-for="Input.CustomerId">Customer</label><select asp-for="Input.CustomerId" id="edit-customer-select"><option value="">Select customer</option>@foreach (var customer in Model.Customers) { <option value="@customer.Id">@(customer.CustomerName ?? customer.Email) — @customer.Email</option> }</select></div>
-                    <div><label asp-for="Input.CustomerDeviceId">Device</label><select asp-for="Input.CustomerDeviceId" id="edit-device-select"></select></div>
+                    <div>
+                        <label asp-for="Input.CustomerId">Customer</label>
+                        @if (User.IsInRole("Technician"))
+                        {
+                            <select id="edit-customer-select" disabled><option value="@Model.Input.CustomerId">@(Model.Order.Customer?.CustomerName ?? Model.Order.Customer?.Email ?? "No customer")</option></select>
+                            <input asp-for="Input.CustomerId" type="hidden" />
+                        }
+                        else
+                        {
+                            <select asp-for="Input.CustomerId" id="edit-customer-select"><option value="">Select customer</option>@foreach (var customer in Model.Customers) { <option value="@customer.Id">@(customer.CustomerName ?? customer.Email) — @customer.Email</option> }</select>
+                        }
+                    </div>
+                    <div>
+                        <label asp-for="Input.CustomerDeviceId">Device</label>
+                        @if (User.IsInRole("Technician"))
+                        {
+                            <select id="edit-device-select" disabled><option value="@Model.Input.CustomerDeviceId">@(Model.Order.Device ?? "Device") — @Model.Order.DeviceModelAndSerialNumber</option></select>
+                            <input asp-for="Input.CustomerDeviceId" type="hidden" />
+                        }
+                        else
+                        {
+                            <select asp-for="Input.CustomerDeviceId" id="edit-device-select"></select>
+                        }
+                    </div>
                 </div>
-                <div id="edit-new-device-fields" class="user-form-row user-form-row-two-columns">
+                <div id="edit-new-device-fields" class="user-form-row user-form-row-two-columns @(User.IsInRole("Technician") ? "technician-locked" : string.Empty)">
                     <div><label asp-for="Input.NewDeviceType">New Device</label><select asp-for="Input.NewDeviceType"><option value="">Select device type</option><option>Computer</option><option>Laptop</option><option>Printer</option><option>Phone</option><option>Tablet</option><option>Other</option></select></div>
                     <div><label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label><input asp-for="Input.NewDeviceModelAndSerialNumber" /></div>
                 </div>
-                <div class="user-form-row"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
+                <div class="user-form-row @(User.IsInRole("Technician") ? "technician-locked" : string.Empty)"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
             </section>
             <section class="repair-section">
                 <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
