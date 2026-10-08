@@ -257,7 +257,7 @@
             const deviceId = Number(deviceSelect.value || 0);
             const selectedDevice = devices.find(device => String(device.id) === deviceSelect.value);
             const serial = selectedDevice?.modelAndSerialNumber?.trim().toLowerCase();
-            const warranty = activeWarranties.find(item => item.customerId === customerId &&
+            const warranty = selectedDevice && activeWarranties.find(item => item.customerId === customerId &&
                 (item.customerDeviceId === deviceId || (serial && item.deviceModelAndSerialNumber?.trim().toLowerCase() === serial)));
             if (warranty) {
                 const date = new Intl.DateTimeFormat('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }).format(new Date(`${warranty.warrantyEndDate}T12:00:00`));
@@ -293,7 +293,6 @@
         const activeWarrantyDialog = document.getElementById('active-warranty-dialog');
         window.addEventListener('message', event => { if (event.data?.type === 'close-warranty-card') activeWarrantyDialog.close(); });
         document.getElementById('close-active-warranty').addEventListener('click', () => activeWarrantyDialog.close());
-        document.getElementById('close-active-warranty-bottom').addEventListener('click', () => activeWarrantyDialog.close());
         let devicePhotoFiles = [];
         const deletedDevicePhotoIds = new Set();
 
@@ -361,14 +360,7 @@
             renderDevicePhotos();
             updateActiveWarrantyNotice();
         };
-        ['change', 'input', 'click', 'blur'].forEach(eventName => deviceSelect.addEventListener(eventName, () => setTimeout(refreshDeviceSelection, 0)));
-        let lastDeviceSelection = deviceSelect.value;
-        setInterval(() => {
-            if (deviceSelect.value !== lastDeviceSelection) {
-                lastDeviceSelection = deviceSelect.value;
-                refreshDeviceSelection();
-            }
-        }, 250);
+        deviceSelect.addEventListener('change', refreshDeviceSelection);
         devicePhotoInput.addEventListener('change', () => {
             devicePhotoFiles = Array.from(devicePhotoInput.files);
             renderDevicePhotos();
