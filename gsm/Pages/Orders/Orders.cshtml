@@ -25,7 +25,11 @@
         <div class="user-form-row user-form-row-two-columns">
             <div>
                 <label asp-for="Input.CustomerId">Customer</label>
-                <select asp-for="Input.CustomerId" id="customer-select">
+                <div class="customer-combobox" id="customer-combobox">
+                    <input id="customer-search" class="customer-search-input" type="search" placeholder="Search by name, email or phone" autocomplete="off" role="combobox" aria-controls="customer-options" aria-expanded="false" aria-autocomplete="list" />
+                    <div id="customer-options" class="customer-options" role="listbox" hidden></div>
+                </div>
+                <select asp-for="Input.CustomerId" id="customer-select" class="customer-select-hidden">
                     <option value="">Select customer</option>
                     @foreach (var customer in Model.Customers)
                     {
@@ -283,6 +287,50 @@
             }),
             new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
         const customerSelect = document.getElementById('customer-select');
+        const customerSearch = document.getElementById('customer-search');
+        const customerOptions = document.getElementById('customer-options');
+        const customerCombobox = document.getElementById('customer-combobox');
+        const closeCustomerOptions = () => { customerOptions.hidden = true; customerSearch.setAttribute('aria-expanded', 'false'); };
+        const renderCustomerOptions = () => {
+            const term = customerSearch.value.trim().toLowerCase();
+            customerOptions.replaceChildren();
+            [...customerSelect.options].filter(option => option.value && (option.dataset.search || option.textContent).toLowerCase().includes(term)).forEach(option => {
+                const item = document.createElement('button');
+                item.type = 'button';
+                item.className = 'customer-option';
+                item.setAttribute('role', 'option');
+                item.dataset.customerId = option.value;
+                item.textContent = option.textContent.trim();
+                customerOptions.appendChild(item);
+            });
+            customerOptions.hidden = customerOptions.childElementCount === 0;
+            customerSearch.setAttribute('aria-expanded', String(!customerOptions.hidden));
+        };
+        customerSearch.addEventListener('focus', renderCustomerOptions);
+        customerSearch.addEventListener('input', () => {
+            if (customerSelect.value) {
+                customerSelect.value = '';
+                customerSelect.dispatchEvent(new Event('change'));
+            }
+            renderCustomerOptions();
+        });
+        customerSearch.addEventListener('keydown', event => {
+            if (event.key === 'Escape') closeCustomerOptions();
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                customerOptions.querySelector('.customer-option')?.click();
+            }
+        });
+        customerOptions.addEventListener('click', event => {
+            const option = event.target.closest('[data-customer-id]');
+            if (!option) return;
+            customerSelect.value = option.dataset.customerId;
+            customerSearch.value = customerSelect.selectedOptions[0].textContent.trim();
+            closeCustomerOptions();
+            customerSelect.dispatchEvent(new Event('change'));
+        });
+        document.addEventListener('click', event => { if (!customerCombobox.contains(event.target)) closeCustomerOptions(); });
+        if (customerSelect.value) customerSearch.value = customerSelect.selectedOptions[0].textContent.trim();
         const deviceSelect = document.getElementById('device-select');
         const newDeviceFields = document.getElementById('new-device-fields');
         const newDeviceType = document.querySelector('[name="Input.NewDeviceType"]');
