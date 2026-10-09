@@ -59,6 +59,8 @@ public class AdminOrderModel : PageModel
             Input.NewDeviceModelAndSerialNumber = null;
             Input.DevicePhotos = [];
             Input.DeletedDevicePhotoIds = [];
+            Input.Accessories = order.Accessories;
+            Input.DevicePassword = order.DevicePassword;
         }
 
         if (Input.DevicePhotos.Count > 10)

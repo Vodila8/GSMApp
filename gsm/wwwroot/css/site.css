@@ -988,6 +988,9 @@ body { background: var(--ops-bg); color: var(--ops-text); }
 .user-order-card .order-card-price span { margin-left: .25rem; font-size: 1.05rem; }
 .user-orders-empty { display: grid; gap: .3rem; padding: 1.25rem; color: var(--ops-muted); text-align: center; background: #f8fbfd; border: 1px dashed #cbd9e6; border-radius: .7rem; }
 .user-orders-empty strong { color: var(--ops-text); }
+.technician-locked-select { appearance: none; -webkit-appearance: none; background-image: none !important; padding-right: .75rem !important; cursor: not-allowed; }
+.technician-readonly-field { min-height: 42px; padding: .6rem .75rem; color: var(--ops-muted); background: #f2f6fa; border: 1px solid var(--ops-border); border-radius: .5rem; overflow-wrap: anywhere; }
+
 @media (max-width: 700px) {
   .user-orders-panel { width: 100%; margin: .75rem 0; }
   .user-orders-header, .user-orders-section-heading { align-items: flex-start; flex-direction: column; gap: .65rem; }

@@ -73,7 +73,7 @@
                         <label asp-for="Input.CustomerId">Customer</label>
                         @if (User.IsInRole("Technician"))
                         {
-                            <select id="edit-customer-select" disabled><option value="@Model.Input.CustomerId">@(Model.Order.Customer?.CustomerName ?? Model.Order.Customer?.Email ?? "No customer")</option></select>
+                            <select id="edit-customer-select" class="technician-locked-select" disabled><option value="@Model.Input.CustomerId">@(Model.Order.Customer?.CustomerName ?? Model.Order.Customer?.Email ?? "No customer")</option></select>
                             <input asp-for="Input.CustomerId" type="hidden" />
                         }
                         else
@@ -85,7 +85,7 @@
                         <label asp-for="Input.CustomerDeviceId">Device</label>
                         @if (User.IsInRole("Technician"))
                         {
-                            <select id="edit-device-select" disabled><option value="@Model.Input.CustomerDeviceId">@(Model.Order.Device ?? "Device") — @Model.Order.DeviceModelAndSerialNumber</option></select>
+                            <select id="edit-device-select" class="technician-locked-select" disabled><option value="@Model.Input.CustomerDeviceId">@(Model.Order.Device ?? "Device") — @Model.Order.DeviceModelAndSerialNumber</option></select>
                             <input asp-for="Input.CustomerDeviceId" type="hidden" />
                         }
                         else
@@ -104,7 +104,31 @@
                 <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
                 <div class="user-form-row"><label asp-for="Input.ProblemOrRepair">Problem / Repair</label><textarea asp-for="Input.ProblemOrRepair" rows="3"></textarea></div>
                 <div class="user-form-row"><label asp-for="Input.DeviceConditionAndNotes">Device Condition and Notes at Acceptance</label><textarea asp-for="Input.DeviceConditionAndNotes" rows="3"></textarea></div>
-                <div class="user-form-row user-form-row-two-columns"><div><label asp-for="Input.Accessories">Accessories</label><input asp-for="Input.Accessories" type="hidden" id="edit-accessories-value" /><div class="accessory-options" id="edit-accessories-options"><button type="button" class="accessory-option" data-accessory="SIM card">SIM card</button><button type="button" class="accessory-option" data-accessory="Case">Case</button><button type="button" class="accessory-option" data-accessory="Charger">Charger</button><button type="button" class="accessory-option" data-accessory="Cable">Cable</button><button type="button" class="accessory-option" data-accessory="Bag">Bag</button><button type="button" class="accessory-option" data-accessory="Other">Other</button></div><input asp-for="Input.OtherAccessory" id="edit-accessories-other" class="accessory-other-input" type="text" placeholder="Write accessory" hidden /></div><div><label asp-for="Input.DevicePassword">Device Password</label><input asp-for="Input.DevicePassword" type="text" /></div></div>
+                <div class="user-form-row user-form-row-two-columns">
+                    <div>
+                        <label asp-for="Input.Accessories">Accessories</label>
+                        @if (User.IsInRole("Technician"))
+                        {
+                            <div class="technician-readonly-field">@(string.IsNullOrWhiteSpace(Model.Order.Accessories) ? "Not specified" : Model.Order.Accessories)</div>
+                        }
+                        else
+                        {
+                            <input asp-for="Input.Accessories" type="hidden" id="edit-accessories-value" />
+                            <div class="accessory-options" id="edit-accessories-options"><button type="button" class="accessory-option" data-accessory="SIM card">SIM card</button><button type="button" class="accessory-option" data-accessory="Case">Case</button><button type="button" class="accessory-option" data-accessory="Charger">Charger</button><button type="button" class="accessory-option" data-accessory="Cable">Cable</button><button type="button" class="accessory-option" data-accessory="Bag">Bag</button><button type="button" class="accessory-option" data-accessory="Other">Other</button></div><input asp-for="Input.OtherAccessory" id="edit-accessories-other" class="accessory-other-input" type="text" placeholder="Write accessory" hidden />
+                        }
+                    </div>
+                    <div>
+                        <label asp-for="Input.DevicePassword">Device Password</label>
+                        @if (User.IsInRole("Technician"))
+                        {
+                            <div class="technician-readonly-field">@(string.IsNullOrWhiteSpace(Model.Order.DevicePassword) ? "Not specified" : Model.Order.DevicePassword)</div>
+                        }
+                        else
+                        {
+                            <input asp-for="Input.DevicePassword" type="text" />
+                        }
+                    </div>
+                </div>
                 <input asp-for="Input.AdbDiagnosticReport" type="hidden" />
             </section>
             <h2 class="order-section-title">Parts from Warehouse</h2>
@@ -194,16 +218,18 @@ photoPicker.addEventListener('click', event => {
 const accessoryOptions = document.getElementById('edit-accessories-options');
 const accessoryValue = document.getElementById('edit-accessories-value');
 const accessoryOther = document.getElementById('edit-accessories-other');
-const accessoryValues = (accessoryValue.value || '').split(',').map(value => value.trim()).filter(Boolean);
-const knownAccessories = new Set(['SIM card', 'Case', 'Charger', 'Cable', 'Bag', 'Other']);
-const selectedAccessories = new Set(accessoryValues.filter(value => knownAccessories.has(value)));
-const customAccessory = accessoryValues.filter(value => !knownAccessories.has(value));
-if (customAccessory.length > 0) { selectedAccessories.add('Other'); accessoryOther.value = customAccessory.join(', '); }
-accessoryOptions.querySelectorAll('[data-accessory]').forEach(button => { if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected'); });
-function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySelectorAll('.selected')].map(button => button.dataset.accessory).filter(value => value !== 'Other').concat(accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected') && accessoryOther.value.trim() ? [accessoryOther.value.trim()] : []).join(', '); accessoryOther.hidden = !accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected'); }
-accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { if (button.dataset.accessory === 'Other') button.classList.add('selected'); else button.classList.toggle('selected'); syncAccessories(); } });
-accessoryOther.addEventListener('input', syncAccessories);
-document.getElementById('edit-order-form').addEventListener('submit', syncAccessories);
+if (accessoryOptions && accessoryValue && accessoryOther) {
+    const accessoryValues = (accessoryValue.value || '').split(',').map(value => value.trim()).filter(Boolean);
+    const knownAccessories = new Set(['SIM card', 'Case', 'Charger', 'Cable', 'Bag', 'Other']);
+    const selectedAccessories = new Set(accessoryValues.filter(value => knownAccessories.has(value)));
+    const customAccessory = accessoryValues.filter(value => !knownAccessories.has(value));
+    if (customAccessory.length > 0) { selectedAccessories.add('Other'); accessoryOther.value = customAccessory.join(', '); }
+    accessoryOptions.querySelectorAll('[data-accessory]').forEach(button => { if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected'); });
+    function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySelectorAll('.selected')].map(button => button.dataset.accessory).filter(value => value !== 'Other').concat(accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected') && accessoryOther.value.trim() ? [accessoryOther.value.trim()] : []).join(', '); accessoryOther.hidden = !accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected'); }
+    accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { if (button.dataset.accessory === 'Other') button.classList.add('selected'); else button.classList.toggle('selected'); syncAccessories(); } });
+    accessoryOther.addEventListener('input', syncAccessories);
+    document.getElementById('edit-order-form').addEventListener('submit', syncAccessories);
+}
 const printText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
 document.getElementById('print-admin-order').addEventListener('click', () => {
     const customer = customerSelect.selectedOptions[0]?.textContent.trim() || 'Not specified';
