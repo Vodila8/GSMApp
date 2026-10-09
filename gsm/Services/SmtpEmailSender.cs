@@ -33,15 +33,22 @@ public class SmtpEmailSender : IEmailSender
 
         var fromName = _configuration["Smtp:FromName"] ?? "GSM Service Center";
         var replyTo = _configuration["Smtp:ReplyTo"];
-        var plainTextMessage = Regex.Replace(htmlMessage, "<[^>]+>", " ");
-        plainTextMessage = WebUtility.HtmlDecode(Regex.Replace(plainTextMessage, @"\s+", " ")).Trim();
+        var plainTextMessage = Regex.Replace(
+            htmlMessage,
+            @"<br\s*/?>|</p>|</div>|</h[1-6]>",
+            "\n",
+            RegexOptions.IgnoreCase);
+        plainTextMessage = Regex.Replace(plainTextMessage, "<[^>]+>", string.Empty);
+        plainTextMessage = WebUtility.HtmlDecode(plainTextMessage);
+        plainTextMessage = Regex.Replace(plainTextMessage, @"[ \t]+\n", "\n");
+        plainTextMessage = Regex.Replace(plainTextMessage, @"\n{3,}", "\n\n").Trim();
 
         using var message = new MailMessage
         {
             From = new MailAddress(username, fromName),
             Subject = subject,
-            Body = htmlMessage,
-            IsBodyHtml = true,
+            Body = plainTextMessage,
+            IsBodyHtml = false,
             SubjectEncoding = System.Text.Encoding.UTF8,
             BodyEncoding = System.Text.Encoding.UTF8,
             HeadersEncoding = System.Text.Encoding.UTF8
@@ -56,6 +63,10 @@ public class SmtpEmailSender : IEmailSender
             plainTextMessage,
             System.Text.Encoding.UTF8,
             MediaTypeNames.Text.Plain));
+        message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(
+            htmlMessage,
+            System.Text.Encoding.UTF8,
+            MediaTypeNames.Text.Html));
         message.Headers.Add("Auto-Submitted", "auto-generated");
         message.Headers.Add("X-Auto-Response-Suppress", "All");
 
