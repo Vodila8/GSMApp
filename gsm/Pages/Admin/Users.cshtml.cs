@@ -186,7 +186,7 @@ public class UsersModel : PageModel
 
     public async Task<IActionResult> OnPostDeleteUserAsync(string id)
     {
-        if (!User.IsInRole("Boss")) return Forbid();
+        if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
         var currentUserId = _userManager.GetUserId(User);
@@ -203,6 +203,8 @@ public class UsersModel : PageModel
 
         var roles = await _userManager.GetRolesAsync(user);
         if (roles.Contains("Boss", StringComparer.OrdinalIgnoreCase)) return Forbid();
+        if (roles.Contains("Administrator", StringComparer.OrdinalIgnoreCase) && !User.IsInRole("Boss")) return Forbid();
+        if (roles.Contains("User", StringComparer.OrdinalIgnoreCase) && !User.IsInRole("Boss")) return Forbid();
 
         var currentMembership = memberships.FirstOrDefault(membership => membership.CompanyId == _tenantContext.CompanyId);
         if (currentMembership != null) _dbContext.UserCompanyMemberships.Remove(currentMembership);

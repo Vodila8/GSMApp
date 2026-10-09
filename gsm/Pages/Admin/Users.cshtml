@@ -42,7 +42,11 @@
                             </span>
                             <span class="order-card-date">View orders and manage dates</span>
                         </a>
-                        @if (User.IsInRole("Boss"))
+                        @{
+                            var canDeleteUser = User.IsInRole("Boss") && !string.Equals(user.Role, "Boss", StringComparison.OrdinalIgnoreCase)
+                                || User.IsInRole("Administrator") && string.Equals(user.Role, "Technician", StringComparison.OrdinalIgnoreCase);
+                        }
+                        @if (canDeleteUser)
                         {
                             <form method="post" asp-page-handler="DeleteUser" asp-route-id="@user.Id" onsubmit="return confirm('Delete this user?');">
                                 <button type="submit" class="btn btn-outline-danger">Delete user</button>
