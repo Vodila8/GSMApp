@@ -1,5 +1,7 @@
 using System.Net;
 using System.Net.Mail;
+using System.Net.Mime;
+using System.Text.RegularExpressions;
 
 namespace gsm.Services;
 
@@ -29,10 +31,33 @@ public class SmtpEmailSender : IEmailSender
             EnableSsl = enableSsl
         };
 
-        using var message = new MailMessage(username, email, subject, htmlMessage)
+        var fromName = _configuration["Smtp:FromName"] ?? "GSM Service Center";
+        var replyTo = _configuration["Smtp:ReplyTo"];
+        var plainTextMessage = Regex.Replace(htmlMessage, "<[^>]+>", " ");
+        plainTextMessage = WebUtility.HtmlDecode(Regex.Replace(plainTextMessage, @"\s+", " ")).Trim();
+
+        using var message = new MailMessage
         {
-            IsBodyHtml = true
+            From = new MailAddress(username, fromName),
+            Subject = subject,
+            Body = htmlMessage,
+            IsBodyHtml = true,
+            SubjectEncoding = System.Text.Encoding.UTF8,
+            BodyEncoding = System.Text.Encoding.UTF8,
+            HeadersEncoding = System.Text.Encoding.UTF8
         };
+        message.To.Add(new MailAddress(email));
+        if (!string.IsNullOrWhiteSpace(replyTo))
+        {
+            message.ReplyToList.Add(new MailAddress(replyTo));
+        }
+
+        message.AlternateViews.Add(AlternateView.CreateAlternateViewFromString(
+            plainTextMessage,
+            System.Text.Encoding.UTF8,
+            MediaTypeNames.Text.Plain));
+        message.Headers.Add("Auto-Submitted", "auto-generated");
+        message.Headers.Add("X-Auto-Response-Suppress", "All");
 
         _logger.LogInformation("Sending email to {Email} via {Host}:{Port}", email, host, port);
         await client.SendMailAsync(message);
