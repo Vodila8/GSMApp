@@ -16,7 +16,11 @@ namespace gsm.Pages;
 [Authorize(Roles = "Boss,Administrator")]
 public class CreateUserModel : PageModel
 {
-    private const string PasswordCharacters = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789!@#$%";
+    private const string UppercaseCharacters = "ABCDEFGHJKLMNPQRSTUVWXYZ";
+    private const string LowercaseCharacters = "abcdefghijkmnopqrstuvwxyz";
+    private const string DigitCharacters = "23456789";
+    private const string SpecialCharacters = "!@#$%";
+    private const string PasswordCharacters = UppercaseCharacters + LowercaseCharacters + DigitCharacters + SpecialCharacters;
     private readonly UserManager<ApplicationUser> _userManager;
     private readonly IEmailSender _emailSender;
     private readonly ILogger<CreateUserModel> _logger;
@@ -138,7 +142,6 @@ public class CreateUserModel : PageModel
             pageHandler: null,
             values: null,
             protocol: Request.Scheme);
-
         var customerIdLine = user.CustomerNumber is null
             ? string.Empty
             : $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>";
@@ -172,6 +175,23 @@ public class CreateUserModel : PageModel
         return RedirectToPage();
     }
 
+    private static string GeneratePassword()
+    {
+        var characters = new[]
+        {
+            UppercaseCharacters[RandomNumberGenerator.GetInt32(UppercaseCharacters.Length)],
+            LowercaseCharacters[RandomNumberGenerator.GetInt32(LowercaseCharacters.Length)],
+            DigitCharacters[RandomNumberGenerator.GetInt32(DigitCharacters.Length)],
+            SpecialCharacters[RandomNumberGenerator.GetInt32(SpecialCharacters.Length)]
+        };
+        var remaining = Enumerable.Range(0, 12)
+            .Select(_ => PasswordCharacters[RandomNumberGenerator.GetInt32(PasswordCharacters.Length)])
+            .ToArray();
+        return new string(characters.Concat(remaining)
+            .OrderBy(_ => RandomNumberGenerator.GetInt32(int.MaxValue))
+            .ToArray());
+    }
+
     private async Task<string> GenerateCustomerNumberAsync()
     {
         string number;
@@ -181,17 +201,6 @@ public class CreateUserModel : PageModel
         }
         while (await _userManager.Users.AnyAsync(user => user.CustomerNumber == number));
         return number;
-    }
-
-    private static string GeneratePassword()
-    {
-        var characters = new char[16];
-        for (var index = 0; index < characters.Length; index++)
-        {
-            characters[index] = PasswordCharacters[RandomNumberGenerator.GetInt32(PasswordCharacters.Length)];
-        }
-
-        return new string(characters);
     }
 
     public class InputModel
