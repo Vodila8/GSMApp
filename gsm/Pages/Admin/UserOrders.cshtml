@@ -9,6 +9,21 @@
         <a class="back-link" href="/Users">← Back to users</a>
         <h1 class="warehouse-title">@(Model.Customer!.CustomerName ?? Model.Customer.Email)</h1>
         <p class="text-muted">@Model.Customer.Email</p>
+        <form method="post" asp-page-handler="UpdateContact" asp-route-id="@Model.Customer.Id" class="user-contact-card">
+            <div class="user-form-row user-form-row-two-columns">
+                <div>
+                    <label asp-for="Contact.CustomerName">Name</label>
+                    <input asp-for="Contact.CustomerName" autocomplete="name" />
+                    <span asp-validation-for="Contact.CustomerName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Contact.PhoneNumber">Phone number</label>
+                    <input asp-for="Contact.PhoneNumber" type="tel" autocomplete="tel" />
+                    <span asp-validation-for="Contact.PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save contact information</button>
+        </form>
         @if (!User.IsInRole("Boss") && !User.IsInRole("Administrator"))
         {
             <form method="post" asp-page-handler="SetPassword" asp-route-id="@Model.Customer.Id" class="user-password-card">

@@ -142,27 +142,18 @@ public class CreateUserModel : PageModel
             pageHandler: null,
             values: null,
             protocol: Request.Scheme);
-        var customerIdLine = user.CustomerNumber is null
-            ? string.Empty
-            : $"<b>Customer ID:</b> {WebUtility.HtmlEncode(user.CustomerNumber)}<br><br>";
-        const string serviceTerms = "<hr><h3>General service terms</h3>" +
-            "The service provider is not responsible for loss or damage to information, programs or data stored on the product before service." +
-            "<br><br>The customer is responsible for creating a separate backup copy and removing personal information before submitting the product for service." +
-            "<br><br>Warranty service does not cover products that were used or stored improperly, mechanical damage, damage caused by natural disasters, unsealed products or modules, or attempts to repair a defect by unauthorized persons." +
-            "<br><br>Unclaimed products may be subject to storage or disposal fees in accordance with applicable law. By submitting a device for service, the customer agrees to the service terms and conditions." +
-            "<br><br>These terms are provided in English for your reference. The applicable local legal provisions remain in force.";
         try
         {
             await _emailSender.SendEmailAsync(
                 user.Email!,
-                "Confirm your account",
-                $"Hello {WebUtility.HtmlEncode(Input.CustomerName ?? "there")},<br><br>" +
-                customerIdLine +
-                "An account has been created for you. Use the password below to sign in after confirming your email.<br><br>" +
-                $"<b>Temporary password:</b> {WebUtility.HtmlEncode(generatedPassword)}<br><br>" +
-                $"<a href='{WebUtility.HtmlEncode(confirmationUrl)}' style='padding:8px 16px;background:#0d6efd;color:#fff;text-decoration:none;border-radius:4px;'>Confirm email</a><br><br>" +
-                $"<a href='{WebUtility.HtmlEncode(applicationUrl)}' style='padding:8px 16px;background:#198754;color:#fff;text-decoration:none;border-radius:4px;'>Open application</a><br><br>" +
-                "If you did not expect this email, you can ignore it." + serviceTerms);
+                "Your GSM Service Center account",
+                AccountEmailContent.BuildAccountCreatedEmail(
+                    Input.CustomerName,
+                    Input.Role,
+                    user.CustomerNumber,
+                    generatedPassword,
+                    confirmationUrl!,
+                    applicationUrl!));
         }
         catch (Exception exception)
         {

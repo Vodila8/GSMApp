@@ -32,6 +32,32 @@ public class UserOrdersModel : PageModel
     [BindProperty]
     public PasswordInput Password { get; set; } = new();
 
+    [BindProperty]
+    public ContactInput Contact { get; set; } = new();
+
+    public async Task<IActionResult> OnPostUpdateContactAsync(string id)
+    {
+        if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
+        foreach (var key in ModelState.Keys.Where(key => key.StartsWith(nameof(Password), StringComparison.OrdinalIgnoreCase)).ToList())
+            ModelState.Remove(key);
+        if (!ModelState.IsValid)
+        {
+            await LoadAsync(id);
+            return Page();
+        }
+
+        var user = await _userManager.Users.FirstOrDefaultAsync(item =>
+            item.Id == id &&
+            (item.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == item.Id && membership.CompanyId == _tenantContext.CompanyId)));
+        if (user == null) return NotFound();
+
+        user.CustomerName = string.IsNullOrWhiteSpace(Contact.CustomerName) ? null : Contact.CustomerName.Trim();
+        user.PhoneNumber = string.IsNullOrWhiteSpace(Contact.PhoneNumber) ? null : Contact.PhoneNumber.Trim();
+        await _dbContext.SaveChangesAsync();
+        TempData["StatusMessage"] = "User contact information has been updated.";
+        return RedirectToPage(new { id });
+    }
+
     public async Task<IActionResult> OnPostSetPasswordAsync(string id)
     {
         if (User.IsInRole("Boss") || User.IsInRole("Administrator")) return Forbid();
@@ -100,6 +126,11 @@ public class UserOrdersModel : PageModel
             user.Id == id &&
             (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)));
         if (Customer == null) return false;
+        Contact = new ContactInput
+        {
+            CustomerName = Customer.CustomerName,
+            PhoneNumber = Customer.PhoneNumber
+        };
         Orders = await _dbContext.ServiceOrders
             .Where(order => order.CustomerId == id)
             .Include(order => order.Adjustments)
@@ -107,6 +138,15 @@ public class UserOrdersModel : PageModel
             .OrderByDescending(order => order.CreatedAt)
             .ToListAsync();
         return true;
+    }
+
+    public class ContactInput
+    {
+        [StringLength(200)]
+        public string? CustomerName { get; set; }
+
+        [StringLength(50)]
+        public string? PhoneNumber { get; set; }
     }
 
     public class PasswordInput
