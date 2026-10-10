@@ -54,6 +54,9 @@ public class UsersModel : PageModel
     [BindProperty(SupportsGet = true)]
     public string? Search { get; set; }
 
+    [BindProperty(SupportsGet = true)]
+    public string RoleFilter { get; set; } = "All";
+
     public List<UserListItem> Users { get; private set; } = [];
     public string? StatusMessage { get; private set; }
     public bool ShowCreateUserModal { get; private set; }
@@ -321,6 +324,18 @@ public class UsersModel : PageModel
 
         var usersQuery = _dbContext.Users
             .Where(user => (user.CompanyId == _tenantContext.CompanyId || _dbContext.UserCompanyMemberships.Any(membership => membership.UserId == user.Id && membership.CompanyId == _tenantContext.CompanyId)) && !hiddenUserIds.Contains(user.Id));
+        var selectedRole = RoleFilter?.Trim() ?? "All";
+        if (!new[] { "All", "User", "Technician", "Administrator" }.Contains(selectedRole, StringComparer.OrdinalIgnoreCase))
+        {
+            RoleFilter = "All";
+            selectedRole = "All";
+        }
+        if (!string.Equals(selectedRole, "All", StringComparison.OrdinalIgnoreCase))
+        {
+            usersQuery = usersQuery.Where(user => _dbContext.UserRoles
+                .Join(_dbContext.Roles, userRole => userRole.RoleId, role => role.Id, (userRole, role) => new { userRole.UserId, role.Name })
+                .Any(item => item.UserId == user.Id && item.Name == selectedRole));
+        }
         if (!string.IsNullOrWhiteSpace(Search))
         {
             var search = Search.Trim();

@@ -12,6 +12,15 @@
         </div>
         <form method="get" class="users-search-form">
             <input asp-for="Search" placeholder="Search by name, email or phone number" autocomplete="off" />
+            <select asp-for="RoleFilter" aria-label="Filter by role">
+                <option value="All">All roles</option>
+                <option value="User">Users</option>
+                <option value="Technician">Technicians</option>
+                @if (User.IsInRole("Boss"))
+                {
+                    <option value="Administrator">Administrators</option>
+                }
+            </select>
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
         @if (Model.StatusMessage is not null)

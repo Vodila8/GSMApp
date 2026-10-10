@@ -572,8 +572,10 @@ body {
 .users-page-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .users-page-heading .warehouse-title { margin-bottom: 1.5rem; }
 .users-search-form { display: flex; gap: .65rem; margin: 0 0 1.25rem; }
-.users-search-form input { flex: 1; min-height: 42px; padding: .6rem .75rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; }
-.users-search-form input:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
+.users-search-form input, .users-search-form select { min-height: 42px; padding: .6rem .75rem; color: var(--ops-text); background: #f7fafc; border: 1px solid var(--ops-border); border-radius: .45rem; outline: none; }
+.users-search-form input { flex: 1; min-width: 0; }
+.users-search-form select { min-width: 150px; }
+.users-search-form input:focus, .users-search-form select:focus { background: #fff; border-color: var(--ops-blue); box-shadow: 0 0 0 3px rgb(16 169 232 / 12%); }
 .add-user-button { display: inline-flex; align-items: center; justify-content: center; width: 2.5rem; height: 2.5rem; padding: 0; margin-bottom: 1.5rem; color: #fff; font-size: 1.65rem; font-weight: 400; line-height: 1; text-decoration: none; background: var(--ops-blue); border: 1px solid var(--ops-blue); border-radius: .55rem; box-shadow: 0 5px 12px rgb(16 169 232 / 25%); cursor: pointer; }
 .add-user-button:hover { color: #fff; background: var(--ops-blue-dark); border-color: var(--ops-blue-dark); }
 .user-password-card { display: grid; gap: .75rem; padding: 1rem; margin: 1rem 0 1.25rem; background: #f7fbfe; border: 1px solid var(--ops-border); border-radius: .65rem; }
@@ -922,6 +924,8 @@ body { background: var(--ops-bg); color: var(--ops-text); }
   .warehouse-page-actions { flex-wrap: wrap; margin-bottom: 1rem; }
   .warehouse-page-search { flex-wrap: wrap; }
   .warehouse-page-search input { flex: 1 1 100%; }
+  .users-search-form { flex-wrap: wrap; }
+  .users-search-form input, .users-search-form select, .users-search-form .btn { flex: 1 1 100%; width: 100%; }
   .warehouse-report-filters { grid-template-columns: 1fr; }
   .warehouse-page-search .btn { flex: 1 1 0; }
   .warehouse-title, .repair-form .warehouse-title { font-size: 1.45rem; }
