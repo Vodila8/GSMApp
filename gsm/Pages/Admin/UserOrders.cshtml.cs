@@ -53,7 +53,20 @@ public class UserOrdersModel : PageModel
 
         user.CustomerName = string.IsNullOrWhiteSpace(Contact.CustomerName) ? null : Contact.CustomerName.Trim();
         user.PhoneNumber = string.IsNullOrWhiteSpace(Contact.PhoneNumber) ? null : Contact.PhoneNumber.Trim();
-        await _dbContext.SaveChangesAsync();
+        var updateResult = await _userManager.UpdateAsync(user);
+        if (!updateResult.Succeeded)
+        {
+            foreach (var error in updateResult.Errors)
+                ModelState.AddModelError(string.Empty, error.Description);
+            await LoadAsync(id);
+            Contact = new ContactInput
+            {
+                CustomerName = user.CustomerName,
+                PhoneNumber = user.PhoneNumber
+            };
+            return Page();
+        }
+
         TempData["StatusMessage"] = "User contact information has been updated.";
         return RedirectToPage(new { id });
     }
