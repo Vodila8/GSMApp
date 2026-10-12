@@ -1,0 +1,98 @@
+@page "/UserOrders/{id}"
+@model gsm.Pages.UserOrdersModel
+@{
+    ViewData["Title"] = "User Orders";
+}
+
+<div class="user-form-page user-orders-page">
+    <section class="warehouse-list user-orders-panel">
+        <a class="back-link" href="/Users">← Back to users</a>
+        <div class="user-orders-header">
+            <div>
+                <span class="user-orders-kicker">User profile</span>
+                <h1 class="warehouse-title">@(Model.Customer!.CustomerName ?? Model.Customer.Email)</h1>
+                <p class="user-orders-email">@Model.Customer.Email</p>
+            </div>
+            <span class="user-orders-count">@Model.Orders.Count @(Model.Orders.Count == 1 ? "order" : "orders")</span>
+        </div>
+        <form method="post" asp-page-handler="UpdateContact" asp-route-id="@Model.Customer.Id" class="user-contact-card">
+            <div class="user-form-row user-form-row-two-columns">
+                <div>
+                    <label asp-for="Contact.CustomerName">Name</label>
+                    <input asp-for="Contact.CustomerName" autocomplete="name" />
+                    <span asp-validation-for="Contact.CustomerName" class="text-danger"></span>
+                </div>
+                <div>
+                    <label asp-for="Contact.PhoneNumber">Phone number</label>
+                    <input asp-for="Contact.PhoneNumber" type="tel" autocomplete="tel" />
+                    <span asp-validation-for="Contact.PhoneNumber" class="text-danger"></span>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Save contact information</button>
+        </form>
+        @if (!User.IsInRole("Boss") && !User.IsInRole("Administrator"))
+        {
+            <form method="post" asp-page-handler="SetPassword" asp-route-id="@Model.Customer.Id" class="user-password-card">
+                <div>
+                    <strong>Account password</strong>
+                    <span>Set a new password for this user.</span>
+                </div>
+                <div class="user-password-card-actions">
+                    <input asp-for="Password.NewPassword" autocomplete="new-password" placeholder="New password" />
+                    <button type="submit" class="btn btn-primary">Update password</button>
+                </div>
+                <span asp-validation-for="Password.NewPassword" class="text-danger"></span>
+            </form>
+        }
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success">@statusMessage</div>
+        }
+        <div class="user-orders-section-heading">
+            <div>
+                <span class="user-orders-kicker">Service history</span>
+                <h2>Orders</h2>
+            </div>
+            <span class="user-orders-section-note">Select an order to open management</span>
+        </div>
+        @if (Model.Orders.Count == 0)
+        {
+            <div class="user-orders-empty">
+                <strong>No orders yet</strong>
+                <span>This user does not have any service orders.</span>
+            </div>
+        }
+        else
+        {
+            <div class="order-cards user-orders-cards">
+            @foreach (var order in Model.Orders)
+            {
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                var isCompleted = order.Stages.Any(stage => stage.IsFixed && stage.Name == "End" && stage.EndDate.HasValue && stage.EndDate <= today);
+                var currentStage = order.Stages
+                    .Where(stage => !stage.IsFixed && stage.StartDate.HasValue && stage.StartDate <= today && (!stage.EndDate.HasValue || stage.EndDate >= today))
+                    .OrderByDescending(stage => stage.SortOrder)
+                    .Select(stage => stage.Name)
+                    .FirstOrDefault();
+                <a class="order-card user-order-card" href="/AdminOrder/@order.Id">
+                    <span class="user-order-card-top">
+                        <span class="order-card-number">Order #@order.Id</span>
+                        <span class="order-card-status @(isCompleted ? "completed" : "progress")">
+                            @(isCompleted ? "Completed" : string.IsNullOrWhiteSpace(currentStage) ? "In progress" : $"In progress — {currentStage}")
+                        </span>
+                    </span>
+                    <strong class="user-order-device">@order.Device</strong>
+                    @if (!string.IsNullOrWhiteSpace(order.DeviceModelAndSerialNumber))
+                    {
+                        <span class="user-order-serial">@order.DeviceModelAndSerialNumber</span>
+                    }
+                    <span class="user-order-card-bottom">
+                        <span class="order-card-date">Open order management</span>
+                        <span class="order-card-price">@order.TotalPrice.ToString("0.00") EUR <span>→</span></span>
+                    </span>
+                </a>
+            }
+            </div>
+        }
+    </section>
+</div>

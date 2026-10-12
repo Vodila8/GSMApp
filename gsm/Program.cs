@@ -1,0 +1,113 @@
+using gsm.Data;
+using gsm.Services;
+using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.EntityFrameworkCore;
+
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddDataProtection()
+    .PersistKeysToFileSystem(new DirectoryInfo(Path.Combine(builder.Environment.ContentRootPath, "DataProtectionKeys")))
+    .SetApplicationName("gsm");
+
+// Add services to the container.
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseNpgsql(connectionString));
+builder.Services.AddHttpContextAccessor();
+builder.Services.AddScoped<TenantContext>();
+builder.Services.AddScoped<Microsoft.AspNetCore.Authentication.IClaimsTransformation, CompanyClaimsTransformation>();
+
+builder.Services.AddScoped<SmtpEmailSender>();
+builder.Services.AddScoped<IEmailSender, RabbitMqEmailSender>();
+builder.Services.AddScoped<AdbDiagnosticService>();
+builder.Services.AddHostedService<RabbitMqEmailWorker>();
+builder.Services.AddHostedService<OrderStageNotificationWorker>();
+
+builder.Services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+{
+    options.Password.RequireDigit = true;
+    options.Password.RequireLowercase = true;
+    options.Password.RequireNonAlphanumeric = true;
+    options.Password.RequireUppercase = true;
+    options.Password.RequiredLength = 8;
+    options.Password.RequiredUniqueChars = 1;
+    options.SignIn.RequireConfirmedEmail = true;
+})
+    .AddEntityFrameworkStores<ApplicationDbContext>()
+    .AddRoles<IdentityRole>()
+    .AddDefaultTokenProviders();
+
+builder.Services.ConfigureApplicationCookie(options =>
+{
+    options.ExpireTimeSpan = TimeSpan.FromDays(30);
+    options.SlidingExpiration = true;
+    options.Cookie.Name = "gsm.auth";
+    options.Cookie.IsEssential = true;
+    options.LoginPath = "/Identity/Account/Login";
+});
+
+builder.Services.AddRazorPages();
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+
+    foreach (var roleName in new[] { "Boss", "Administrator", "Technician", "User" })
+    {
+        if (!await roleManager.RoleExistsAsync(roleName))
+        {
+            await roleManager.CreateAsync(new IdentityRole(roleName));
+        }
+    }
+}
+
+// Accept the original HTTPS scheme when the app is opened through a public tunnel.
+app.UseForwardedHeaders(new ForwardedHeadersOptions
+{
+    ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
+});
+
+// Configure the HTTP request pipeline.
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
+    app.UseHsts();
+    app.UseHttpsRedirection();
+}
+app.UseStaticFiles();
+
+app.UseRouting();
+
+app.UseAuthentication();
+app.Use(async (context, next) =>
+{
+    if (context.User.Identity?.IsAuthenticated == true &&
+        !context.Request.Path.StartsWithSegments("/AcceptTerms") &&
+        !context.Request.Path.StartsWithSegments("/Identity/Account/Logout"))
+    {
+        var userManager = context.RequestServices.GetRequiredService<UserManager<ApplicationUser>>();
+        var user = await userManager.GetUserAsync(context.User);
+        var isStaff = context.User.IsInRole("Boss") ||
+                      context.User.IsInRole("Administrator") ||
+                      context.User.IsInRole("Technician");
+        if (user != null && !isStaff && !user.TermsAcceptedAt.HasValue)
+        {
+            var returnUrl = context.Request.PathBase + context.Request.Path + context.Request.QueryString;
+            context.Response.Redirect($"/AcceptTerms?returnUrl={Uri.EscapeDataString(returnUrl)}");
+            return;
+        }
+    }
+
+    await next();
+});
+app.UseAuthorization();
+
+app.MapRazorPages();
+
+app.Run();

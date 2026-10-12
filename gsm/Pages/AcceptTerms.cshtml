@@ -1,0 +1,31 @@
+@page "/AcceptTerms"
+@model gsm.Pages.AcceptTermsModel
+@using gsm.Services
+@{
+    ViewData["Title"] = "Service Terms";
+}
+
+<div class="terms-page">
+    <section class="terms-card">
+        <div class="terms-kicker">GSM Service Center</div>
+        <h1>Before you continue</h1>
+        <p class="terms-intro">Please read and confirm the service terms. Confirmation is required the first time you enter your account.</p>
+        <div class="terms-content">
+            @Html.Raw(AccountEmailContent.ServiceTermsHtml)
+        </div>
+        <form method="post" class="terms-form">
+            <input type="hidden" asp-for="ReturnUrl" />
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+            <label class="terms-checkbox">
+                <input asp-for="Accepted" type="checkbox" />
+                <span>I have read and accept the service terms.</span>
+            </label>
+            <span asp-validation-for="Accepted" class="text-danger"></span>
+            <button type="submit" class="btn btn-primary">Confirm and continue</button>
+        </form>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

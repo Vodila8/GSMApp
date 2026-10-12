@@ -1,0 +1,133 @@
+@page "/DeviceDiagnostics"
+@model gsm.Pages.DeviceDiagnosticsModel
+@{
+    ViewData["Title"] = "Device Diagnostics";
+    var canCreateRepair = User.IsInRole("Boss") || User.IsInRole("Administrator");
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list diagnostics-page">
+        <div class="diagnostics-heading">
+            <div>
+                <span class="dashboard-kicker">ADB ENGINEERING</span>
+                <h1 class="warehouse-title">Device Diagnostics</h1>
+                <p class="text-muted">Connect an Android phone and allow USB debugging to scan device details.</p>
+            </div>
+        </div>
+
+        <div class="browser-diagnostics-panel">
+            <div>
+                <strong>Scan this computer's phone in browser</strong>
+                <p>The public website uses a small local agent on this computer to access USB and ADB.</p>
+                <ol class="agent-setup-steps">
+                    <li>Download the latest <strong>GSM Agent</strong> and extract it to a new permanent folder, for example <strong>C:\GSM-Agent</strong>.</li>
+                    <li>Run <strong>install-gsm-agent.bat</strong> once. It registers and starts the agent automatically.</li>
+                    <li>Keep the agent running, connect the phone by USB and click Scan connected phone.</li>
+                </ol>
+            </div>
+            <div class="diagnostics-panel-actions">
+                <a class="btn btn-outline-primary" href="/downloads/gsm-agent.zip" download>Install agent</a>
+                <a class="btn btn-outline-primary" href="gsm-agent://start">3. Start local agent</a>
+                <button class="btn btn-primary" type="button" id="browser-adb-scan">Scan connected phone</button>
+            </div>
+        </div>
+        <div id="browser-diagnostics-result" class="browser-diagnostics-result" hidden></div>
+
+    </section>
+</div>
+
+<script>
+    const browserScanButton = document.getElementById('browser-adb-scan');
+    const browserResult = document.getElementById('browser-diagnostics-result');
+    const canCreateRepair = @canCreateRepair.ToString().ToLowerInvariant();
+    const escapeHtml = value => String(value ?? 'Unavailable')
+        .replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;');
+    const diagnosticValue = (data, key) => data[key] || 'Unavailable';
+
+    const runAdbCommand = async (adb, command) => {
+        const shell = await adb.shell(command);
+        const output = await shell.receive();
+        return new TextDecoder().decode(output).trim();
+    };
+    const batteryValue = (battery, name) => {
+        const line = battery.split(/\r?\n/).find(item => item.trim().startsWith(name + ':'));
+        return line ? line.split(':').slice(1).join(':').trim() : 'Unknown';
+    };
+    const healthName = value => ({ '2': 'Good', '3': 'Overheated', '4': 'Dead', '5': 'Over-voltage', '6': 'Unspecified failure' }[value] ?? value);
+    const storageText = value => {
+        const line = value.split(/\r?\n/).filter(Boolean).at(-1) ?? '';
+        const columns = line.trim().split(/\s+/);
+        return columns.length >= 5 ? `Used: ${columns[2]} KB\nAvailable: ${columns[3]} KB\nUsage: ${columns[4]}` : 'Unavailable';
+    };
+
+    browserScanButton.addEventListener('click', async () => {
+        browserScanButton.disabled = true;
+        browserScanButton.textContent = 'Connecting...';
+        browserResult.hidden = false;
+        browserResult.className = 'browser-diagnostics-result';
+        browserResult.textContent = 'Select your Android phone and approve USB debugging if requested.';
+
+        try {
+            try {
+                let agentResponse;
+                for (const agentUrl of ['http://127.0.0.1:5127/api/diagnostics', 'http://localhost:5127/api/diagnostics']) {
+                    try {
+                        const response = await fetch(agentUrl);
+                        if (response.ok) {
+                            agentResponse = response;
+                            break;
+                        }
+                    } catch { }
+                }
+                if (agentResponse?.ok) {
+                    const data = await agentResponse.json();
+                    const details = diagnosticValue(data, 'deviceDetails');
+                    const hardwareRows = [
+                        ['Product code', diagnosticValue(data, 'productName')],
+                        ['Android', `Android ${diagnosticValue(data, 'androidVersion')} · API ${diagnosticValue(data, 'androidApiLevel')}`],
+                        ['CPU architecture', diagnosticValue(data, 'cpuArchitecture')],
+                        ['Kernel', diagnosticValue(data, 'kernelVersion')],
+                        ['SELinux', diagnosticValue(data, 'selinuxStatus')],
+                        ['USB connection', diagnosticValue(data, 'usbStatus')],
+                        ['ADB access', diagnosticValue(data, 'rootAccess')]
+                    ];
+                    const telemetryRows = [
+                        ['Battery health', `${diagnosticValue(data, 'batteryHealth')} · ${diagnosticValue(data, 'batteryLevel')}%`],
+                        ['Battery temperature', diagnosticValue(data, 'batteryTemperature')],
+                        ['Battery voltage', diagnosticValue(data, 'batteryVoltage')],
+                        ['Charging current', diagnosticValue(data, 'chargingCurrent')],
+                        ['Internal storage', diagnosticValue(data, 'storage').replaceAll('\n', ' · ')],
+                        ['NFC controller', diagnosticValue(data, 'nfcStatus')],
+                        ['Sensors', diagnosticValue(data, 'sensorStatus')]
+                    ];
+                    const renderRows = rows => rows.map(([label, value]) =>
+                        `<div class="diagnostic-row"><span>${escapeHtml(label)}</span><strong>${escapeHtml(value)}</strong></div>`).join('');
+                    browserResult.className = 'browser-diagnostics-result browser-diagnostics-success';
+                    browserResult.innerHTML = `<div class="diagnostic-summary"><strong>${escapeHtml(details)}</strong><span>Serial number: ${escapeHtml(diagnosticValue(data, 'serialNumber'))}</span></div>
+                        <div class="diagnostic-grid">
+                            <article class="diagnostic-card"><h2>Connected device</h2>${renderRows(hardwareRows)}</article>
+                            <article class="diagnostic-card"><h2>Hardware telemetry</h2>${renderRows(telemetryRows)}</article>
+                        </div>`;
+                    if (canCreateRepair) {
+                        const link = document.createElement('a');
+                        link.className = 'btn btn-primary diagnostics-create-button';
+                        link.textContent = 'Create Repair with this device';
+                        link.href = `/CreateRepair?deviceType=${encodeURIComponent('Phone')}&deviceDetails=${encodeURIComponent(details)}&adbReport=${encodeURIComponent(diagnosticValue(data, 'report'))}`;
+                        browserResult.appendChild(link);
+                    }
+                    return;
+                }
+            } catch { }
+
+            browserResult.className = 'browser-diagnostics-result browser-diagnostics-error';
+            browserResult.innerHTML = 'The local diagnostic agent is not running. Extract the latest downloaded archive and run <strong>install-gsm-agent.bat</strong>. Keep its window open and scan again.';
+        } catch (error) {
+            browserResult.className = 'browser-diagnostics-result browser-diagnostics-error';
+            const rawMessage = error.message || 'The phone could not be scanned.';
+            browserResult.textContent = rawMessage;
+        } finally {
+            browserScanButton.disabled = false;
+            browserScanButton.textContent = 'Scan connected phone';
+        }
+    });
+</script>

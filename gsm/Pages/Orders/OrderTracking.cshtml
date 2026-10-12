@@ -1,0 +1,316 @@
+@page "/OrderTracking/{id:int}"
+@model gsm.Pages.OrderTrackingModel
+@{
+    ViewData["Title"] = "Order Tracking";
+}
+
+@{
+    var warrantyOnly = Model.OpenWarranty && Request.Query["embedded"].Count > 0;
+}
+<div class="user-form-page @(warrantyOnly ? "warranty-only-page" : string.Empty)">
+    <form class="warehouse-list tracking-form @(Model.IsPartnerOrder ? "partner-readonly-tracking" : string.Empty)" method="post" asp-page-handler="Save">
+        <div class="tracking-heading">
+            <h1 class="warehouse-title">Order Tracking</h1>
+            @if (Model.FinalEndDate.HasValue && !Model.IsPartnerOrder)
+            {
+                <button class="btn btn-outline-primary" type="button" id="open-warranty-card">Create warranty card</button>
+            }
+        </div>
+        @if (Model.IsPartnerOrder)
+        {
+            <div class="alert alert-info" role="status">This partner order is read-only. Stage and warranty changes are managed by the owning company.</div>
+        }
+        <p class="tracking-order-details">
+            <strong>Order #@Model.Order!.Id</strong><br />
+            Customer: @(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)<br />
+            Device: @Model.Order.Device @if (!string.IsNullOrWhiteSpace(Model.Order.DeviceModelAndSerialNumber)) { <span>— @Model.Order.DeviceModelAndSerialNumber</span> }
+        </p>
+
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success" role="alert">@statusMessage</div>
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <div class="table-responsive">
+            <table class="table warehouse-table" id="stages-table">
+                <thead><tr><th>No.</th><th>Stage</th><th>Date Range</th><th>Order</th></tr></thead>
+                <tbody>
+                @for (var index = 0; index < Model.Stages.Count; index++)
+                {
+                    var startDateValue = Model.Stages[index].StartDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    var endDateValue = Model.Stages[index].EndDate?.ToString("yyyy-MM-dd") ?? string.Empty;
+                    var startTimeValue = Model.Stages[index].StartTime?.ToString(@"hh\:mm") ?? string.Empty;
+                    var endTimeValue = Model.Stages[index].EndTime?.ToString(@"hh\:mm") ?? string.Empty;
+                    var timeRangeValue = startTimeValue.Length > 0 && endTimeValue.Length > 0
+                        ? $"{startTimeValue} — {endTimeValue}"
+                        : startTimeValue;
+                    <tr data-fixed="@Model.Stages[index].IsFixed.ToString().ToLowerInvariant()">
+                        <td class="stage-number">@(index + 1)<input asp-for="Stages[index].Id" type="hidden" /><input asp-for="Stages[index].IsFixed" type="hidden" /></td>
+                        <td>
+                            @if (Model.Stages[index].IsFixed)
+                            {
+                                <input asp-for="Stages[index].Name" type="hidden" />
+                                @Model.Stages[index].Name <span class="text-muted">(fixed)</span>
+                            }
+                            else
+                            {
+                                <input asp-for="Stages[index].Name" aria-label="Stage name" />
+                            }
+                        </td>
+                        <td>
+                            <input name="Stages[@index].StartDate" value="@startDateValue" class="range-start" type="hidden" />
+                            <input name="Stages[@index].EndDate" value="@endDateValue" class="range-end" type="hidden" />
+                            <button class="date-range-button" type="button">Select date range</button>
+                            <span class="date-range-value" aria-live="polite"></span>
+                            <label class="stage-time-range">Start / end time<input class="stage-time-range-input" value="@timeRangeValue" type="text" placeholder="09:00 — 17:30" autocomplete="off" /><input name="Stages[@index].StartTime" class="stage-start-time" value="@startTimeValue" type="hidden" /><input name="Stages[@index].EndTime" class="stage-end-time" value="@endTimeValue" type="hidden" /></label>
+                        </td>
+                        <td>
+                            @if (!Model.Stages[index].IsFixed)
+                            {
+                                <button class="btn btn-outline-secondary btn-sm move-up" type="button" title="Move up">↑</button>
+                                <button class="btn btn-outline-secondary btn-sm move-down" type="button" title="Move down">↓</button>
+                                <button class="btn btn-outline-danger btn-sm delete-stage" type="button" title="Delete stage">×</button>
+                            }
+                        </td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        @if (!Model.IsPartnerOrder)
+        {
+            <button class="btn btn-outline-secondary btn-sm" id="add-stage" type="button">+ Add Stage</button>
+            <button class="btn btn-primary" type="submit">Save Stages</button>
+        }
+    </form>
+</div>
+
+@if (Model.FinalEndDate.HasValue && !Model.IsPartnerOrder)
+{
+    <dialog class="warranty-card-dialog" id="warranty-card-dialog">
+        <form method="post" asp-page-handler="SaveWarranty" asp-route-id="@Model.Order!.Id" id="warranty-card-form">
+        <div class="create-user-modal-header">
+            <h2>Warranty card</h2>
+            <button type="button" class="create-user-close" id="close-warranty-card" aria-label="Close">×</button>
+        </div>
+        <div class="warranty-card-controls">
+            <label>Warranty start date<input id="warranty-start-date" type="date" value="@Model.FinalEndDate.Value.ToString("yyyy-MM-dd")" readonly /></label>
+            <label>Warranty period (months)<input id="warranty-period-months" name="WarrantyMonths" type="number" min="1" max="120" step="1" value="@(Model.Order.WarrantyMonths ?? 12)" /></label>
+            <label>Warranty expiration date<input id="warranty-end-date" type="date" readonly /></label>
+        </div>
+        <div class="warranty-card-document" id="warranty-card-document">
+            <div class="warranty-card-company">@(Model.Company?.Name ?? "Company")</div>
+            <h3>Warranty card</h3>
+            <p><strong>Order #@Model.Order!.Id</strong></p>
+            <table>
+                <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Qty.</th><th>Serial number</th><th>Warranty</th></tr></thead>
+                <tbody>
+                @if (Model.Order.Lines.Count == 0)
+                {
+                    <tr><td>1</td><td><input class="warranty-editable" type="text" value="" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.ProblemOrRepair ?? "Repair service")" /></td><td>1</td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td></tr>
+                }
+                else
+                {
+                    @for (var index = 0; index < Model.Order.Lines.Count; index++)
+                    {
+                        var line = Model.Order.Lines[index];
+                        <tr><td>@(index + 1)</td><td><input class="warranty-editable" type="text" value="@(line.WarehouseItem?.ProductNumber ?? "")" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@line.Description" /></td><td>@line.Quantity.ToString("0.000")</td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td></tr>
+                    }
+                }
+                </tbody>
+            </table>
+            <p class="warranty-card-text">The warranty period starts from the date of signing the warranty card.<br />The goods described above will be repaired free of charge before the warranty period expires. Warranty service is provided at the company's office.<br />The warranty becomes void in the following cases:<br />- the goods described above have been used or stored improperly;<br />- there is mechanical damage;<br />- the damage was caused by natural disasters;<br />- the goods or their modules have been unsealed;<br />- an attempt has been made to repair the defect by an unauthorized person.<br />For matters not covered above, the provisions of the Bulgarian Obligations and Contracts Act apply.</p>
+            <div class="warranty-card-signatures"><span>Customer: ................................</span><span>Supplier: ................................</span></div>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" id="print-warranty-card">Print</button>
+            <button type="button" class="btn btn-outline-secondary" id="close-warranty-card-bottom">Close</button>
+            <button type="submit" class="btn btn-primary">Save warranty</button>
+        </div>
+        </form>
+    </dialog>
+}
+
+<dialog class="range-calendar" id="range-calendar">
+    <div class="range-calendar-header">
+        <button type="button" id="previous-month" aria-label="Previous month">‹</button>
+        <strong id="calendar-month"></strong>
+        <button type="button" id="next-month" aria-label="Next month">›</button>
+    </div>
+    <div class="calendar-weekdays"><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span></div>
+    <div class="calendar-days" id="calendar-days"></div>
+    <p class="calendar-help">Choose the start date, then the end date.</p>
+    <button type="button" class="btn btn-outline-secondary btn-sm" id="clear-range">Clear dates</button>
+    <button type="button" class="btn btn-secondary btn-sm" id="close-calendar">Close</button>
+</dialog>
+
+<template id="stage-template">
+    <tr data-fixed="false">
+        <td class="stage-number">0<input name="Stages[__index__].Id" type="hidden" value="0" /><input name="Stages[__index__].IsFixed" type="hidden" value="false" /></td>
+        <td><input name="Stages[__index__].Name" aria-label="Stage name" placeholder="Stage name" /></td>
+        <td><input name="Stages[__index__].StartDate" class="range-start" type="hidden" /><input name="Stages[__index__].EndDate" class="range-end" type="hidden" /><button class="date-range-button" type="button">Select date range</button><span class="date-range-value" aria-live="polite"></span><label class="stage-time-range">Start / end time<input class="stage-time-range-input" type="text" placeholder="09:00 — 17:30" autocomplete="off" /><input name="Stages[__index__].StartTime" class="stage-start-time" type="hidden" /><input name="Stages[__index__].EndTime" class="stage-end-time" type="hidden" /></label></td>
+        <td><button class="btn btn-outline-secondary btn-sm move-up" type="button" title="Move up">↑</button><button class="btn btn-outline-secondary btn-sm move-down" type="button" title="Move down">↓</button><button class="btn btn-outline-danger btn-sm delete-stage" type="button" title="Delete stage">×</button></td>
+    </tr>
+</template>
+
+@section Scripts {
+    <script>
+        const stageBody = document.querySelector('#stages-table tbody');
+        function updateStageNumbers() {
+            [...stageBody.rows].forEach((row, index) => {
+                row.querySelector('.stage-number').firstChild.nodeValue = (index + 1);
+                row.querySelectorAll('input[name]').forEach(input => {
+                    input.name = input.name.replace(/Stages\[\d+\]/, `Stages[${index}]`);
+                });
+            });
+        }
+        let stageIndex = @Model.Stages.Count;
+        document.addEventListener('click', event => {
+            const row = event.target.closest('tr');
+            if (!row) return;
+            if (event.target.classList.contains('move-up')) {
+                const previous = row.previousElementSibling;
+                if (previous && previous.dataset.fixed !== 'true') {
+                    stageBody.insertBefore(row, previous);
+                }
+            }
+            if (event.target.classList.contains('move-down')) {
+                const next = row.nextElementSibling;
+                if (next && next.dataset.fixed !== 'true') {
+                    stageBody.insertBefore(next, row);
+                }
+            }
+            if (event.target.classList.contains('delete-stage')) {
+                row.remove();
+            }
+            updateStageNumbers();
+        });
+
+        const calendar = document.getElementById('range-calendar');
+        const calendarDays = document.getElementById('calendar-days');
+        const calendarMonth = document.getElementById('calendar-month');
+        let activeRangeButton;
+        let displayedMonth = new Date();
+        let rangeStart = '';
+        let rangeEnd = '';
+
+        const toIsoDate = date => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+        const formatDate = value => value ? new Intl.DateTimeFormat('en-GB').format(new Date(`${value}T12:00:00`)) : '';
+        function updateRangeButton(button) {
+            const row = button.closest('tr');
+            const start = row.querySelector('.range-start').value;
+            const end = row.querySelector('.range-end').value;
+            const text = start ? `${formatDate(start)} — ${formatDate(end || start)}` : 'Select date range';
+            button.textContent = text;
+            row.querySelector('.date-range-value').textContent = start ? text : 'No dates selected';
+        }
+        function syncTimeRange(input) {
+            const row = input.closest('tr');
+            const value = input.value.trim();
+            const range = value.match(/^(\d{1,2}:\d{2})\s*[—–-]\s*(\d{1,2}:\d{2})$/);
+            const single = value.match(/^(\\d{1,2}:\\d{2})$/);
+            row.querySelector('.stage-start-time').value = range ? range[1] : single ? single[1] : '';
+            row.querySelector('.stage-end-time').value = range ? range[2] : '';
+        }
+        document.querySelectorAll('.stage-time-range-input').forEach(input => input.addEventListener('input', () => syncTimeRange(input)));
+        document.querySelector('.tracking-form').addEventListener('submit', () => document.querySelectorAll('.stage-time-range-input').forEach(syncTimeRange));
+        function renderCalendar() {
+            const year = displayedMonth.getFullYear();
+            const month = displayedMonth.getMonth();
+            calendarMonth.textContent = displayedMonth.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+            calendarDays.innerHTML = '';
+            const offset = (new Date(year, month, 1).getDay() + 6) % 7;
+            const dayCount = new Date(year, month + 1, 0).getDate();
+            for (let blank = 0; blank < offset; blank++) calendarDays.insertAdjacentHTML('beforeend', '<span></span>');
+            for (let day = 1; day <= dayCount; day++) {
+                const value = toIsoDate(new Date(year, month, day));
+                const selected = value === rangeStart || value === rangeEnd;
+                const inRange = rangeStart && rangeEnd && value > rangeStart && value < rangeEnd;
+                const today = value === toIsoDate(new Date());
+                calendarDays.insertAdjacentHTML('beforeend', `<button type="button" class="calendar-day${selected ? ' selected' : ''}${inRange ? ' in-range' : ''}${today ? ' today' : ''}" data-date="${value}">${day}</button>`);
+            }
+        }
+        function attachRangeButton(button) {
+            updateRangeButton(button);
+            button.addEventListener('click', () => {
+                activeRangeButton = button;
+                const row = button.closest('tr');
+                rangeStart = row.querySelector('.range-start').value;
+                rangeEnd = row.querySelector('.range-end').value;
+                displayedMonth = new Date(`${rangeStart || toIsoDate(new Date())}T12:00:00`);
+                renderCalendar();
+                calendar.showModal();
+            });
+        }
+        document.querySelectorAll('.date-range-button').forEach(attachRangeButton);
+        document.getElementById('add-stage').addEventListener('click', () => {
+            const template = document.getElementById('stage-template').innerHTML.replaceAll('__index__', stageIndex++);
+            const endStage = [...stageBody.rows].find(row => row.dataset.fixed === 'true' && row.querySelector('input[name$=".Name"]').value === 'End');
+            if (endStage) {
+                endStage.insertAdjacentHTML('beforebegin', template);
+                attachRangeButton(endStage.previousElementSibling.querySelector('.date-range-button'));
+            } else {
+                stageBody.insertAdjacentHTML('beforeend', template);
+                attachRangeButton(stageBody.lastElementChild.querySelector('.date-range-button'));
+            }
+            updateStageNumbers();
+        });
+        calendarDays.addEventListener('click', event => {
+            if (!event.target.matches('.calendar-day')) return;
+            const date = event.target.dataset.date;
+            if (!rangeStart || rangeEnd || date < rangeStart) { rangeStart = date; rangeEnd = ''; }
+            else { rangeEnd = date; }
+            const row = activeRangeButton.closest('tr');
+            row.querySelector('.range-start').value = rangeStart;
+            row.querySelector('.range-end').value = rangeEnd || rangeStart;
+            updateRangeButton(activeRangeButton);
+            renderCalendar();
+        });
+        document.getElementById('previous-month').addEventListener('click', () => { displayedMonth.setMonth(displayedMonth.getMonth() - 1); renderCalendar(); });
+        document.getElementById('next-month').addEventListener('click', () => { displayedMonth.setMonth(displayedMonth.getMonth() + 1); renderCalendar(); });
+        document.getElementById('clear-range').addEventListener('click', () => {
+            const row = activeRangeButton.closest('tr');
+            row.querySelector('.range-start').value = '';
+            row.querySelector('.range-end').value = '';
+            rangeStart = ''; rangeEnd = ''; updateRangeButton(activeRangeButton); renderCalendar();
+        });
+        document.getElementById('close-calendar').addEventListener('click', () => calendar.close());
+    </script>
+    @if (Model.FinalEndDate.HasValue)
+    {
+        <script>
+            const warrantyDialog = document.getElementById('warranty-card-dialog');
+            const warrantyStart = document.getElementById('warranty-start-date');
+            const warrantyMonths = document.getElementById('warranty-period-months');
+            const warrantyEnd = document.getElementById('warranty-end-date');
+            const updateWarrantyCard = () => {
+                const months = Math.max(1, Number(warrantyMonths.value) || 1);
+                warrantyMonths.value = months;
+                const date = new Date(`${warrantyStart.value}T12:00:00`);
+                date.setMonth(date.getMonth() + months);
+                warrantyEnd.value = toIsoDate(date);
+                document.querySelectorAll('.warranty-months-value').forEach(cell => cell.textContent = `${months} months`);
+            };
+            const embeddedWarranty = new URLSearchParams(window.location.search).get('embedded') !== null;
+            const closeWarranty = () => {
+                if (embeddedWarranty && window.parent !== window) window.parent.postMessage({ type: 'close-warranty-card' }, '*');
+                else warrantyDialog.close();
+            };
+            document.getElementById('open-warranty-card').addEventListener('click', () => { updateWarrantyCard(); warrantyDialog.showModal(); });
+            document.getElementById('close-warranty-card').addEventListener('click', closeWarranty);
+            document.getElementById('close-warranty-card-bottom').addEventListener('click', closeWarranty);
+            warrantyMonths.addEventListener('change', updateWarrantyCard);
+            if (new URLSearchParams(window.location.search).get('openWarranty') === '1') { updateWarrantyCard(); warrantyDialog.showModal(); }
+            document.getElementById('print-warranty-card').addEventListener('click', () => {
+                updateWarrantyCard();
+                document.querySelectorAll('#warranty-card-document input').forEach(input => input.setAttribute('value', input.value));
+                const printWindow = window.open('', '_blank', 'width=1000,height=800');
+                if (!printWindow) return;
+                printWindow.document.write(`<html><head><title>Warranty card</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}.warranty-card-document{max-width:1000px;margin:auto}.warranty-card-company{text-align:center;font-size:22px;font-weight:700;margin-bottom:12px}.warranty-card-document h3{text-align:center}.warranty-card-document table{width:100%;border-collapse:collapse}.warranty-card-document th,.warranty-card-document td{border:1px solid #111;padding:8px;text-align:center}.warranty-card-text{margin-top:18px;line-height:1.45}.warranty-card-signatures{display:flex;justify-content:space-between;margin-top:55px}</style></head><body>${document.getElementById('warranty-card-document').outerHTML}</body></html>`);
+                printWindow.onafterprint = () => printWindow.close();
+                printWindow.document.close(); printWindow.focus(); printWindow.print();
+            });
+        </script>
+    }
+}

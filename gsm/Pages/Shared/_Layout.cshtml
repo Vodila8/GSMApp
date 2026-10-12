@@ -1,0 +1,414 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - gsm</title>
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/gsm.styles.css" asp-append-version="true" />
+</head>
+<body class="@(Context.Request.Query["embedded"].Count > 0 ? "embedded-page" : "")">
+    @{
+        var isIdentityPage = string.Equals(ViewContext.RouteData.Values["area"]?.ToString(), "Identity", StringComparison.OrdinalIgnoreCase);
+        var currentRole = User.IsInRole("Boss") ? "Boss" :
+            User.IsInRole("Administrator") ? "Administrator" :
+            User.IsInRole("Technician") ? "Technician" : "User";
+    }
+
+    @if (User.Identity?.IsAuthenticated == true && !isIdentityPage && Context.Request.Query["embedded"].Count == 0)
+    {
+        <div class="app-shell">
+            <aside class="sidebar" aria-label="Main navigation">
+                <button type="button" class="mobile-sidebar-toggle" data-toggle-mobile-sidebar aria-expanded="true">☰ <span>Menu</span></button>
+                <nav class="sidebar-menu">
+                    @if (User.IsInRole("Boss") || User.IsInRole("Administrator") || User.IsInRole("Technician"))
+                    {
+                        <a class="sidebar-link" href="/"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 11.5 12 5l8 6.5V20H4v-8.5Zm3 5.5h3v-3h4v3h3v-4.1l-5-4.05-5 4.05V17Z" /></svg><span>Home</span></a>
+                        <a class="sidebar-link" href="/OrderOverview"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">▤</span><span>Orders</span></a>
+                    }
+                    @if (User.IsInRole("Boss") || User.IsInRole("Administrator"))
+                    {
+                        @if (User.IsInRole("Boss"))
+                        {
+                            <a class="sidebar-link" href="/Partners"><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">⇄</span><span>Partners</span></a>
+                        }
+                        <a class="sidebar-link" href="/Users"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M16 20v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 18.5V20h2v-1.5A1.5 1.5 0 0 1 7.5 17h5a1.5 1.5 0 0 1 1.5 1.5V20h2ZM10 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8Zm0-6a2 2 0 1 1 0 4 2 2 0 0 1 0-4Zm7 1h3v2h-3V7Zm-1 4h4v2h-4v-2Z" /></svg><span>Users</span></a>
+                        <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-reference><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Reference</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-sale><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">$</span><span>Sell item</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-delivery><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">↙</span><span>Delivery</span></button>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-partner><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">+</span><span>Add partner</span></button>
+                        <a class="sidebar-link" href="/DeviceDiagnostics"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 3h6v2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h3V3Zm0 4H6v12h12V7h-3v2H9V7Zm1 5h4v2h-4v-2Z" /></svg><span>Device Diagnostics</span></a>
+                        <a class="sidebar-link" href="/CreateRepair"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h12v2H4v10h12v2H4a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2Zm14 3 4 4-4 4-1.4-1.4 1.6-1.6H10v-2h8.2l-1.6-1.6L18 8Z" /></svg><span>Create Repair</span></a>
+                    }
+                    else if (User.IsInRole("Technician"))
+                    {
+                        <a class="sidebar-link" href="/Warehouse"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4V5Zm2 2v10h12V7H6Zm2 2h8v2H8V9Zm0 4h5v2H8v-2Z" /></svg><span>Warehouse</span></a>
+                        <button class="sidebar-link global-action-link" type="button" data-open-global-reference><span class="sidebar-link-icon sidebar-action-icon" aria-hidden="true">?</span><span>Reference</span></button>
+                    }
+                    else
+                    {
+                        <a class="sidebar-link" href="/MyOrders"><svg class="sidebar-link-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14v16H5V4Zm2 2v12h10V6H7Zm2 2h6v2H9V8Zm0 4h6v2H9v-2Z" /></svg><span>My Orders</span></a>
+                    }
+                </nav>
+
+                <a class="sidebar-user" href="/Profile" aria-label="Open profile">
+                    <strong>@(User.Identity?.Name ?? "User")</strong>
+                    <span>@currentRole</span>
+                </a>
+                <form class="sidebar-logout" asp-area="Identity" asp-page="/Account/Logout" method="post">
+                    <button type="submit" class="sidebar-link sidebar-logout-button">Log out</button>
+                </form>
+            </aside>
+
+            <main role="main" class="app-content">
+                @RenderBody()
+            </main>
+        </div>
+
+        @if (User.IsInRole("Boss") || User.IsInRole("Administrator") || User.IsInRole("Technician"))
+        {
+            <dialog id="global-sale-dialog" class="create-user-dialog warehouse-sale-dialog global-warehouse-dialog">
+                <form method="post" action="/Warehouse?handler=SellBatch" class="create-user-modal-form" id="global-sale-form">
+                    @Html.AntiForgeryToken()
+                    <div class="create-user-modal-header global-window-header"><h2>Sell items</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-sale aria-label="Close">×</button></div></div>
+                    <div class="user-form-row"><label for="global-sale-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-sale-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" name="BatchPartnerId" id="global-sale-partner-id" /><div class="global-partner-options" id="global-sale-partner-options" hidden></div></div></div>
+                    <div class="user-form-row"><label for="global-sale-date">Sale date</label><input id="global-sale-date" name="BatchSaleDate" type="date" value="@DateOnly.FromDateTime(DateTime.Today).ToString("yyyy-MM-dd")" /></div>
+                    <div class="user-form-row"><label for="global-sale-search">Search products</label><input id="global-sale-search" type="search" placeholder="Barcode or part name" /></div>
+                    <div class="table-responsive"><table class="table warehouse-table global-sale-table"><thead><tr><th>No.</th><th>Select</th><th>Product</th><th>Stock</th><th>Quantity</th><th>Discount (%)</th><th>Notes</th><th>Total</th></tr></thead><tbody id="global-sale-items"></tbody></table></div>
+                    <div class="global-modal-total">Total: <strong id="global-sale-total">0.00 EUR</strong></div>
+                    <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-sale>Cancel</button><button type="submit" class="btn btn-primary" id="global-record-sale" disabled>Record sale</button></div>
+                </form>
+            </dialog>
+            <dialog id="global-delivery-dialog" class="warehouse-edit-dialog warehouse-delivery-dialog global-warehouse-dialog">
+                <form method="post" action="/Warehouse?handler=SaveDelivery&amp;globalDelivery=1" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
+                    @Html.AntiForgeryToken()
+                    <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
+                    <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div></div>
+                    <div class="user-form-row global-delivery-search"><label for="global-delivery-search">Search parts in delivery</label><input id="global-delivery-search" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
+                    <div class="table-responsive"><table class="table warehouse-table warehouse-delivery-table"><thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead><tbody id="global-delivery-items"></tbody></table></div>
+                    <div class="global-modal-total">Total: <strong id="global-delivery-total">0.00 EUR</strong></div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="global-add-delivery-row">+ Add item</button>
+                    <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-delivery>Cancel</button><button type="submit" class="btn btn-primary">Save delivery</button></div>
+                </form>
+            </dialog>
+            <dialog id="global-partner-dialog" class="create-user-dialog global-partner-dialog">
+                <form method="post" action="/Warehouse?handler=CreatePartner" class="create-user-modal-form" id="global-partner-form">
+                    @Html.AntiForgeryToken()
+                    <div class="create-user-modal-header global-window-header"><h2>Add partner</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-partner aria-label="Close">×</button></div></div>
+                    <div class="user-form-row"><label for="global-partner-name">Name</label><input id="global-partner-name" name="NewPartner.Name" required /></div>
+                    <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-egn">EGN</label><input id="global-partner-egn" name="NewPartner.Egn" /></div><div><label for="global-partner-bulstat">Bulstat</label><input id="global-partner-bulstat" name="NewPartner.Bulstat" /></div></div>
+                    <div class="user-form-row user-form-row-two-columns"><div><label for="global-partner-phone">Phone</label><input id="global-partner-phone" name="NewPartner.Phone" type="tel" /></div><div><label for="global-partner-email">Email</label><input id="global-partner-email" name="NewPartner.Email" type="email" /></div></div>
+                    <div class="create-user-modal-actions"><button type="button" class="btn btn-outline-secondary" data-close-global-partner>Cancel</button><button type="submit" class="btn btn-primary">Add partner</button></div>
+                </form>
+            </dialog>
+            <dialog id="global-reference-dialog" class="global-reference-dialog global-warehouse-dialog">
+                <div class="create-user-modal-header global-window-header"><h2>Warehouse Reference</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-reference aria-label="Close">×</button></div></div>
+                <iframe src="/WarehouseReport?embedded=1" title="Warehouse Reference" class="global-reference-frame"></iframe>
+            </dialog>
+            <div id="global-window-taskbar" class="global-window-taskbar" aria-label="Minimized windows"></div>
+            <script>
+                (() => {
+                    const saleDialog = document.getElementById('global-sale-dialog');
+                    const deliveryDialog = document.getElementById('global-delivery-dialog');
+                    const partnerDialog = document.getElementById('global-partner-dialog');
+                    const referenceDialog = document.getElementById('global-reference-dialog');
+                    const saleItemsBody = document.getElementById('global-sale-items');
+                    const saleSearch = document.getElementById('global-sale-search');
+                    const saleTotal = document.getElementById('global-sale-total');
+                    const salePartnerInput = document.getElementById('global-sale-partner-input');
+                    const salePartnerOptions = document.getElementById('global-sale-partner-options');
+                    const deliveryPartnerInput = document.getElementById('global-delivery-partner-input');
+                    const deliveryPartnerOptions = document.getElementById('global-delivery-partner-options');
+                    const deliveryItemsBody = document.getElementById('global-delivery-items');
+                    const deliverySearch = document.getElementById('global-delivery-search');
+                    const deliveryTotal = document.getElementById('global-delivery-total');
+                    const windowStateStorageKey = 'gsm-global-window-state';
+                    const savedWindowState = JSON.parse(localStorage.getItem(windowStateStorageKey) || '{}');
+                    function setupGlobalWindow(dialog, key, title) {
+                        const header = dialog.querySelector('.global-window-header');
+                        const maximize = dialog.querySelector('[data-maximize-global]');
+                        const minimize = dialog.querySelector('[data-minimize-global]');
+                        const taskbar = document.getElementById('global-window-taskbar');
+                        const taskButton = document.createElement('button');
+                        taskButton.type = 'button';
+                        taskButton.className = 'global-taskbar-window';
+                        taskButton.textContent = title;
+                        taskButton.dataset.windowKey = key;
+                        taskButton.hidden = !savedWindowState[key]?.minimized;
+                        taskbar.appendChild(taskButton);
+                        minimize.addEventListener('click', event => {
+                            event.stopPropagation();
+                            saveWindowState(key, title, dialog);
+                            dialog.dataset.minimized = 'true';
+                            dialog.close();
+                            taskButton.hidden = false;
+                        });
+                        taskButton.addEventListener('click', async () => {
+                            dialog.dataset.minimized = 'false';
+                            taskButton.hidden = true;
+                            if (key === 'sale' || key === 'delivery') await loadCatalog();
+                            restoreWindowValues(key);
+                            dialog.showModal();
+                        });
+                        dialog.addEventListener('close', () => {
+                            if (dialog.dataset.minimized !== 'true') taskButton.hidden = true;
+                        });
+                        let dragging = false;
+                        let startX = 0;
+                        let startY = 0;
+                        let startLeft = 0;
+                        let startTop = 0;
+                        maximize.addEventListener('click', event => {
+                            event.stopPropagation();
+                            dialog.classList.toggle('is-maximized');
+                            maximize.textContent = dialog.classList.contains('is-maximized') ? '❐' : '□';
+                            if (dialog.classList.contains('is-maximized')) {
+                                dialog.style.left = '';
+                                dialog.style.top = '';
+                                dialog.style.margin = '';
+                            }
+                        });
+                        header.addEventListener('pointerdown', event => {
+                            if (dialog.classList.contains('is-maximized') || event.target.closest('button')) return;
+                            const rect = dialog.getBoundingClientRect();
+                            dragging = true;
+                            startX = event.clientX;
+                            startY = event.clientY;
+                            startLeft = rect.left;
+                            startTop = rect.top;
+                            dialog.style.margin = '0';
+                            dialog.style.left = `${startLeft}px`;
+                            dialog.style.top = `${startTop}px`;
+                            header.setPointerCapture(event.pointerId);
+                        });
+                        header.addEventListener('pointermove', event => {
+                            if (!dragging) return;
+                            dialog.style.left = `${Math.max(0, startLeft + event.clientX - startX)}px`;
+                            dialog.style.top = `${Math.max(0, startTop + event.clientY - startY)}px`;
+                        });
+                        header.addEventListener('pointerup', () => { dragging = false; });
+                        header.addEventListener('pointercancel', () => { dragging = false; });
+                    }
+                    setupGlobalWindow(saleDialog, 'sale', 'Sell items');
+                    setupGlobalWindow(deliveryDialog, 'delivery', 'Delivery');
+                    setupGlobalWindow(referenceDialog, 'reference', 'Reference');
+                    setupGlobalWindow(partnerDialog, 'partner', 'Add partner');
+                    let catalog = [];
+                    let partners = [];
+                    let deliveryIndex = 0;
+                    const saveWindowState = (key, title, dialog) => {
+                        savedWindowState[key] = { title, minimized: true, values: [...dialog.querySelectorAll('input[name], select[name], textarea[name]')].filter(input => input.type !== 'file').map(input => ({ name: input.name, value: input.value, checked: input.checked })) };
+                        if (key === 'sale') { savedWindowState[key].search = saleSearch.value; savedWindowState[key].partner = salePartnerInput.value; savedWindowState[key].partnerId = document.getElementById('global-sale-partner-id').value; savedWindowState[key].saleRows = [...saleItemsBody.querySelectorAll('tr')].map(row => ({ id: row.dataset.id, checked: row.querySelector('.global-sale-select')?.checked, quantity: row.querySelector('.global-sale-quantity')?.value, discount: row.querySelector('.global-sale-discount')?.value, note: row.querySelector('.global-sale-note')?.value })); }
+                        if (key === 'delivery') { savedWindowState[key].partner = deliveryPartnerInput.value; savedWindowState[key].partnerId = document.getElementById('global-delivery-partner-id').value; savedWindowState[key].deliveryRows = [...deliveryItemsBody.querySelectorAll('tr')].map(row => [...row.querySelectorAll('input[name]')].filter(input => input.type !== 'file').map(input => ({ name: input.name.split('.').pop(), value: input.value }))); }
+                        localStorage.setItem(windowStateStorageKey, JSON.stringify(savedWindowState));
+                    };
+                    const clearWindowState = key => { delete savedWindowState[key]; localStorage.setItem(windowStateStorageKey, JSON.stringify(savedWindowState)); };
+                    function restoreWindowValues(key) {
+                        const state = savedWindowState[key];
+                        if (!state) return;
+                        state.values?.forEach(saved => document.querySelectorAll(`[name="${CSS.escape(saved.name)}"]`).forEach(input => { input.value = saved.value; input.checked = saved.checked; }));
+                        if (key === 'sale') {
+                            saleSearch.value = state.search || '';
+                            salePartnerInput.value = state.partner || '';
+                            document.getElementById('global-sale-partner-id').value = state.partnerId || '';
+                            renderSaleItems();
+                            state.saleRows?.forEach(saved => { const row = saleItemsBody.querySelector(`[data-id="${saved.id}"]`); if (row) { row.querySelector('.global-sale-select').checked = saved.checked; row.querySelector('.global-sale-quantity').value = saved.quantity; row.querySelector('.global-sale-discount').value = saved.discount; row.querySelector('.global-sale-note').value = saved.note || ''; } });
+                            updateSaleTotal();
+                        }
+                        if (key === 'delivery') {
+                            deliveryPartnerInput.value = state.partner || '';
+                            document.getElementById('global-delivery-partner-id').value = state.partnerId || '';
+                            while (deliveryItemsBody.children.length < (state.deliveryRows?.length || 0)) addDeliveryRow();
+                            state.deliveryRows?.forEach((saved, index) => saved.forEach(value => { const input = deliveryItemsBody.children[index]?.querySelector(`input[name$=".${value.name}"]`); if (input) input.value = value.value; }));
+                        }
+                    }
+
+                    function renderPartnerOptions(input, options, hidden) {
+                        const term = input.value.trim().toLowerCase();
+                        options.innerHTML = partners
+                            .filter(partner => partner.name.toLowerCase().includes(term))
+                            .map(partner => `<button type="button" class="global-partner-option" data-partner-id="${partner.id}">${partner.name}</button>`)
+                            .join('');
+                        options.hidden = false;
+                        hidden.value = '';
+                    }
+                    function setupPartnerCombobox(input, options, hidden) {
+                        input.addEventListener('focus', () => renderPartnerOptions(input, options, hidden));
+                        input.addEventListener('input', () => renderPartnerOptions(input, options, hidden));
+                        options.addEventListener('click', event => {
+                            const option = event.target.closest('[data-partner-id]');
+                            if (!option) return;
+                            input.value = option.textContent;
+                            hidden.value = option.dataset.partnerId;
+                            hidden.dispatchEvent(new Event('change'));
+                            options.hidden = true;
+                        });
+                    }
+                    const salePartnerId = document.getElementById('global-sale-partner-id');
+                    const recordSaleButton = document.getElementById('global-record-sale');
+                    const updateSalePartnerState = () => { recordSaleButton.disabled = !salePartnerId.value.trim(); };
+                    salePartnerId.addEventListener('change', updateSalePartnerState);
+                    salePartnerInput.addEventListener('input', () => { salePartnerId.value = ''; updateSalePartnerState(); });
+                    setupPartnerCombobox(salePartnerInput, salePartnerOptions, salePartnerId);
+                    setupPartnerCombobox(deliveryPartnerInput, deliveryPartnerOptions, document.getElementById('global-delivery-partner-id'));
+                    updateSalePartnerState();
+                    document.addEventListener('click', event => {
+                        document.querySelectorAll('[data-partner-combobox]').forEach(combo => {
+                            if (!combo.contains(event.target)) combo.querySelector('.global-partner-options').hidden = true;
+                        });
+                    });
+                    function updateSaleTotal() {
+                        let total = 0;
+                        saleItemsBody.querySelectorAll('tr').forEach(row => {
+                            if (!row.querySelector('.global-sale-select').checked) return;
+                            const item = catalog.find(product => String(product.id) === row.dataset.id);
+                            const quantity = Number(row.querySelector('.global-sale-quantity').value || 0);
+                            const discount = Number(row.querySelector('.global-sale-discount').value || 0);
+                            const amount = (item?.unitPrice || 0) * quantity * (1 - discount / 100);
+                            row.querySelector('.global-sale-row-total').textContent = amount.toFixed(2) + ' EUR';
+                            total += amount;
+                        });
+                        saleTotal.textContent = total.toFixed(2) + ' EUR';
+                    }
+                    function renderSaleItems() {
+                        const term = saleSearch.value.trim().toLowerCase();
+                        const previousState = new Map([...saleItemsBody.querySelectorAll('tr')].map(row => [row.dataset.id, {
+                            checked: row.querySelector('.global-sale-select')?.checked,
+                            quantity: row.querySelector('.global-sale-quantity')?.value || 1,
+                            discount: row.querySelector('.global-sale-discount')?.value || 0,
+                            note: row.querySelector('.global-sale-note')?.value || ''
+                        }]));
+                        saleItemsBody.innerHTML = catalog.map((item, index) => `<tr data-id="${item.id}"><td>${index + 1}</td><td><input class="global-sale-select" type="checkbox" ${item.quantity <= 0 ? 'disabled' : ''}></td><td>${item.partName} · product ${item.productNumber || '—'} · barcode ${item.barcode || '—'}</td><td>${item.quantity}</td><td><input class="global-sale-quantity" type="number" min="1" max="${Math.max(0, item.quantity)}" value="${item.quantity > 0 ? 1 : 0}" ${item.quantity <= 0 ? 'disabled' : ''}></td><td><input class="global-sale-discount" type="number" min="0" max="100" step="0.01" value="0"></td><td><input class="global-sale-note" type="text" placeholder="Note"></td><td class="global-sale-row-total">0.00 EUR</td></tr>`).join('');
+                        saleItemsBody.querySelectorAll('tr').forEach(row => {
+                            const item = catalog.find(product => String(product.id) === row.dataset.id);
+                            const state = previousState.get(row.dataset.id);
+                            const partNameMatches = item.partName.toLowerCase().includes(term);
+                            const barcodeMatches = term !== '' && (item.barcode || '').trim().toLowerCase() === term;
+                            row.hidden = term !== '' && !partNameMatches && !barcodeMatches && !state?.checked;
+                            if (state) {
+                                row.querySelector('.global-sale-select').checked = state.checked;
+                                row.querySelector('.global-sale-quantity').value = item.quantity > 0 ? Math.min(Math.max(1, Number(state.quantity) || 1), item.quantity) : 0;
+                                row.querySelector('.global-sale-discount').value = state.discount;
+                                row.querySelector('.global-sale-note').value = state.note;
+                            }
+                        });
+                        updateSaleTotal();
+                    }
+                    function setupGlobalDeliveryProductRow(row) {
+                        const productNumber = row.querySelector('input[name$=".ProductNumber"]');
+                        const partName = row.querySelector('input[name$=".PartName"]');
+                        const barcode = row.querySelector('input[name$=".Barcode"]');
+                        const unitPrice = row.querySelector('input[name$=".UnitPrice"]');
+                        const deliveryPrice = row.querySelector('input[name$=".DeliveryPrice"]');
+                        const updateProductFields = () => {
+                            const value = productNumber.value.trim().toLowerCase().replace(/^p-/, '');
+                            const item = catalog.find(product => String(product.productNumber || '').trim().toLowerCase().replace(/^p-/, '') === value);
+                            if (item) {
+                                partName.value = item.partName || '';
+                                if (barcode) barcode.value = item.barcode || '';
+                                if (unitPrice) unitPrice.value = item.unitPrice ?? 0;
+                                if (deliveryPrice) deliveryPrice.value = item.deliveryPrice ?? 0;
+                            } else {
+                                partName.value = '';
+                                if (barcode) barcode.value = '';
+                                if (unitPrice) unitPrice.value = '';
+                                if (deliveryPrice) deliveryPrice.value = '';
+                            }
+                            updateDeliveryTotal();
+                        };
+                        productNumber.addEventListener('input', updateProductFields);
+                    }
+                    function updateDeliveryTotal() {
+                        let total = 0;
+                        deliveryItemsBody.querySelectorAll('tr').forEach(row => {
+                            const quantity = Number(row.querySelector('input[name$=".Quantity"]')?.value || 0);
+                            const deliveryPrice = Number(row.querySelector('input[name$=".DeliveryPrice"]')?.value || 0);
+                            total += quantity * deliveryPrice;
+                        });
+                        deliveryTotal.textContent = `${total.toFixed(2)} EUR`;
+                    }
+                    function filterDeliveryRows() {
+                        const term = deliverySearch.value.trim().toLowerCase();
+                        deliveryItemsBody.querySelectorAll('tr').forEach(row => {
+                            const values = [...row.querySelectorAll('input')].map(input => input.value.toLowerCase()).join(' ');
+                            row.hidden = term !== '' && !values.includes(term);
+                        });
+                    }
+                    function addDeliveryRow() {
+                        const index = deliveryIndex++;
+                        const now = new Date();
+                        const deliveryDate = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+                        deliveryItemsBody.insertAdjacentHTML('beforeend', `<tr><td>${index + 1}</td><td><input name="DeliveryItems[${index}].DeliveryDate" type="date" value="${deliveryDate}"></td><td><input name="DeliveryItems[${index}].ProductNumber"></td><td><input name="DeliveryItems[${index}].Quantity" type="number" min="0" value="0"></td><td><input name="DeliveryItems[${index}].PartName" required></td><td><input name="DeliveryItems[${index}].Barcode"></td><td><input name="DeliveryItems[${index}].UnitPrice" type="number" min="0" step="0.01"></td><td><input name="DeliveryItems[${index}].DeliveryPrice" type="number" min="0" step="0.01"></td><td><button type="button" class="btn btn-link text-danger global-remove-delivery">×</button></td></tr>`);
+                        setupGlobalDeliveryProductRow(deliveryItemsBody.lastElementChild);
+                        updateDeliveryTotal();
+                    }
+                    async function loadCatalog() {
+                        const response = await fetch('/Warehouse?handler=Options');
+                        const data = await response.json();
+                        catalog = data.items; partners = data.partners;
+                        renderSaleItems();
+                        if (!deliveryItemsBody.children.length) addDeliveryRow();
+                    }
+                    document.querySelector('[data-open-global-sale]')?.addEventListener('click', async () => { saleDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
+                    document.querySelector('[data-open-global-delivery]')?.addEventListener('click', async () => { deliveryDialog.showModal(); try { await loadCatalog(); } catch (error) { console.error('Warehouse catalog could not be loaded.', error); } });
+                    document.querySelector('[data-open-global-partner]')?.addEventListener('click', () => partnerDialog.showModal());
+                    document.querySelector('[data-open-global-reference]')?.addEventListener('click', () => referenceDialog.showModal());
+                    saleSearch.addEventListener('input', renderSaleItems);
+                    saleItemsBody.addEventListener('input', updateSaleTotal);
+                    saleItemsBody.addEventListener('change', updateSaleTotal);
+                    document.getElementById('global-add-delivery-row').addEventListener('click', addDeliveryRow);
+                    deliveryItemsBody.addEventListener('input', updateDeliveryTotal);
+                    deliveryItemsBody.addEventListener('click', event => { if (event.target.closest('.global-remove-delivery') && deliveryItemsBody.children.length > 1) { event.target.closest('tr').remove(); updateDeliveryTotal(); } });
+                    deliverySearch.addEventListener('input', filterDeliveryRows);
+                    updateDeliveryTotal();
+                    document.getElementById('global-sale-form').addEventListener('submit', () => {
+                        let selectedIndex = 0;
+                        saleItemsBody.querySelectorAll('tr').forEach(row => { if (row.querySelector('.global-sale-select').checked) { ['WarehouseItemId', 'Quantity', 'DiscountPercent', 'Note'].forEach(field => { const input = document.createElement('input'); input.type = 'hidden'; input.name = `SaleItems[${selectedIndex}].${field}`; input.value = field === 'WarehouseItemId' ? row.dataset.id : field === 'Quantity' ? row.querySelector('.global-sale-quantity').value : field === 'DiscountPercent' ? row.querySelector('.global-sale-discount').value : row.querySelector('.global-sale-note').value; document.getElementById('global-sale-form').appendChild(input); }); selectedIndex++; } });
+                    });
+                    document.getElementById('global-delivery-form').addEventListener('submit', () => {
+                        const partner = document.getElementById('global-delivery-partner');
+                        deliveryItemsBody.querySelectorAll('tr').forEach((row, index) => {
+                            row.querySelectorAll('input[name]').forEach(input => { input.name = input.name.replace(/DeliveryItems\[\d+\]/, `DeliveryItems[${index}]`); });
+                            const partnerId = document.createElement('input'); partnerId.type = 'hidden'; partnerId.name = `DeliveryItems[${index}].PartnerId`; partnerId.value = partner.value; document.getElementById('global-delivery-form').appendChild(partnerId);
+                        });
+                    });
+                    document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => { clearWindowState('sale'); saleDialog.close(); }));
+                    document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => { clearWindowState('delivery'); deliveryDialog.close(); }));
+                    document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => { clearWindowState('partner'); partnerDialog.close(); }));
+                    document.querySelectorAll('[data-close-global-reference]').forEach(button => button.addEventListener('click', () => { clearWindowState('reference'); referenceDialog.close(); }));
+                })();
+            </script>
+        }
+    }
+    else
+    {
+        <div class="site-shell">
+            <main role="main" class="site-main">
+                @RenderBody()
+            </main>
+        </div>
+    }
+
+    <script>
+        document.querySelector('[data-toggle-mobile-sidebar]')?.addEventListener('click', event => {
+            const button = event.currentTarget;
+            const sidebar = button.closest('.sidebar');
+            const collapsed = sidebar.classList.toggle('mobile-menu-collapsed');
+            const menu = sidebar.querySelector('.sidebar-menu');
+            const account = sidebar.querySelector('.sidebar-user');
+            const logout = sidebar.querySelector('.sidebar-logout');
+            menu.style.display = collapsed ? 'none' : '';
+            account.style.display = collapsed ? 'none' : '';
+            logout.style.display = collapsed ? 'none' : '';
+            button.setAttribute('aria-expanded', String(!collapsed));
+        });
+    </script>
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

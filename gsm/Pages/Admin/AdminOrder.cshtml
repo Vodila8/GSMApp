@@ -1,0 +1,293 @@
+@page "/AdminOrder/{id:int}"
+@model gsm.Pages.AdminOrderModel
+@{
+    ViewData["Title"] = "Manage Order";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list order-form repair-form admin-order-page">
+        <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
+        @if (Model.IsPartnerOrder)
+        {
+            <p><strong>Partner order</strong><br />Customer information is hidden for the partner company.<br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
+        }
+        else
+        {
+            <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />Phone: @(Model.Order.Customer?.PhoneNumber ?? "Not specified")<br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
+        }
+        @if (!Model.IsPartnerOrder)
+        {
+            <div class="admin-order-actions">
+                <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
+                <a class="btn btn-outline-primary btn-sm" href="/CreateRepair">Create repair</a>
+                @if (Model.FinalEndDate.HasValue)
+                {
+                    <button class="btn btn-outline-primary btn-sm" type="button" id="open-admin-warranty">@(Model.Order.WarrantyEndDate.HasValue ? "Open warranty card" : "Create warranty card")</button>
+                }
+            </div>
+        }
+        @if (Model.Order.WarrantyEndDate.HasValue)
+        {
+            <div class="alert alert-success admin-order-warranty-status">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</div>
+        }
+        <dialog class="admin-warranty-dialog" id="admin-warranty-dialog">
+            <div class="admin-warranty-dialog-header"><strong>Warranty card</strong><button type="button" class="create-user-close" id="close-admin-warranty" aria-label="Close">×</button></div>
+            <iframe src="/OrderTracking/@Model.Order.Id?embedded=1&amp;openWarranty=1" title="Warranty card" class="admin-warranty-frame"></iframe>
+        </dialog>
+
+        <form method="post" asp-page-handler="ScanAdb" class="mt-3">
+            <button class="btn btn-outline-success" type="submit">Scan Phone with ADB</button>
+            <small class="d-block text-muted mt-1">Connect and unlock the Android phone, then allow USB debugging.</small>
+        </form>
+        @if (TempData["AdbStatus"] is string adbStatus)
+        {
+            <div class="alert alert-success mt-3" role="alert">@adbStatus</div>
+        }
+        @if (TempData["AdbError"] is string adbError)
+        {
+            <div class="alert alert-danger mt-3" role="alert">@adbError</div>
+        }
+        @if (Model.AdbReport is not null)
+        {
+            <section class="adb-report mt-3" role="status">
+                <div class="adb-report-header">
+                    <div>
+                        <span class="adb-report-kicker">DEVICE CHECK</span>
+                        <h3>Phone diagnostic report</h3>
+                    </div>
+                    <span class="adb-report-status">Connected</span>
+                </div>
+                <div class="adb-report-grid">
+                    <div class="adb-report-item"><span>Manufacturer</span><strong>@Model.AdbReport.Manufacturer</strong></div>
+                    <div class="adb-report-item"><span>Model</span><strong>@Model.AdbReport.Model</strong></div>
+                    <div class="adb-report-item"><span>Android version</span><strong>@Model.AdbReport.AndroidVersion</strong></div>
+                    <div class="adb-report-item"><span>Serial number</span><strong>@Model.AdbReport.SerialNumber</strong></div>
+                    <div class="adb-report-item"><span>Battery level</span><strong>@Model.AdbReport.BatteryLevel%</strong></div>
+                    <div class="adb-report-item"><span>Battery health</span><strong>@Model.AdbReport.BatteryHealth</strong></div>
+                    <div class="adb-report-item"><span>Battery temperature</span><strong>@Model.AdbReport.BatteryTemperature</strong></div>
+                </div>
+                <div class="adb-report-storage">
+                    <span>Internal storage</span>
+                    <strong>@Model.AdbReport.Storage</strong>
+                </div>
+            </section>
+        }
+
+        <form method="post" asp-page-handler="SaveOrder" enctype="multipart/form-data" id="edit-order-form">
+            @if (TempData["StatusMessage"] is string statusMessage) { <div class="alert alert-success mt-3">@statusMessage</div> }
+            <div asp-validation-summary="All" class="text-danger"></div>
+            @if (Model.IsPartnerOrder)
+            {
+                <section class="repair-section partner-hidden-section">
+                    <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
+                    <p class="text-muted">Customer and device selection is hidden for the partner company.</p>
+                </section>
+            }
+            else
+            {
+            <section class="repair-section">
+                <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
+                <div class="user-form-row user-form-row-two-columns">
+                    <div>
+                        <label asp-for="Input.CustomerId">Customer</label>
+                        @if (User.IsInRole("Technician") || Model.IsPartnerOrder)
+                        {
+                            <select id="edit-customer-select" class="technician-locked-select" disabled><option value="@Model.Input.CustomerId">@(Model.Order.Customer?.CustomerName ?? Model.Order.Customer?.Email ?? "No customer")</option></select>
+                            <input asp-for="Input.CustomerId" type="hidden" />
+                        }
+                        else
+                        {
+                            <select asp-for="Input.CustomerId" id="edit-customer-select"><option value="">Select customer</option>@foreach (var customer in Model.Customers) { <option value="@customer.Id">@(customer.CustomerName ?? customer.Email) — @customer.Email</option> }</select>
+                        }
+                    </div>
+                    <div>
+                        <label asp-for="Input.CustomerDeviceId">Device</label>
+                        @if (User.IsInRole("Technician") || Model.IsPartnerOrder)
+                        {
+                            <select id="edit-device-select" class="technician-locked-select" disabled><option value="@Model.Input.CustomerDeviceId">@(Model.Order.Device ?? "Device") — @Model.Order.DeviceModelAndSerialNumber</option></select>
+                            <input asp-for="Input.CustomerDeviceId" type="hidden" />
+                        }
+                        else
+                        {
+                            <select asp-for="Input.CustomerDeviceId" id="edit-device-select"></select>
+                        }
+                    </div>
+                </div>
+                @if (!User.IsInRole("Technician") && !Model.IsPartnerOrder && Model.BusinessPartners.Count > 0)
+                {
+                    <div class="user-form-row partner-order-field">
+                        <label asp-for="Input.BusinessPartnerConnectionId">Business partner</label>
+                        <select asp-for="Input.BusinessPartnerConnectionId">
+                            <option value="">No partner</option>
+                            @foreach (var partner in Model.BusinessPartners)
+                            {
+                                <option value="@partner.Id">@(partner.OwnerCompanyId == Model.CurrentCompanyId ? partner.PartnerCompany?.Name : partner.OwnerCompany?.Name ?? "Partner company")</option>
+                            }
+                        </select>
+                        <small class="text-muted">Assign this order to an accepted business partner.</small>
+                    </div>
+                }
+                <div id="edit-new-device-fields" class="user-form-row user-form-row-two-columns @(User.IsInRole("Technician") || Model.IsPartnerOrder ? "technician-locked" : string.Empty)">
+                    <div><label asp-for="Input.NewDeviceType">New Device</label><select asp-for="Input.NewDeviceType"><option value="">Select device type</option><option>Computer</option><option>Laptop</option><option>Printer</option><option>Phone</option><option>Tablet</option><option>Other</option></select></div>
+                    <div><label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label><input asp-for="Input.NewDeviceModelAndSerialNumber" /></div>
+                </div>
+                <div class="user-form-row @(User.IsInRole("Technician") || Model.IsPartnerOrder ? "technician-locked" : string.Empty)"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
+            </section>
+            }
+            <section class="repair-section">
+                <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
+                <div class="user-form-row"><label asp-for="Input.ProblemOrRepair">Problem / Repair</label><textarea asp-for="Input.ProblemOrRepair" rows="3"></textarea></div>
+                <div class="user-form-row"><label asp-for="Input.DeviceConditionAndNotes">Device Condition and Notes at Acceptance</label><textarea asp-for="Input.DeviceConditionAndNotes" rows="3"></textarea></div>
+                <div class="user-form-row user-form-row-two-columns">
+                    <div>
+                        <label asp-for="Input.Accessories">Accessories</label>
+                        @if (User.IsInRole("Technician"))
+                        {
+                            <div class="technician-readonly-field">@(string.IsNullOrWhiteSpace(Model.Order.Accessories) ? "Not specified" : Model.Order.Accessories)</div>
+                        }
+                        else
+                        {
+                            <input asp-for="Input.Accessories" type="hidden" id="edit-accessories-value" />
+                            <div class="accessory-options" id="edit-accessories-options"><button type="button" class="accessory-option" data-accessory="SIM card">SIM card</button><button type="button" class="accessory-option" data-accessory="Case">Case</button><button type="button" class="accessory-option" data-accessory="Charger">Charger</button><button type="button" class="accessory-option" data-accessory="Cable">Cable</button><button type="button" class="accessory-option" data-accessory="Bag">Bag</button><button type="button" class="accessory-option" data-accessory="Other">Other</button></div><input asp-for="Input.OtherAccessory" id="edit-accessories-other" class="accessory-other-input" type="text" placeholder="Write accessory" hidden />
+                        }
+                    </div>
+                    <div>
+                        <label asp-for="Input.DevicePassword">Device Password</label>
+                        @if (User.IsInRole("Technician"))
+                        {
+                            <div class="technician-readonly-field">@(string.IsNullOrWhiteSpace(Model.Order.DevicePassword) ? "Not specified" : Model.Order.DevicePassword)</div>
+                        }
+                        else
+                        {
+                            <input asp-for="Input.DevicePassword" type="text" />
+                        }
+                    </div>
+                </div>
+                <input asp-for="Input.AdbDiagnosticReport" type="hidden" />
+            </section>
+            <h2 class="order-section-title">Parts from Warehouse</h2>
+            <div class="table-responsive"><table class="table warehouse-table"><thead><tr><th>Part</th><th>Unit Price (EUR)</th><th>Quantity</th><th></th></tr></thead><tbody id="parts-body">
+            @for (var index = 0; index < Model.Parts.Count; index++)
+            {
+                <tr class="part-row"><td><input asp-for="Parts[index].OrderLineId" type="hidden" /><select asp-for="Parts[index].WarehouseItemId" class="part-select"><option value="">Select part</option>@foreach (var part in Model.WarehouseItems) { <option value="@part.Id" data-price="@part.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@part.PartName (in stock: @part.Quantity)</option> }</select></td><td><input asp-for="Parts[index].UnitPrice" class="line-price" type="number" min="0" step="0.01" /></td><td><input asp-for="Parts[index].Quantity" class="line-quantity" type="number" min="1" step="1" /></td><td><button class="btn btn-link text-danger remove-part" type="button">×</button></td></tr>
+            }
+            </tbody></table></div>
+            <button id="add-part" class="btn btn-outline-secondary btn-sm" type="button">+ Add Part</button>
+
+            <h2 class="order-section-title">Services</h2>
+            <div class="table-responsive"><table class="table warehouse-table"><thead><tr><th>Service</th><th>Price (EUR)</th><th></th></tr></thead><tbody id="services-body">
+            @for (var index = 0; index < Model.Services.Count; index++)
+            {
+                <tr class="service-row"><td><input asp-for="Services[index].OrderLineId" type="hidden" /><input asp-for="Services[index].Description" placeholder="e.g. Diagnostics" /></td><td><input asp-for="Services[index].UnitPrice" class="service-price" type="number" min="0" step="0.01" /></td><td><button class="btn btn-link text-danger remove-service" type="button">×</button></td></tr>
+            }
+            </tbody></table></div>
+            <button id="add-service" class="btn btn-outline-secondary btn-sm" type="button">+ Add Service</button>
+            <div class="order-total">Total: <strong id="edit-order-total">0.00 EUR</strong></div>
+            <div class="admin-order-form-actions"><button class="btn btn-primary" type="submit">Save Order Changes</button><button class="btn btn-primary" type="button" id="print-admin-order">Print order</button></div>
+        </form>
+    </section>
+</div>
+
+<template id="part-template"><tr class="part-row"><td><input name="Parts[__index__].OrderLineId" type="hidden" value="0" /><select name="Parts[__index__].WarehouseItemId" class="part-select"><option value="">Select part</option>@foreach (var part in Model.WarehouseItems) { <option value="@part.Id" data-price="@part.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)">@part.PartName (in stock: @part.Quantity)</option> }</select></td><td><input name="Parts[__index__].UnitPrice" class="line-price" type="number" min="0" step="0.01" /></td><td><input name="Parts[__index__].Quantity" class="line-quantity" type="number" min="1" value="1" step="1" /></td><td><button class="btn btn-link text-danger remove-part" type="button">×</button></td></tr></template>
+<template id="service-template"><tr class="service-row"><td><input name="Services[__index__].OrderLineId" type="hidden" value="0" /><input name="Services[__index__].Description" placeholder="e.g. Diagnostics" /></td><td><input name="Services[__index__].UnitPrice" class="service-price" type="number" min="0" step="0.01" /></td><td><button class="btn btn-link text-danger remove-service" type="button">×</button></td></tr></template>
+
+@section Scripts {
+<script>
+const adminWarrantyDialog = document.getElementById('admin-warranty-dialog');
+document.getElementById('open-admin-warranty')?.addEventListener('click', () => adminWarrantyDialog.showModal());
+document.getElementById('close-admin-warranty')?.addEventListener('click', () => adminWarrantyDialog.close());
+window.addEventListener('message', event => { if (event.data?.type === 'close-warranty-card') adminWarrantyDialog.close(); });
+let partIndex = @Model.Parts.Count, serviceIndex = @Model.Services.Count;
+const partsBody = document.getElementById('parts-body'), servicesBody = document.getElementById('services-body');
+function total() { let value = 0; document.querySelectorAll('.part-row').forEach(r => value += (parseFloat(r.querySelector('.line-price').value) || 0) * (parseInt(r.querySelector('.line-quantity').value) || 0)); document.querySelectorAll('.service-price').forEach(i => value += parseFloat(i.value) || 0); document.getElementById('edit-order-total').textContent = value.toFixed(2) + ' EUR'; }
+function reindex(selector, prefix) { document.querySelectorAll(selector).forEach((row, index) => row.querySelectorAll('input[name], select[name]').forEach(input => input.name = input.name.replace(new RegExp(`${prefix}\\[\\d+\\]`), `${prefix}[${index}]`))); }
+function bindPart(row) { row.querySelector('.part-select').addEventListener('change', e => { const p = e.target.options[e.target.selectedIndex].dataset.price; if (p) row.querySelector('.line-price').value = p; total(); }); row.querySelector('.remove-part').addEventListener('click', () => { row.remove(); reindex('.part-row', 'Parts'); total(); }); }
+function bindService(row) { row.querySelector('.remove-service').addEventListener('click', () => { row.remove(); reindex('.service-row', 'Services'); total(); }); }
+document.querySelectorAll('.part-row').forEach(bindPart); document.querySelectorAll('.service-row').forEach(bindService);
+document.getElementById('add-part').addEventListener('click', () => { partsBody.insertAdjacentHTML('beforeend', document.getElementById('part-template').innerHTML.replaceAll('__index__', partIndex++)); bindPart(partsBody.lastElementChild); });
+document.getElementById('add-service').addEventListener('click', () => { servicesBody.insertAdjacentHTML('beforeend', document.getElementById('service-template').innerHTML.replaceAll('__index__', serviceIndex++)); bindService(servicesBody.lastElementChild); });
+
+const devices = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.CustomerDevices.Select(device => new { device.Id, device.CustomerId, device.DeviceType, device.ModelAndSerialNumber, photos = device.Photos.Select(photo => new { photo.Id, photo.FileName, photo.OriginalFileName }) }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+const customerSelect = document.getElementById('edit-customer-select');
+const deviceSelect = document.getElementById('edit-device-select');
+const newDeviceFields = document.getElementById('edit-new-device-fields');
+const photoPicker = document.getElementById('edit-device-photo-picker');
+const photoInput = document.getElementById('edit-device-photos');
+const photoPreview = document.getElementById('edit-device-photo-preview');
+const selectedDeviceId = '@Model.Input.CustomerDeviceId';
+let photoFiles = [];
+const deletedPhotoIds = new Set();
+function syncPhotoFiles() { const data = new DataTransfer(); photoFiles.forEach(file => data.items.add(file)); photoInput.files = data.files; }
+function renderPhotos() {
+    photoPreview.innerHTML = '';
+    const device = devices.find(item => String(item.id) === deviceSelect.value);
+    (device?.photos || []).forEach(photo => {
+        if (deletedPhotoIds.has(photo.id)) return;
+        const item = document.createElement('div'); item.className = 'warehouse-photo-item';
+        item.innerHTML = `<a href="/uploads/customer-devices/${photo.fileName}" target="_blank"><img src="/uploads/customer-devices/${photo.fileName}" alt="${photo.originalFileName || 'Device photo'}"></a><button type="button" class="warehouse-photo-delete" data-remove-existing-photo="${photo.id}" title="Remove photo" aria-label="Remove photo">×</button>`;
+        photoPreview.appendChild(item);
+    });
+    photoFiles.forEach((file, index) => {
+        const item = document.createElement('div'); item.className = 'warehouse-photo-item';
+        item.innerHTML = `<img src="${URL.createObjectURL(file)}" alt="${file.name}"><button type="button" class="warehouse-photo-delete" data-remove-new-photo="${index}" title="Remove photo" aria-label="Remove photo">×</button>`;
+        photoPreview.appendChild(item);
+    });
+}
+function loadDevices() {
+    deviceSelect.innerHTML = '<option value="">Add new device</option>';
+    devices.filter(device => device.customerId === customerSelect.value).forEach(device => deviceSelect.add(new Option(device.deviceType + (device.modelAndSerialNumber ? ' — ' + device.modelAndSerialNumber : ''), device.id)));
+    if (devices.some(device => String(device.id) === selectedDeviceId && device.customerId === customerSelect.value)) deviceSelect.value = selectedDeviceId;
+    newDeviceFields.hidden = deviceSelect.value !== '';
+    renderPhotos();
+}
+customerSelect.addEventListener('change', loadDevices);
+deviceSelect.addEventListener('change', () => { newDeviceFields.hidden = deviceSelect.value !== ''; renderPhotos(); });
+photoInput.addEventListener('change', () => { photoFiles = Array.from(photoInput.files); renderPhotos(); });
+photoPicker.addEventListener('click', event => {
+    const removeNew = event.target.closest('[data-remove-new-photo]');
+    if (removeNew) { photoFiles.splice(Number(removeNew.dataset.removeNewPhoto), 1); syncPhotoFiles(); renderPhotos(); return; }
+    const removeExisting = event.target.closest('[data-remove-existing-photo]');
+    if (removeExisting) { deletedPhotoIds.add(Number(removeExisting.dataset.removeExistingPhoto)); const input = document.createElement('input'); input.type = 'hidden'; input.name = 'Input.DeletedDevicePhotoIds'; input.value = removeExisting.dataset.removeExistingPhoto; photoPicker.appendChild(input); renderPhotos(); }
+});
+const accessoryOptions = document.getElementById('edit-accessories-options');
+const accessoryValue = document.getElementById('edit-accessories-value');
+const accessoryOther = document.getElementById('edit-accessories-other');
+if (accessoryOptions && accessoryValue && accessoryOther) {
+    const accessoryValues = (accessoryValue.value || '').split(',').map(value => value.trim()).filter(Boolean);
+    const knownAccessories = new Set(['SIM card', 'Case', 'Charger', 'Cable', 'Bag', 'Other']);
+    const selectedAccessories = new Set(accessoryValues.filter(value => knownAccessories.has(value)));
+    const customAccessory = accessoryValues.filter(value => !knownAccessories.has(value));
+    if (customAccessory.length > 0) { selectedAccessories.add('Other'); accessoryOther.value = customAccessory.join(', '); }
+    accessoryOptions.querySelectorAll('[data-accessory]').forEach(button => { if (selectedAccessories.has(button.dataset.accessory)) button.classList.add('selected'); });
+    function syncAccessories() { accessoryValue.value = [...accessoryOptions.querySelectorAll('.selected')].map(button => button.dataset.accessory).filter(value => value !== 'Other').concat(accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected') && accessoryOther.value.trim() ? [accessoryOther.value.trim()] : []).join(', '); accessoryOther.hidden = !accessoryOptions.querySelector('[data-accessory="Other"]').classList.contains('selected'); }
+    accessoryOptions.addEventListener('click', event => { const button = event.target.closest('[data-accessory]'); if (button) { if (button.dataset.accessory === 'Other') button.classList.add('selected'); else button.classList.toggle('selected'); syncAccessories(); } });
+    accessoryOther.addEventListener('input', syncAccessories);
+    document.getElementById('edit-order-form').addEventListener('submit', syncAccessories);
+}
+const printText = value => String(value ?? '').replace(/[&<>"']/g, character => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[character]));
+document.getElementById('print-admin-order').addEventListener('click', () => {
+    const customer = customerSelect.selectedOptions[0]?.textContent.trim() || 'Not specified';
+    const phone = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Order.Customer?.PhoneNumber ?? "Not specified"));
+    const device = deviceSelect.selectedOptions[0]?.textContent.trim() || document.querySelector('[name="Input.NewDeviceType"]')?.value || 'Not specified';
+    const serial = document.querySelector('[name="Input.NewDeviceModelAndSerialNumber"]')?.value || '';
+    const devicePassword = document.querySelector('[name="Input.DevicePassword"]')?.value || 'Not specified';
+    const problem = document.querySelector('[name="Input.ProblemOrRepair"]')?.value || 'Not specified';
+    const parts = [...document.querySelectorAll('.part-row')].map(row => `<tr><td>Part</td><td>${printText(row.querySelector('.part-select')?.selectedOptions[0]?.textContent.trim())}</td><td>${printText(row.querySelector('.line-quantity')?.value)}</td><td>${printText(row.querySelector('.line-price')?.value)} EUR</td></tr>`);
+    const services = [...document.querySelectorAll('.service-row')].map(row => `<tr><td>Service</td><td>${printText(row.querySelector('[name$=".Description"]')?.value)}</td><td>1</td><td>${printText(row.querySelector('.service-price')?.value)} EUR</td></tr>`);
+    const siteUrl = `${window.location.origin}/MyOrderDetails/@Model.Order.Id`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=140x140&data=${encodeURIComponent(siteUrl)}`;
+    const serviceTerms = `<h2>General service terms</h2><p>The service provider is not responsible for loss or damage to information, programs or data stored on the product before service. The customer is responsible for creating a separate backup copy and removing personal information before submitting the product for service.</p><p>Warranty service does not cover products that were used or stored improperly, mechanical damage, damage caused by natural disasters, unsealed products or modules, or attempts to repair a defect by unauthorized persons.</p><p>Warranty service is void if an unauthorized person attempts to repair the defect. Unclaimed products may be subject to storage or disposal fees in accordance with applicable law. The customer agrees to the service terms by submitting the device for service.</p>`;
+    const printWindow = window.open('', '_blank', 'width=1000,height=800');
+    if (!printWindow) return;
+    printWindow.document.write(`<html><head><title>Repair order</title><style>body{font-family:Arial,sans-serif;padding:28px;color:#111}h1{border-bottom:2px solid #111;padding-bottom:12px}dl{display:grid;grid-template-columns:180px 1fr;gap:8px}dt{font-weight:700}table{width:100%;border-collapse:collapse;margin-top:20px}th,td{border:1px solid #111;padding:8px;text-align:left}.total{text-align:right;font-size:18px;font-weight:700;margin-top:18px}.qr{text-align:right;margin-top:18px}.qr img{width:110px;height:110px}.qr span{display:block;font-size:11px}.terms{margin-top:24px;font-size:12px;line-height:1.45}.terms h2{font-size:16px}.signatures{display:flex;justify-content:space-between;margin-top:70px}</style></head><body><h1>Repair order #@Model.Order.Id</h1><dl><dt>Customer</dt><dd>${printText(customer)}</dd><dt>Phone</dt><dd>${printText(phone)}</dd><dt>Device</dt><dd>${printText(device)}</dd><dt>Serial number</dt><dd>${printText(serial || 'Not specified')}</dd><dt>Device password</dt><dd>${printText(devicePassword)}</dd><dt>Problem / repair</dt><dd>${printText(problem)}</dd></dl><table><thead><tr><th>Type</th><th>Description</th><th>Qty.</th><th>Price</th></tr></thead><tbody>${parts.concat(services).join('') || '<tr><td colspan="4">No parts or services</td></tr>'}</tbody></table><div class="total">Total: ${document.getElementById('edit-order-total').textContent}</div><div class="qr"><img src="${qrCodeUrl}" alt="QR code to order page"><span>Scan to open this order online</span></div><div class="terms">${serviceTerms}</div><div class="signatures"><span>Customer: ................................</span><span>Service employee: ................................</span></div></body></html>`);
+    printWindow.onafterprint = () => printWindow.close();
+    printWindow.document.close();
+    let printed = false;
+    const startPrint = () => { if (printed) return; printed = true; printWindow.focus(); printWindow.print(); };
+    const qrImage = printWindow.document.querySelector('.qr img');
+    if (qrImage) { qrImage.onload = startPrint; qrImage.onerror = startPrint; }
+    setTimeout(startPrint, 1500);
+});
+loadDevices(); total();
+</script>
+}

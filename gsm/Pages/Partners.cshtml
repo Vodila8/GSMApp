@@ -1,0 +1,76 @@
+@page "/Partners"
+@model gsm.Pages.PartnersModel
+@{
+    ViewData["Title"] = "Partners";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list partners-page">
+        <div class="users-page-heading">
+            <div>
+                <span class="user-orders-kicker">Business network</span>
+                <h1 class="warehouse-title">Partners</h1>
+            </div>
+        </div>
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success">@statusMessage</div>
+        }
+        @if (Model.IncomingInvitations.Count > 0)
+        {
+            <section class="partner-invitation-card partner-invitation-notification">
+                <strong>New partnership invitation</strong>
+                <span>You have @Model.IncomingInvitations.Count pending business partnership invitation(s).</span>
+                @foreach (var invitation in Model.IncomingInvitations)
+                {
+                    <div class="partner-pending-row">
+                        <span><b>@invitation.OwnerCompanyName</b> wants to become your business partner.</span>
+                        <form method="post" asp-page-handler="AcceptConnection" asp-route-id="@invitation.Id">
+                            <button class="btn btn-primary" type="submit">Accept</button>
+                        </form>
+                    </div>
+                }
+            </section>
+        }
+        @if (Model.IncomingInvitation is not null)
+        {
+            <section class="partner-invitation-card">
+                <strong>Partnership invitation</strong>
+                <span><b>@Model.IncomingInvitation.OwnerCompanyName</b> wants to become your business partner.</span>
+                <form method="post" asp-page-handler="Accept" class="partner-invitation-actions">
+                    <input type="hidden" name="token" value="@Request.Query["invite"]" />
+                    <button class="btn btn-primary" type="submit">Accept invitation</button>
+                </form>
+            </section>
+        }
+        <form method="post" asp-page-handler="Invite" class="partner-invite-form">
+            <div>
+                <label asp-for="Input.Email">Boss email</label>
+                <input asp-for="Input.Email" type="email" placeholder="boss@example.com" autocomplete="email" />
+                <span asp-validation-for="Input.Email" class="text-danger"></span>
+            </div>
+            <button class="btn btn-primary" type="submit">Send invitation</button>
+        </form>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="partners-list">
+            @if (Model.Connections.Count == 0)
+            {
+                <div class="user-orders-empty"><strong>No partners yet</strong><span>Invite another Boss to connect companies.</span></div>
+            }
+            else
+            {
+                @foreach (var connection in Model.Connections)
+                {
+                    <div class="partner-card">
+                        <div><strong>@(connection.Direction == "Outgoing" ? connection.PartnerCompany : connection.OwnerCompany)</strong><span>@connection.Direction invitation</span></div>
+                        <span class="user-role">@connection.Status</span>
+                    </div>
+                }
+            }
+        </div>
+    </section>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

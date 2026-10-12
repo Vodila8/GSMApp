@@ -1,0 +1,117 @@
+﻿@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Home";
+}
+
+@if (Model.ShowOrderDashboard)
+{
+    <div class="home-dashboard-layout">
+    <section class="dashboard-section">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">SERVICE DESK</span>
+                <h1>Repair order overview</h1>
+            </div>
+        </div>
+        <form method="get" action="/OrderOverview" class="home-order-search-form">
+            <label for="home-order-search">Search order number, customer name or phone</label>
+            <div><input id="home-order-search" name="orderNumber" placeholder="Enter order number, name or phone" /><button class="btn btn-primary" type="submit">Search</button></div>
+        </form>
+
+        <div class="dashboard-stats">
+            <a class="dashboard-stat dashboard-stat-total" href="/OrderOverview">
+                <span class="dashboard-stat-label">Total orders</span>
+                <strong>@Model.OrderStats.Total</strong>
+                <small>All registered orders</small>
+            </a>
+            <a class="dashboard-stat dashboard-stat-progress" href="/OrderOverview?status=progress">
+                <span class="dashboard-stat-label">In progress</span>
+                <strong>@Model.OrderStats.InProgress</strong>
+                <small>End stage is not completed</small>
+            </a>
+            <a class="dashboard-stat dashboard-stat-completed" href="/OrderOverview?status=completed">
+                <span class="dashboard-stat-label">Completed</span>
+                <strong>@Model.OrderStats.Completed</strong>
+                <small>End stage has an end date</small>
+            </a>
+        </div>
+    </section>
+
+    <div class="home-dashboard-lower-grid">
+    <section class="dashboard-section warehouse-search-section">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">INVENTORY</span>
+                <h2>Warehouse parts</h2>
+            </div>
+            <a class="dashboard-section-link" href="/Warehouse">Open warehouse</a>
+        </div>
+        <div class="warehouse-search-form">
+            <div class="warehouse-search-input-wrap">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m20 20-4.3-4.3a7 7 0 1 0-1.4 1.4L18.6 21 20 20ZM5 10a5 5 0 1 1 10 0 5 5 0 0 1-10 0Z" /></svg>
+                <input id="warehouse-live-search" placeholder="Search by part name, product number or barcode" autocomplete="off" />
+            </div>
+        </div>
+        @if (Model.WarehouseItems.Count == 0)
+        {
+            <p class="text-muted warehouse-empty">No warehouse parts found.</p>
+        }
+        else
+        {
+            <div class="warehouse-preview-list">
+                @foreach (var item in Model.WarehouseItems)
+                {
+                    <div class="warehouse-preview-item" data-warehouse-item data-search="@($"{item.PartName} {item.ProductNumber} {item.Barcode} {item.Id}")">
+                        <div>
+                            <strong>@item.PartName</strong>
+                            <span>№ @item.ProductNumber · @item.Quantity in stock</span>
+                        </div>
+                        <strong>@item.UnitPrice.ToString("0.00") EUR</strong>
+                    </div>
+                }
+            </div>
+        }
+    </section>
+
+    <section class="dashboard-section analytics-dashboard-section">
+        <div class="dashboard-heading">
+            <div>
+                <span class="dashboard-kicker">ANALYTICS</span>
+                <h2>Business analytics</h2>
+            </div>
+            <span class="dashboard-section-note">Current company</span>
+        </div>
+        <div class="analytics-grid">
+            <div class="analytics-card analytics-card-revenue"><span>Total revenue today</span><strong>@Model.Analytics.RevenueToday.ToString("0.00") EUR</strong><small>Completed repairs + sales</small></div>
+            <div class="analytics-card analytics-card-revenue"><span>Total revenue this month</span><strong>@Model.Analytics.RevenueThisMonth.ToString("0.00") EUR</strong><small>Completed repairs + sales</small></div>
+            <div class="analytics-card analytics-card-orders"><span>Completed orders today</span><strong>@Model.Analytics.OrdersToday</strong><small>End stage completed today</small></div>
+            <div class="analytics-card analytics-card-orders"><span>Completed orders this month</span><strong>@Model.Analytics.OrdersThisMonth</strong><small>End stage completed this month</small></div>
+            <div class="analytics-card analytics-card-average"><span>Average repair check</span><strong>@Model.Analytics.AverageCheckThisMonth.ToString("0.00") EUR</strong><small>Completed repairs this month</small></div>
+            <div class="analytics-card analytics-card-stock"><span>Warehouse sales today</span><strong>@Model.Analytics.SalesRevenueToday.ToString("0.00") EUR</strong><small>Sales revenue</small></div>
+            <div class="analytics-card analytics-card-stock"><span>Warehouse sales this month</span><strong>@Model.Analytics.SalesRevenueThisMonth.ToString("0.00") EUR</strong><small>Sales revenue</small></div>
+            <div class="analytics-card analytics-card-stock"><span>Low stock</span><strong>@Model.Analytics.LowStockItems</strong><small>Items with 5 or fewer units</small></div>
+        </div>
+    </section>
+    </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        const warehouseSearch = document.getElementById('warehouse-live-search');
+        const warehouseItems = [...document.querySelectorAll('[data-warehouse-item]')];
+        const updateWarehouseResults = () => {
+            const query = warehouseSearch.value.trim().toLowerCase();
+            let visibleCount = 0;
+            warehouseItems.forEach(item => {
+                const matches = !query || item.dataset.search.toLowerCase().includes(query);
+                const show = matches && (query || visibleCount < 8);
+                item.hidden = !show;
+                if (show) visibleCount++;
+            });
+        };
+        warehouseSearch?.addEventListener('input', updateWarehouseResults);
+        updateWarehouseResults();
+    </script>
+}

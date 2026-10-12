@@ -1,0 +1,415 @@
+@page "/Warehouse"
+@model gsm.Pages.WarehouseModel
+@{
+    ViewData["Title"] = "Warehouse";
+}
+
+<div class="user-form-page">
+    <section class="warehouse-list warehouse-page">
+        <div class="warehouse-page-heading">
+            <h1 class="warehouse-title">Warehouse</h1>
+            <div class="warehouse-page-actions">
+                <a class="warehouse-action-button" href="/WarehouseReport" title="Warehouse report" aria-label="Warehouse report">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h10l4 4v14H5V3Zm9 1.8V8h3.2L14 4.8ZM8 12h8v-1.5H8V12Zm0 3h8v-1.5H8V15Zm0 3h5v-1.5H8V18Z" /></svg>
+                </a>
+                <button class="warehouse-action-button" type="button" data-open-warehouse-edit title="Edit warehouse" aria-label="Edit warehouse">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 16.5V20h3.5L18.8 8.7l-3.5-3.5L4 16.5Zm16.7-10.9c.4-.4.4-1 0-1.4l-.9-.9a1 1 0 0 0-1.4 0l-1.7 1.7 3.5 3.5 1.7-1.7Z" /></svg>
+                </button>
+                <a class="warehouse-action-button" href="/WarehouseSales" title="Sales history" aria-label="Sales history">▤</a>
+                <button class="warehouse-action-button warehouse-add-button" type="button" data-open-warehouse-item title="Add item" aria-label="Add item">+</button>
+            </div>
+        </div>
+        <form method="get" class="warehouse-page-search" role="search">
+            <label class="visually-hidden" for="warehouse-search">Search warehouse</label>
+            <input id="warehouse-search" name="search" value="@Model.Search" placeholder="Search by barcode or part name" />
+            <button class="btn btn-primary" type="submit">Search</button>
+            @if (!string.IsNullOrWhiteSpace(Model.Search))
+            {
+                <a class="btn btn-outline-secondary" href="/Warehouse">Clear</a>
+            }
+        </form>
+        @if (TempData["StatusMessage"] is string statusMessage)
+        {
+            <div class="alert alert-success">@statusMessage</div>
+        }
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <datalist id="warehouse-product-numbers">
+            @foreach (var productNumber in Model.ProductNumbers)
+            {
+                <option value="@productNumber"></option>
+            }
+        </datalist>
+
+        <div class="table-responsive">
+            <table class="table warehouse-table warehouse-items-table align-middle">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Product number</th>
+                        <th>Quantity</th>
+                        <th>Part name</th>
+                        <th>Partner</th>
+                        <th>Barcode</th>
+                        <th>Unit price (EUR)</th>
+                        <th>Delivery price (EUR)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var index = 0; index < Model.Items.Count; index++)
+                {
+                    <tr>
+                        <td>@(index + 1)</td>
+                        <td>@(Model.Items[index].ProductNumber ?? "—")</td>
+                        <td>@Model.Items[index].Quantity</td>
+                        <td>@Model.Items[index].PartName</td>
+                        <td>@(Model.Items[index].PartnerName ?? "—")</td>
+                        <td>@(string.IsNullOrWhiteSpace(Model.Items[index].Barcode) ? "—" : Model.Items[index].Barcode)</td>
+                        <td>@Model.Items[index].UnitPrice.ToString("0.00")</td>
+                        <td>@Model.Items[index].DeliveryPrice.ToString("0.00")</td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<dialog id="warehouse-edit-dialog" class="warehouse-edit-dialog">
+    <form method="post" asp-page-handler="Save" enctype="multipart/form-data" class="warehouse-edit-form">
+        <div class="create-user-modal-header global-window-header">
+            <h2>Edit warehouse</h2>
+            <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="edit" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-edit aria-label="Close">×</button></div>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="warehouse-edit-search"><label for="warehouse-edit-search-input">Search items</label><input id="warehouse-edit-search-input" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
+        <div class="table-responsive">
+            <table class="table warehouse-table warehouse-edit-table align-middle">
+                <thead>
+                    <tr>
+                        <th>No.</th>
+                        <th>Product number</th>
+                        <th>Quantity</th>
+                        <th>Part name</th>
+                        <th>Barcode</th>
+                        <th>Unit price</th>
+                        <th>Delivery price</th>
+                    </tr>
+                </thead>
+                <tbody>
+                @for (var index = 0; index < Model.Items.Count; index++)
+                {
+                    <tr>
+                        <td>@(index + 1)<input asp-for="Items[index].Id" type="hidden" /></td>
+                        <td><input asp-for="Items[index].ProductNumber" list="warehouse-product-numbers" /></td>
+                        <td><input asp-for="Items[index].Quantity" type="number" min="0" step="1" /></td>
+                        <td><input asp-for="Items[index].PartName" /></td>
+                        <td><input asp-for="Items[index].Barcode" /></td>
+                        <td><input asp-for="Items[index].UnitPrice" type="number" min="0" step="0.01" /></td>
+                        <td><input asp-for="Items[index].DeliveryPrice" type="number" min="0" step="0.01" /></td>
+                    </tr>
+                }
+                </tbody>
+            </table>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-warehouse-edit>Cancel</button>
+            <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="warehouse-item-dialog" class="create-user-dialog">
+    <form method="post" asp-page-handler="AddItem" enctype="multipart/form-data" class="create-user-modal-form">
+        <div class="create-user-modal-header global-window-header">
+            <h2>Add warehouse item</h2>
+            <div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-local="item" aria-label="Minimize">−</button><button type="button" class="create-user-close" data-close-warehouse-item aria-label="Close">×</button></div>
+        </div>
+        <div class="text-muted mb-3">A product number is generated automatically, but you can choose an existing number or enter a new one.</div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="user-form-row"><label asp-for="NewItem.ProductNumber">Product number</label><input asp-for="NewItem.ProductNumber" list="warehouse-product-numbers" /></div>
+        <div class="user-form-row">
+            <label for="new-item-partner-select">Partner</label>
+            <select id="new-item-partner-select">
+                @if (Model.Partners.Count > 0)
+                {
+                    <option value="" disabled selected>Choose partner</option>
+                }
+                @if (Model.Partners.Count == 0)
+                {
+                    <option value="__new__" selected>Add new partner</option>
+                }
+                else
+                {
+                    <option value="__new__">Add new partner</option>
+                }
+                @foreach (var partner in Model.Partners)
+                {
+                    <option value="@partner.Id">@partner.Name</option>
+                }
+            </select>
+            <input asp-for="NewItem.PartnerId" type="hidden" id="new-item-partner-id" />
+        </div>
+        <div class="user-form-row" id="new-item-partner-name-field" hidden>
+            <label asp-for="NewItem.NewPartnerName">New partner name</label>
+            <input asp-for="NewItem.NewPartnerName" placeholder="Partner name" />
+        </div>
+        <div class="user-form-row"><label asp-for="NewItem.PartName">Part name</label><input asp-for="NewItem.PartName" required /></div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="NewItem.Quantity">Quantity</label><input asp-for="NewItem.Quantity" type="number" min="0" step="1" /></div>
+            <div><label asp-for="NewItem.Barcode">Barcode</label><input asp-for="NewItem.Barcode" /></div>
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="NewItem.UnitPrice">Unit price (EUR)</label><input asp-for="NewItem.UnitPrice" type="number" min="0" step="0.01" /></div>
+            <div><label asp-for="NewItem.DeliveryPrice">Delivery price (EUR)</label><input asp-for="NewItem.DeliveryPrice" type="number" min="0" step="0.01" /></div>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-warehouse-item>Cancel</button>
+            <button type="submit" class="btn btn-primary">Add item</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog id="warehouse-sale-dialog" class="create-user-dialog warehouse-sale-dialog">
+    <form method="post" asp-page-handler="Sell" class="create-user-modal-form">
+        <div class="create-user-modal-header">
+            <h2>Sell warehouse item</h2>
+            <button type="button" class="create-user-close" data-close-warehouse-sale aria-label="Close">×</button>
+        </div>
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="user-form-row">
+            <label for="sale-product-search">Search product</label>
+            <input id="sale-product-search" type="search" placeholder="Search by barcode or part name" autocomplete="off" />
+        </div>
+        <div class="user-form-row">
+            <label asp-for="Sale.WarehouseItemId">Product</label>
+            <select asp-for="Sale.WarehouseItemId" id="sale-product-select" size="6">
+                <option value="">Select product</option>
+                @foreach (var item in Model.Items)
+                {
+                    <option value="@item.Id" data-unit-price="@item.UnitPrice.ToString(System.Globalization.CultureInfo.InvariantCulture)" data-search="@($"{item.PartName} {item.ProductNumber} {item.Barcode}")">@item.PartName · product @item.ProductNumber · barcode @(string.IsNullOrWhiteSpace(item.Barcode) ? "—" : item.Barcode) · stock: @item.Quantity</option>
+                }
+            </select>
+        </div>
+        <div class="user-form-row">
+            <label for="sale-partner-select">Partner</label>
+            <select id="sale-partner-select">
+                @if (Model.Partners.Count > 0)
+                {
+                    <option value="" disabled selected>Choose partner</option>
+                }
+                @if (Model.Partners.Count == 0)
+                {
+                    <option value="__new__" selected>Add new partner</option>
+                }
+                else
+                {
+                    <option value="__new__">Add new partner</option>
+                }
+                @foreach (var partner in Model.Partners)
+                {
+                    <option value="@partner.Id">@partner.Name</option>
+                }
+            </select>
+            <input asp-for="Sale.PartnerId" type="hidden" id="sale-partner-id" />
+        </div>
+        <div class="user-form-row" id="sale-partner-name-field" hidden>
+            <label asp-for="Sale.NewPartnerName">New partner name</label>
+            <input asp-for="Sale.NewPartnerName" placeholder="Partner name" />
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="Sale.SaleDate">Sale date</label><input asp-for="Sale.SaleDate" type="date" /></div>
+            <div><label asp-for="Sale.Quantity">Quantity</label><input asp-for="Sale.Quantity" id="sale-quantity" type="number" min="1" /></div>
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label asp-for="Sale.DiscountPercent">Discount (%)</label><input asp-for="Sale.DiscountPercent" id="sale-discount" type="number" min="0" max="100" step="0.01" /></div>
+        </div>
+        <div class="user-form-row user-form-row-two-columns">
+            <div><label for="sale-total">Total amount</label><input id="sale-total" type="text" value="0.00 EUR" readonly /></div>
+            <div><label asp-for="Sale.Note">Note</label><input asp-for="Sale.Note" placeholder="Optional note" /></div>
+        </div>
+        <div class="create-user-modal-actions">
+            <button type="button" class="btn btn-outline-secondary" data-close-warehouse-sale>Cancel</button>
+            <button type="submit" class="btn btn-primary">Record sale</button>
+        </div>
+    </form>
+</dialog>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const warehouseEditDialog = document.getElementById('warehouse-edit-dialog');
+        const warehouseItemDialog = document.getElementById('warehouse-item-dialog');
+        const warehouseSaleDialog = document.getElementById('warehouse-sale-dialog');
+        const warehouseDeliveryDialog = document.getElementById('warehouse-delivery-dialog');
+        const warehouseEditSearch = document.getElementById('warehouse-edit-search-input');
+        const localTaskbar = document.getElementById('global-window-taskbar');
+
+        function setupLocalWindow(dialog, key, title) {
+            const minimize = dialog.querySelector('[data-minimize-local]');
+            const header = dialog.querySelector('.global-window-header');
+            const taskButton = document.createElement('button');
+            taskButton.type = 'button';
+            taskButton.className = 'global-taskbar-window';
+            taskButton.textContent = title;
+            taskButton.hidden = true;
+            localTaskbar.appendChild(taskButton);
+            minimize.addEventListener('click', () => { dialog.dataset.minimized = 'true'; dialog.close(); taskButton.hidden = false; });
+            taskButton.addEventListener('click', () => { dialog.dataset.minimized = 'false'; taskButton.hidden = true; dialog.showModal(); });
+            dialog.addEventListener('close', () => { if (dialog.dataset.minimized !== 'true') taskButton.hidden = true; });
+            header.addEventListener('pointerdown', event => { if (event.target.closest('button')) return; });
+        }
+        setupLocalWindow(warehouseEditDialog, 'edit', 'Edit warehouse');
+        setupLocalWindow(warehouseItemDialog, 'item', 'Add item');
+
+        function setupPartnerChoice(selectId, partnerIdId, newNameId, newNameFieldId) {
+            const select = document.getElementById(selectId);
+            const partnerId = document.getElementById(partnerIdId);
+            const newName = document.getElementById(newNameId);
+            const newNameField = document.getElementById(newNameFieldId);
+            const useNewPartner = () => {
+                const isNew = select.value === '__new__';
+                newNameField.hidden = !isNew;
+                if (isNew) {
+                    partnerId.value = '';
+                    newName.focus();
+                } else {
+                    partnerId.value = select.value;
+                    newName.value = '';
+                }
+            };
+            if (newName.value.trim()) select.value = '__new__';
+            else if (partnerId.value) select.value = partnerId.value;
+            useNewPartner();
+            select.addEventListener('change', useNewPartner);
+        }
+
+        warehouseEditSearch?.addEventListener('input', () => {
+            const term = warehouseEditSearch.value.trim().toLowerCase();
+            document.querySelectorAll('.warehouse-edit-table tbody tr').forEach(row => {
+                const values = [...row.querySelectorAll('input:not([type="hidden"])')].map(input => input.value.toLowerCase()).join(' ');
+                row.hidden = term !== '' && !values.includes(term);
+            });
+        });
+        const saleProduct = document.getElementById('sale-product-select');
+        const saleQuantity = document.getElementById('sale-quantity');
+        const saleDiscount = document.getElementById('sale-discount');
+        const saleTotal = document.getElementById('sale-total');
+        function updateSaleTotal() {
+            const option = saleProduct.options[saleProduct.selectedIndex];
+            const unitPrice = Number(option?.dataset.unitPrice || 0);
+            const quantity = Number(saleQuantity.value || 0);
+            const discount = Number(saleDiscount.value || 0);
+            saleTotal.value = `${(unitPrice * quantity * (1 - discount / 100)).toFixed(2)} EUR`;
+        }
+        const saleProductSearch = document.getElementById('sale-product-search');
+        saleProductSearch.addEventListener('input', () => {
+            const term = saleProductSearch.value.trim().toLowerCase();
+            [...saleProduct.options].forEach((option, index) => {
+                if (index === 0) return;
+                option.hidden = term !== '' && !(option.dataset.search || option.textContent).toLowerCase().includes(term);
+            });
+            if (saleProduct.selectedOptions[0]?.hidden) saleProduct.value = '';
+            updateSaleTotal();
+        });
+        saleProduct.addEventListener('change', updateSaleTotal);
+        saleQuantity.addEventListener('input', updateSaleTotal);
+        saleDiscount.addEventListener('input', updateSaleTotal);
+        updateSaleTotal();
+        if (warehouseDeliveryDialog) {
+        const deliveryCatalog = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(Model.Items.Select(item => new { item.ProductNumber, item.PartName, item.Barcode, item.UnitPrice, item.DeliveryPrice }), new System.Text.Json.JsonSerializerOptions { PropertyNamingPolicy = System.Text.Json.JsonNamingPolicy.CamelCase }));
+        function setupDeliveryProductRow(row) {
+            const productNumber = row.querySelector('input[name$=".ProductNumber"]');
+            const partName = row.querySelector('input[name$=".PartName"]');
+            const barcode = row.querySelector('input[name$=".Barcode"]');
+            const unitPrice = row.querySelector('input[name$=".UnitPrice"]');
+            const deliveryPrice = row.querySelector('input[name$=".DeliveryPrice"]');
+            const updateProductFields = () => {
+                const value = productNumber.value.trim().toLowerCase().replace(/^p-/, '');
+                const item = deliveryCatalog.find(product => String(product.productNumber || '').trim().toLowerCase().replace(/^p-/, '') === value);
+                if (item) {
+                    partName.value = item.partName || '';
+                    if (barcode) barcode.value = item.barcode || '';
+                    if (unitPrice) unitPrice.value = item.unitPrice ?? 0;
+                    if (deliveryPrice) deliveryPrice.value = item.deliveryPrice ?? 0;
+                } else {
+                    partName.value = '';
+                    if (barcode) barcode.value = '';
+                    if (unitPrice) unitPrice.value = '';
+                    if (deliveryPrice) deliveryPrice.value = '';
+                }
+                updateDeliveryTotal();
+            };
+            productNumber.addEventListener('input', updateProductFields);
+        }
+        const deliverySearch = document.getElementById('warehouse-delivery-search-input');
+        const deliveryTotalValue = document.getElementById('warehouse-delivery-total-value');
+        function updateDeliveryTotal() {
+            let total = 0;
+            document.querySelectorAll('#delivery-items-body [data-delivery-row]').forEach(row => {
+                const quantity = Number(row.querySelector('input[name$=".Quantity"]')?.value || 0);
+                const deliveryPrice = Number(row.querySelector('input[name$=".DeliveryPrice"]')?.value || 0);
+                total += quantity * deliveryPrice;
+            });
+            deliveryTotalValue.textContent = `${total.toFixed(2)} EUR`;
+        }
+        function filterDeliveryRows() {
+            const term = deliverySearch.value.trim().toLowerCase();
+            document.querySelectorAll('#delivery-items-body [data-delivery-row]').forEach(row => {
+                const values = [...row.querySelectorAll('input, select')].map(input => input.value.toLowerCase()).join(' ');
+                row.hidden = term !== '' && !values.includes(term);
+            });
+        }
+
+        document.querySelectorAll('[data-delivery-row]').forEach(row => setupDeliveryProductRow(row));
+        const deliveryItemsBody = document.getElementById('delivery-items-body');
+        let deliveryIndex = deliveryItemsBody.querySelectorAll('[data-delivery-row]').length;
+        document.getElementById('add-delivery-row').addEventListener('click', () => {
+            const rowMarkup = document.getElementById('delivery-row-template').innerHTML
+                .replaceAll('__index__', deliveryIndex)
+                .replaceAll('__number__', deliveryIndex + 1);
+            deliveryItemsBody.insertAdjacentHTML('beforeend', rowMarkup);
+            const row = deliveryItemsBody.lastElementChild;
+            setupDeliveryProductRow(row);
+            deliveryIndex++;
+            updateDeliveryTotal();
+        });
+        deliveryItemsBody.addEventListener('click', event => {
+            if (event.target.closest('.remove-delivery-row') && deliveryItemsBody.querySelectorAll('[data-delivery-row]').length > 1) {
+                event.target.closest('[data-delivery-row]').remove();
+                updateDeliveryTotal();
+            }
+        });
+        deliveryItemsBody.addEventListener('input', updateDeliveryTotal);
+        deliverySearch.addEventListener('input', filterDeliveryRows);
+        updateDeliveryTotal();
+        warehouseDeliveryDialog.querySelector('form').addEventListener('submit', () => {
+            deliveryItemsBody.querySelectorAll('[data-delivery-row]').forEach((row, index) => {
+                row.querySelectorAll('input[name], select[name]').forEach(input => {
+                    input.name = input.name.replace(/DeliveryItems\[\d+\]/, `DeliveryItems[${index}]`);
+                });
+            });
+        });
+        }
+        setupPartnerChoice('new-item-partner-select', 'new-item-partner-id', 'NewItem_NewPartnerName', 'new-item-partner-name-field');
+        setupPartnerChoice('sale-partner-select', 'sale-partner-id', 'Sale_NewPartnerName', 'sale-partner-name-field');
+        document.querySelector('[data-open-warehouse-edit]').addEventListener('click', () => warehouseEditDialog.showModal());
+        document.querySelector('[data-open-warehouse-item]').addEventListener('click', () => warehouseItemDialog.showModal());
+        document.querySelector('[data-open-warehouse-sale]')?.addEventListener('click', () => warehouseSaleDialog.showModal());
+        document.querySelectorAll('[data-close-warehouse-edit]').forEach(button => button.addEventListener('click', () => warehouseEditDialog.close()));
+        document.querySelectorAll('[data-close-warehouse-item]').forEach(button => button.addEventListener('click', () => warehouseItemDialog.close()));
+        document.querySelectorAll('[data-close-warehouse-sale]').forEach(button => button.addEventListener('click', () => warehouseSaleDialog.close()));
+        @if (Model.ShowSaleModal)
+        {
+            <text>warehouseSaleDialog.showModal();</text>
+        }
+        @if (Model.ShowEditModal)
+        {
+            <text>warehouseEditDialog.showModal();</text>
+        }
+        @if (Model.ShowAddModal || Model.ShowItemModal)
+        {
+            <text>warehouseItemDialog.showModal();</text>
+        }
+    </script>
+}

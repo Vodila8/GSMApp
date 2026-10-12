@@ -1,0 +1,30 @@
+@page "/Profile"
+@model gsm.Pages.ProfileModel
+@{
+    ViewData["Title"] = "Profile";
+}
+
+<div class="user-form-page">
+    <section class="user-form profile-page">
+        <div class="profile-page-header">
+            <div>
+                <span class="dashboard-kicker">ACCOUNT</span>
+                <h1 class="warehouse-title">Profile</h1>
+                <p class="text-muted">@Model.Email</p>
+            </div>
+            <a class="btn btn-outline-secondary" href="/">Back</a>
+        </div>
+
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+        <section class="profile-danger-zone">
+            <h2>Delete account</h2>
+            <p>This permanently deletes your account and removes your saved devices. Existing orders will remain without a customer.</p>
+            <form method="post" asp-page-handler="Delete" class="profile-delete-form">
+                <label asp-for="Confirmation">Type DELETE to confirm</label>
+                <input asp-for="Confirmation" autocomplete="off" placeholder="DELETE" />
+                <button class="btn btn-danger" type="submit">Delete my account</button>
+            </form>
+        </section>
+    </section>
+</div>

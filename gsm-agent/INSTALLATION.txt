@@ -1,0 +1,25 @@
+GSM Diagnostic Agent — installation
+===================================
+
+1. Extract every file from this archive into a new permanent folder.
+   Recommended folder: C:\GSM-Agent
+
+2. Double-click install-gsm-agent.bat once.
+   It registers the browser start button and starts the diagnostic agent.
+
+3. Keep the black GSM Diagnostic Agent window open while you scan phones.
+   Later you only need to run start-gsm-agent.bat.
+
+4. Connect an Android phone with a data-capable USB cable, unlock it,
+   enable USB debugging and approve the RSA request on the phone.
+
+5. Return to Device Diagnostics in the website and select
+   "Scan connected phone".
+
+The agent already includes ADB. Installing Android Platform Tools separately
+is not required for this package.
+
+If the browser still says that the agent is not running:
+- make sure the GSM Diagnostic Agent window is still open;
+- do not run two copies of the agent at the same time;
+- check that Windows Firewall did not block gsm-agent.exe.
