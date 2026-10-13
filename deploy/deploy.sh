@@ -34,7 +34,7 @@ if [[ -f "$DEPLOYED_COMMIT_FILE" ]] && [[ "$(cat "$DEPLOYED_COMMIT_FILE")" == "$
     exit 0
 fi
 
-git -c safe.directory="$REPO_DIR" merge --ff-only origin/main
+git -c safe.directory="$REPO_DIR" reset --hard origin/main
 
 dotnet restore "$REPO_DIR/gsm/gsm.csproj"
 
