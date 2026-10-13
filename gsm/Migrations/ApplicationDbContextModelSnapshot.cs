@@ -391,9 +391,6 @@ namespace gsm.Migrations
                     b.Property<DateOnly?>("EndDate")
                         .HasColumnType("date");
 
-                    b.Property<TimeSpan?>("EndTime")
-                        .HasColumnType("interval");
-
                     b.Property<bool>("IsFixed")
                         .HasColumnType("boolean");
 
@@ -410,9 +407,6 @@ namespace gsm.Migrations
 
                     b.Property<DateOnly?>("StartDate")
                         .HasColumnType("date");
-
-                    b.Property<TimeSpan?>("StartTime")
-                        .HasColumnType("interval");
 
                     b.HasKey("Id");
 

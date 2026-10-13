@@ -533,8 +533,6 @@ body {
   border-radius: .375rem;
 }
 .date-range-value { display: block; margin-top: .35rem; color: #64748b; font-size: .78rem; }
-.stage-time-range { display: grid; gap: .2rem; margin-top: .55rem; color: #64748b; font-size: .7rem; font-weight: 700; }
-.stage-time-range-input { min-width: 0; padding: .4rem .5rem; color: var(--ops-text); background: #fff; border: 1px solid #cbd5e1; border-radius: .35rem; }
 
 .range-calendar {
   width: min(100% - 2rem, 380px);

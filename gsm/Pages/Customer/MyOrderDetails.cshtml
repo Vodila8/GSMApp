@@ -5,9 +5,7 @@
     var stages = Model.Order!.Stages.OrderBy(stage => stage.SortOrder).ToList();
     var currentStage = stages.LastOrDefault(stage => !stage.EndDate.HasValue) ?? stages.LastOrDefault();
     var isCompleted = stages.Any(stage => stage.IsFixed && stage.Name == "End" && stage.EndDate.HasValue);
-    string FormatStageDateTime(DateOnly? date, TimeSpan? time) => !date.HasValue
-        ? "Date not set"
-        : $"{date.Value:dd MMM yyyy}{(time.HasValue ? $" at {time.Value:hh\\:mm}" : string.Empty)}";
+    string FormatStageDate(DateOnly? date) => date?.ToString("dd MMM yyyy") ?? "Date not set";
 }
 
 <div class="user-form-page">
@@ -34,10 +32,10 @@
                         <div class="customer-order-step-marker">@(stageCompleted ? "✓" : stage.SortOrder + 1)</div>
                         <div class="customer-order-step-content">
                             <strong>@stage.Name</strong>
-                            <span>@(stageCompleted ? $"Completed {FormatStageDateTime(stage.EndDate, stage.EndTime)}" : stageCurrent ? "Currently in progress" : "Waiting to start")</span>
+                            <span>@(stageCompleted ? $"Completed {FormatStageDate(stage.EndDate)}" : stageCurrent ? "Currently in progress" : "Waiting to start")</span>
                             @if (!stageCompleted && stage.StartDate.HasValue)
                             {
-                                <small>Started @FormatStageDateTime(stage.StartDate, stage.StartTime)</small>
+                                <small>Started @FormatStageDate(stage.StartDate)</small>
                             }
                         </div>
                     </li>

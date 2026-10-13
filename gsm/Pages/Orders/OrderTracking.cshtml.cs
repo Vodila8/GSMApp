@@ -43,9 +43,7 @@ public class OrderTrackingModel : PageModel
             Id = stage.Id,
             Name = stage.Name,
             StartDate = stage.StartDate,
-            StartTime = stage.StartTime,
             EndDate = stage.EndDate,
-            EndTime = stage.EndTime,
             IsFixed = stage.IsFixed
         }).ToList();
         return Page();
@@ -97,9 +95,7 @@ public class OrderTrackingModel : PageModel
                 stage.CompletionNotificationSent = false;
             }
             stage.StartDate = input.StartDate;
-            stage.StartTime = input.StartTime;
             stage.EndDate = input.EndDate;
-            stage.EndTime = input.EndTime;
             stage.SortOrder = index;
             stage.Name = input.Name.Trim();
 
@@ -146,11 +142,6 @@ public class OrderTrackingModel : PageModel
             {
                 ModelState.AddModelError(string.Empty, $"The end date for {stage.Name} cannot be earlier than its start date.");
             }
-            if (stage.StartDate.HasValue && stage.EndDate.HasValue && stage.StartDate == stage.EndDate &&
-                stage.StartTime.HasValue && stage.EndTime.HasValue && stage.EndTime < stage.StartTime)
-            {
-                ModelState.AddModelError(string.Empty, $"The end time for {stage.Name} cannot be earlier than its start time.");
-            }
         }
 
         return ModelState.IsValid;
@@ -175,9 +166,7 @@ public class OrderTrackingModel : PageModel
         public int Id { get; set; }
         public string Name { get; set; } = string.Empty;
         public DateOnly? StartDate { get; set; }
-        public TimeSpan? StartTime { get; set; }
         public DateOnly? EndDate { get; set; }
-        public TimeSpan? EndTime { get; set; }
         public bool IsFixed { get; set; }
     }
 }

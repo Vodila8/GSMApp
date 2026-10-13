@@ -20,11 +20,7 @@ public class OrderStage
 
     public DateOnly? StartDate { get; set; }
 
-    public TimeSpan? StartTime { get; set; }
-
     public DateOnly? EndDate { get; set; }
-
-    public TimeSpan? EndTime { get; set; }
 
     public bool IsFixed { get; set; }
 

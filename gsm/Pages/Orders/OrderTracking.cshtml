@@ -36,11 +36,6 @@
                 {
                     var startDateValue = Model.Stages[index].StartDate?.ToString("yyyy-MM-dd") ?? string.Empty;
                     var endDateValue = Model.Stages[index].EndDate?.ToString("yyyy-MM-dd") ?? string.Empty;
-                    var startTimeValue = Model.Stages[index].StartTime?.ToString(@"hh\:mm") ?? string.Empty;
-                    var endTimeValue = Model.Stages[index].EndTime?.ToString(@"hh\:mm") ?? string.Empty;
-                    var timeRangeValue = startTimeValue.Length > 0 && endTimeValue.Length > 0
-                        ? $"{startTimeValue} — {endTimeValue}"
-                        : startTimeValue;
                     <tr data-fixed="@Model.Stages[index].IsFixed.ToString().ToLowerInvariant()">
                         <td class="stage-number">@(index + 1)<input asp-for="Stages[index].Id" type="hidden" /><input asp-for="Stages[index].IsFixed" type="hidden" /></td>
                         <td>
@@ -59,7 +54,6 @@
                             <input name="Stages[@index].EndDate" value="@endDateValue" class="range-end" type="hidden" />
                             <button class="date-range-button" type="button">Select date range</button>
                             <span class="date-range-value" aria-live="polite"></span>
-                            <label class="stage-time-range">Start / end time<input class="stage-time-range-input" value="@timeRangeValue" type="text" placeholder="09:00 — 17:30" autocomplete="off" /><input name="Stages[@index].StartTime" class="stage-start-time" value="@startTimeValue" type="hidden" /><input name="Stages[@index].EndTime" class="stage-end-time" value="@endTimeValue" type="hidden" /></label>
                         </td>
                         <td>
                             @if (!Model.Stages[index].IsFixed)
@@ -142,7 +136,7 @@
     <tr data-fixed="false">
         <td class="stage-number">0<input name="Stages[__index__].Id" type="hidden" value="0" /><input name="Stages[__index__].IsFixed" type="hidden" value="false" /></td>
         <td><input name="Stages[__index__].Name" aria-label="Stage name" placeholder="Stage name" /></td>
-        <td><input name="Stages[__index__].StartDate" class="range-start" type="hidden" /><input name="Stages[__index__].EndDate" class="range-end" type="hidden" /><button class="date-range-button" type="button">Select date range</button><span class="date-range-value" aria-live="polite"></span><label class="stage-time-range">Start / end time<input class="stage-time-range-input" type="text" placeholder="09:00 — 17:30" autocomplete="off" /><input name="Stages[__index__].StartTime" class="stage-start-time" type="hidden" /><input name="Stages[__index__].EndTime" class="stage-end-time" type="hidden" /></label></td>
+        <td><input name="Stages[__index__].StartDate" class="range-start" type="hidden" /><input name="Stages[__index__].EndDate" class="range-end" type="hidden" /><button class="date-range-button" type="button">Select date range</button><span class="date-range-value" aria-live="polite"></span></td>
         <td><button class="btn btn-outline-secondary btn-sm move-up" type="button" title="Move up">↑</button><button class="btn btn-outline-secondary btn-sm move-down" type="button" title="Move down">↓</button><button class="btn btn-outline-danger btn-sm delete-stage" type="button" title="Delete stage">×</button></td>
     </tr>
 </template>
@@ -198,16 +192,6 @@
             button.textContent = text;
             row.querySelector('.date-range-value').textContent = start ? text : 'No dates selected';
         }
-        function syncTimeRange(input) {
-            const row = input.closest('tr');
-            const value = input.value.trim();
-            const range = value.match(/^(\d{1,2}:\d{2})\s*[—–-]\s*(\d{1,2}:\d{2})$/);
-            const single = value.match(/^(\\d{1,2}:\\d{2})$/);
-            row.querySelector('.stage-start-time').value = range ? range[1] : single ? single[1] : '';
-            row.querySelector('.stage-end-time').value = range ? range[2] : '';
-        }
-        document.querySelectorAll('.stage-time-range-input').forEach(input => input.addEventListener('input', () => syncTimeRange(input)));
-        document.querySelector('.tracking-form').addEventListener('submit', () => document.querySelectorAll('.stage-time-range-input').forEach(syncTimeRange));
         function renderCalendar() {
             const year = displayedMonth.getFullYear();
             const month = displayedMonth.getMonth();
