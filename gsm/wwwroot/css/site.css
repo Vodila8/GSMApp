@@ -533,6 +533,7 @@ body {
   border-radius: .375rem;
 }
 .date-range-value { display: block; margin-top: .35rem; color: #64748b; font-size: .78rem; }
+.tracking-form .date-range-value { display: none; }
 
 .range-calendar {
   width: min(100% - 2rem, 380px);
