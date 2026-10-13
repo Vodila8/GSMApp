@@ -4,9 +4,6 @@ public class ServiceOrder
 {
     public string CompanyId { get; set; } = string.Empty;
 
-    public int? BusinessPartnerConnectionId { get; set; }
-    public BusinessPartnerConnection? BusinessPartnerConnection { get; set; }
-
     public int Id { get; set; }
 
     public string? CustomerId { get; set; }

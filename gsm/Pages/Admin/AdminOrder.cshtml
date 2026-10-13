@@ -7,25 +7,15 @@
 <div class="user-form-page">
     <section class="warehouse-list order-form repair-form admin-order-page">
         <h1 class="warehouse-title">Order #@Model.Order.Id</h1>
-        @if (Model.IsPartnerOrder)
-        {
-            <p><strong>Partner order</strong><br />Customer information is hidden for the partner company.<br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
-        }
-        else
-        {
-            <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />Phone: @(Model.Order.Customer?.PhoneNumber ?? "Not specified")<br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
-        }
-        @if (!Model.IsPartnerOrder)
-        {
-            <div class="admin-order-actions">
-                <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
-                <a class="btn btn-outline-primary btn-sm" href="/CreateRepair">Create repair</a>
-                @if (Model.FinalEndDate.HasValue)
-                {
-                    <button class="btn btn-outline-primary btn-sm" type="button" id="open-admin-warranty">@(Model.Order.WarrantyEndDate.HasValue ? "Open warranty card" : "Create warranty card")</button>
-                }
-            </div>
-        }
+        <p><strong>@(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)</strong><br />Phone: @(Model.Order.Customer?.PhoneNumber ?? "Not specified")<br />@Model.Order.Device — @Model.Order.DeviceModelAndSerialNumber</p>
+        <div class="admin-order-actions">
+            <a class="btn btn-outline-primary btn-sm" href="/OrderTracking/@Model.Order.Id">Manage stages and dates</a>
+            <a class="btn btn-outline-primary btn-sm" href="/CreateRepair">Create repair</a>
+            @if (Model.FinalEndDate.HasValue)
+            {
+                <button class="btn btn-outline-primary btn-sm" type="button" id="open-admin-warranty">@(Model.Order.WarrantyEndDate.HasValue ? "Open warranty card" : "Create warranty card")</button>
+            }
+        </div>
         @if (Model.Order.WarrantyEndDate.HasValue)
         {
             <div class="alert alert-success admin-order-warranty-status">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</div>
@@ -76,21 +66,12 @@
         <form method="post" asp-page-handler="SaveOrder" enctype="multipart/form-data" id="edit-order-form">
             @if (TempData["StatusMessage"] is string statusMessage) { <div class="alert alert-success mt-3">@statusMessage</div> }
             <div asp-validation-summary="All" class="text-danger"></div>
-            @if (Model.IsPartnerOrder)
-            {
-                <section class="repair-section partner-hidden-section">
-                    <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
-                    <p class="text-muted">Customer and device selection is hidden for the partner company.</p>
-                </section>
-            }
-            else
-            {
             <section class="repair-section">
                 <h2 class="repair-section-title"><span>1</span> Customer and device</h2>
                 <div class="user-form-row user-form-row-two-columns">
                     <div>
                         <label asp-for="Input.CustomerId">Customer</label>
-                        @if (User.IsInRole("Technician") || Model.IsPartnerOrder)
+                        @if (User.IsInRole("Technician"))
                         {
                             <select id="edit-customer-select" class="technician-locked-select" disabled><option value="@Model.Input.CustomerId">@(Model.Order.Customer?.CustomerName ?? Model.Order.Customer?.Email ?? "No customer")</option></select>
                             <input asp-for="Input.CustomerId" type="hidden" />
@@ -102,7 +83,7 @@
                     </div>
                     <div>
                         <label asp-for="Input.CustomerDeviceId">Device</label>
-                        @if (User.IsInRole("Technician") || Model.IsPartnerOrder)
+                        @if (User.IsInRole("Technician"))
                         {
                             <select id="edit-device-select" class="technician-locked-select" disabled><option value="@Model.Input.CustomerDeviceId">@(Model.Order.Device ?? "Device") — @Model.Order.DeviceModelAndSerialNumber</option></select>
                             <input asp-for="Input.CustomerDeviceId" type="hidden" />
@@ -113,27 +94,12 @@
                         }
                     </div>
                 </div>
-                @if (!User.IsInRole("Technician") && !Model.IsPartnerOrder && Model.BusinessPartners.Count > 0)
-                {
-                    <div class="user-form-row partner-order-field">
-                        <label asp-for="Input.BusinessPartnerConnectionId">Business partner</label>
-                        <select asp-for="Input.BusinessPartnerConnectionId">
-                            <option value="">No partner</option>
-                            @foreach (var partner in Model.BusinessPartners)
-                            {
-                                <option value="@partner.Id">@(partner.OwnerCompanyId == Model.CurrentCompanyId ? partner.PartnerCompany?.Name : partner.OwnerCompany?.Name ?? "Partner company")</option>
-                            }
-                        </select>
-                        <small class="text-muted">Assign this order to an accepted business partner.</small>
-                    </div>
-                }
-                <div id="edit-new-device-fields" class="user-form-row user-form-row-two-columns @(User.IsInRole("Technician") || Model.IsPartnerOrder ? "technician-locked" : string.Empty)">
+                <div id="edit-new-device-fields" class="user-form-row user-form-row-two-columns @(User.IsInRole("Technician") ? "technician-locked" : string.Empty)">
                     <div><label asp-for="Input.NewDeviceType">New Device</label><select asp-for="Input.NewDeviceType"><option value="">Select device type</option><option>Computer</option><option>Laptop</option><option>Printer</option><option>Phone</option><option>Tablet</option><option>Other</option></select></div>
                     <div><label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label><input asp-for="Input.NewDeviceModelAndSerialNumber" /></div>
                 </div>
-                <div class="user-form-row @(User.IsInRole("Technician") || Model.IsPartnerOrder ? "technician-locked" : string.Empty)"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
+                <div class="user-form-row @(User.IsInRole("Technician") ? "technician-locked" : string.Empty)"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
             </section>
-            }
             <section class="repair-section">
                 <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
                 <div class="user-form-row"><label asp-for="Input.ProblemOrRepair">Problem / Repair</label><textarea asp-for="Input.ProblemOrRepair" rows="3"></textarea></div>

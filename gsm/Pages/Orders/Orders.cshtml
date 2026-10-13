@@ -46,20 +46,6 @@
                 <span asp-validation-for="Input.CustomerDeviceId" class="text-danger"></span>
             </div>
         </div>
-        @if (Model.BusinessPartners.Count > 0)
-        {
-            <div class="user-form-row partner-order-field">
-                <label asp-for="Input.BusinessPartnerConnectionId">Business partner</label>
-                <select asp-for="Input.BusinessPartnerConnectionId">
-                    <option value="">No partner</option>
-                    @foreach (var partner in Model.BusinessPartners)
-                    {
-                        <option value="@partner.Id">@(partner.OwnerCompanyId == Model.CurrentCompanyId ? partner.PartnerCompany?.Name : partner.OwnerCompany?.Name ?? "Partner company")</option>
-                    }
-                </select>
-                <small class="text-muted">Assign this repair to an accepted business partner.</small>
-            </div>
-        }
         <div id="active-warranty-notice" class="active-warranty-notice" hidden role="status"></div>
         <dialog id="active-warranty-dialog" class="active-warranty-dialog">
             <div class="create-user-modal-header"><h2>Warranty card</h2><button type="button" class="create-user-close" id="close-active-warranty" aria-label="Close">×</button></div>

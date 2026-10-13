@@ -248,51 +248,6 @@ namespace gsm.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
-            modelBuilder.Entity("gsm.Data.BusinessPartnerConnection", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<DateTime?>("AcceptedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("InvitedByUserId")
-                        .IsRequired()
-                        .HasMaxLength(450)
-                        .HasColumnType("character varying(450)");
-
-                    b.Property<string>("InvitedEmail")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("character varying(256)");
-
-                    b.Property<string>("OwnerCompanyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("PartnerCompanyId")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("Status")
-                        .HasColumnType("integer");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("PartnerCompanyId");
-
-                    b.HasIndex("OwnerCompanyId", "PartnerCompanyId")
-                        .IsUnique();
-
-                    b.ToTable("BusinessPartnerConnections");
-                });
-
             modelBuilder.Entity("gsm.Data.Company", b =>
                 {
                     b.Property<string>("Id")
@@ -480,9 +435,6 @@ namespace gsm.Migrations
                     b.Property<string>("AdbDiagnosticReport")
                         .HasColumnType("text");
 
-                    b.Property<int?>("BusinessPartnerConnectionId")
-                        .HasColumnType("integer");
-
                     b.Property<string>("CompanyId")
                         .IsRequired()
                         .HasColumnType("text");
@@ -524,8 +476,6 @@ namespace gsm.Migrations
                         .HasColumnType("date");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("BusinessPartnerConnectionId");
 
                     b.HasIndex("CustomerDeviceId");
 
@@ -905,25 +855,6 @@ namespace gsm.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("gsm.Data.BusinessPartnerConnection", b =>
-                {
-                    b.HasOne("gsm.Data.Company", "OwnerCompany")
-                        .WithMany()
-                        .HasForeignKey("OwnerCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("gsm.Data.Company", "PartnerCompany")
-                        .WithMany()
-                        .HasForeignKey("PartnerCompanyId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("OwnerCompany");
-
-                    b.Navigation("PartnerCompany");
-                });
-
             modelBuilder.Entity("gsm.Data.CustomerDevice", b =>
                 {
                     b.HasOne("gsm.Data.ApplicationUser", "Customer")
@@ -970,10 +901,6 @@ namespace gsm.Migrations
 
             modelBuilder.Entity("gsm.Data.ServiceOrder", b =>
                 {
-                    b.HasOne("gsm.Data.BusinessPartnerConnection", "BusinessPartnerConnection")
-                        .WithMany("ServiceOrders")
-                        .HasForeignKey("BusinessPartnerConnectionId");
-
                     b.HasOne("gsm.Data.CustomerDevice", "CustomerDevice")
                         .WithMany()
                         .HasForeignKey("CustomerDeviceId");
@@ -981,8 +908,6 @@ namespace gsm.Migrations
                     b.HasOne("gsm.Data.ApplicationUser", "Customer")
                         .WithMany()
                         .HasForeignKey("CustomerId");
-
-                    b.Navigation("BusinessPartnerConnection");
 
                     b.Navigation("Customer");
 
@@ -1043,11 +968,6 @@ namespace gsm.Migrations
                     b.Navigation("Partner");
 
                     b.Navigation("WarehouseItem");
-                });
-
-            modelBuilder.Entity("gsm.Data.BusinessPartnerConnection", b =>
-                {
-                    b.Navigation("ServiceOrders");
                 });
 
             modelBuilder.Entity("gsm.Data.CustomerDevice", b =>

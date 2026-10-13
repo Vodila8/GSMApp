@@ -13,13 +13,11 @@ namespace gsm.Pages;
 public class AdminOrderModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly TenantContext _tenantContext;
     private readonly AdbDiagnosticService _adbDiagnosticService;
     private readonly IWebHostEnvironment _environment;
-    public AdminOrderModel(ApplicationDbContext dbContext, TenantContext tenantContext, AdbDiagnosticService adbDiagnosticService, IWebHostEnvironment environment)
+    public AdminOrderModel(ApplicationDbContext dbContext, AdbDiagnosticService adbDiagnosticService, IWebHostEnvironment environment)
     {
         _dbContext = dbContext;
-        _tenantContext = tenantContext;
         _adbDiagnosticService = adbDiagnosticService;
         _environment = environment;
     }
@@ -30,9 +28,6 @@ public class AdminOrderModel : PageModel
     public List<WarehouseItem> WarehouseItems { get; private set; } = [];
     public List<ApplicationUser> Customers { get; private set; } = [];
     public List<CustomerDevice> CustomerDevices { get; private set; } = [];
-    public List<BusinessPartnerConnection> BusinessPartners { get; private set; } = [];
-    public string? CurrentCompanyId { get; private set; }
-    public bool IsPartnerOrder { get; private set; }
     public OrdersModel.AdbDiagnosticDetails? AdbReport { get; private set; }
 
     [BindProperty] public OrderEditInput Input { get; set; } = new();
@@ -48,7 +43,7 @@ public class AdminOrderModel : PageModel
 
     public async Task<IActionResult> OnPostSaveOrderAsync(int id)
     {
-        var order = await AccessibleOrders()
+        var order = await _dbContext.ServiceOrders
             .Include(item => item.Lines)
             .Include(item => item.Adjustments)
             .Include(item => item.CustomerDevice!)
@@ -56,15 +51,7 @@ public class AdminOrderModel : PageModel
             .FirstOrDefaultAsync(item => item.Id == id);
         if (order == null) return NotFound();
 
-        var isPartnerOrder = !string.Equals(order.CompanyId, _tenantContext.CompanyId, StringComparison.Ordinal) &&
-            (User.IsInRole("Boss") || User.IsInRole("Administrator")) &&
-            await _dbContext.BusinessPartnerConnections.AnyAsync(connection =>
-                connection.Id == order.BusinessPartnerConnectionId &&
-                connection.PartnerCompanyId == _tenantContext.CompanyId &&
-                connection.Status == BusinessPartnerConnectionStatus.Accepted);
-        IsPartnerOrder = isPartnerOrder;
-
-        if (User.IsInRole("Technician") || isPartnerOrder)
+        if (User.IsInRole("Technician"))
         {
             Input.CustomerId = order.CustomerId;
             Input.CustomerDeviceId = order.CustomerDeviceId;
@@ -74,7 +61,6 @@ public class AdminOrderModel : PageModel
             Input.DeletedDevicePhotoIds = [];
             Input.Accessories = order.Accessories;
             Input.DevicePassword = order.DevicePassword;
-            Input.BusinessPartnerConnectionId = order.BusinessPartnerConnectionId;
         }
 
         if (Input.DevicePhotos.Count > 10)
@@ -116,18 +102,6 @@ public class AdminOrderModel : PageModel
             _dbContext.CustomerDevices.Add(device);
         }
 
-        BusinessPartnerConnection? businessPartner = null;
-        if (Input.BusinessPartnerConnectionId.HasValue)
-        {
-            businessPartner = await _dbContext.BusinessPartnerConnections
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(connection => connection.Id == Input.BusinessPartnerConnectionId.Value &&
-                    (connection.OwnerCompanyId == order.CompanyId || connection.PartnerCompanyId == order.CompanyId) &&
-                    connection.Status == BusinessPartnerConnectionStatus.Accepted);
-            if (businessPartner == null)
-                ModelState.AddModelError("Input.BusinessPartnerConnectionId", "Select a valid accepted partner.");
-        }
-
         var parts = Parts.Where(item => item.WarehouseItemId.HasValue && item.WarehouseItemId.Value > 0).ToList();
         var services = Services.Where(item => !string.IsNullOrWhiteSpace(item.Description)).ToList();
         if (parts.Any(item => item.Quantity <= 0 || item.UnitPrice < 0) || services.Any(item => item.UnitPrice < 0))
@@ -159,8 +133,6 @@ public class AdminOrderModel : PageModel
             return Page();
         }
 
-        order.BusinessPartnerConnection = businessPartner;
-        order.BusinessPartnerConnectionId = businessPartner?.Id;
         order.CustomerId = customer?.Id;
         order.CustomerDevice = device;
         order.CustomerDeviceId = device?.Id;
@@ -230,7 +202,7 @@ public class AdminOrderModel : PageModel
 
     public async Task<IActionResult> OnPostScanAdbAsync(int id)
     {
-        var order = await AccessibleOrders()
+        var order = await _dbContext.ServiceOrders
             .Include(item => item.CustomerDevice)
             .FirstOrDefaultAsync(item => item.Id == id);
         if (order == null) return NotFound();
@@ -258,22 +230,9 @@ public class AdminOrderModel : PageModel
         return RedirectToPage(new { id });
     }
 
-    private IQueryable<ServiceOrder> AccessibleOrders()
-    {
-        var companyId = _tenantContext.CompanyId;
-        var canSeePartnerOrders = User.IsInRole("Boss") || User.IsInRole("Administrator");
-        return _dbContext.ServiceOrders
-            .IgnoreQueryFilters()
-            .Where(order => order.CompanyId == companyId ||
-                (canSeePartnerOrders && _dbContext.BusinessPartnerConnections.Any(connection =>
-                    connection.Id == order.BusinessPartnerConnectionId &&
-                    connection.PartnerCompanyId == companyId &&
-                    connection.Status == BusinessPartnerConnectionStatus.Accepted)));
-    }
-
     private async Task<bool> LoadAsync(int id)
     {
-        Order = await AccessibleOrders()
+        Order = await _dbContext.ServiceOrders
             .Include(item => item.Customer)
             .Include(item => item.CustomerDevice!)
                 .ThenInclude(device => device.Photos)
@@ -285,13 +244,6 @@ public class AdminOrderModel : PageModel
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
         if (Order != null)
         {
-            CurrentCompanyId = Order.CompanyId;
-            IsPartnerOrder = !string.Equals(Order.CompanyId, _tenantContext.CompanyId, StringComparison.Ordinal) &&
-                (User.IsInRole("Boss") || User.IsInRole("Administrator")) &&
-                await _dbContext.BusinessPartnerConnections.AnyAsync(connection =>
-                    connection.Id == Order.BusinessPartnerConnectionId &&
-                    connection.PartnerCompanyId == _tenantContext.CompanyId &&
-                    connection.Status == BusinessPartnerConnectionStatus.Accepted);
             Customers = await _dbContext.Users
                 .Where(user => (user.CompanyId == Order.CompanyId || _dbContext.UserCompanyMemberships.Any(membership =>
                     membership.UserId == user.Id && membership.CompanyId == Order.CompanyId)) &&
@@ -303,13 +255,6 @@ public class AdminOrderModel : PageModel
                 .Where(item => item.CompanyId == Order.CompanyId)
                 .Include(item => item.Photos)
                 .OrderBy(item => item.DeviceType)
-                .ToListAsync();
-            BusinessPartners = await _dbContext.BusinessPartnerConnections
-                .IgnoreQueryFilters()
-                .Include(connection => connection.OwnerCompany)
-                .Include(connection => connection.PartnerCompany)
-                .Where(connection => (connection.OwnerCompanyId == Order.CompanyId || connection.PartnerCompanyId == Order.CompanyId) && connection.Status == BusinessPartnerConnectionStatus.Accepted)
-                .OrderBy(connection => connection.PartnerCompany!.Name)
                 .ToListAsync();
         }
         AdbReport = ParseDiagnosticReport(Order?.AdbDiagnosticReport);
@@ -389,8 +334,7 @@ public class AdminOrderModel : PageModel
 
     private void PopulateInputs()
     {
-        Input.BusinessPartnerConnectionId = Order!.BusinessPartnerConnectionId;
-        Input.CustomerId = Order.CustomerId;
+        Input.CustomerId = Order!.CustomerId;
         Input.CustomerDeviceId = Order.CustomerDeviceId;
         Input.NewDeviceType = Order.CustomerDeviceId.HasValue ? null : Order.Device;
         Input.NewDeviceModelAndSerialNumber = Order.CustomerDeviceId.HasValue ? null : Order.DeviceModelAndSerialNumber;
@@ -416,7 +360,6 @@ public class AdminOrderModel : PageModel
 
     public class OrderEditInput
     {
-        public int? BusinessPartnerConnectionId { get; set; }
         public string? CustomerId { get; set; }
         public int? CustomerDeviceId { get; set; }
         public string? NewDeviceType { get; set; }

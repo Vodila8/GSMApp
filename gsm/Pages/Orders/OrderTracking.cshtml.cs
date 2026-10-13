@@ -1,5 +1,4 @@
 using gsm.Data;
-using gsm.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,12 +10,10 @@ namespace gsm.Pages;
 public class OrderTrackingModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly TenantContext _tenantContext;
 
-    public OrderTrackingModel(ApplicationDbContext dbContext, TenantContext tenantContext)
+    public OrderTrackingModel(ApplicationDbContext dbContext)
     {
         _dbContext = dbContext;
-        _tenantContext = tenantContext;
     }
 
     [BindProperty]
@@ -31,7 +28,6 @@ public class OrderTrackingModel : PageModel
         .FirstOrDefault(stage => stage.IsFixed && stage.Name == "End")?.EndDate;
 
     public bool OpenWarranty { get; private set; }
-    public bool IsPartnerOrder { get; private set; }
 
     public async Task<IActionResult> OnGetAsync(int id, bool openWarranty = false)
     {
@@ -57,7 +53,6 @@ public class OrderTrackingModel : PageModel
 
     public async Task<IActionResult> OnPostSaveAsync(int id)
     {
-        if (await IsPartnerOrderAsync(id)) return Forbid();
         if (!ValidateDates())
         {
             await LoadOrderAsync(id);
@@ -121,7 +116,6 @@ public class OrderTrackingModel : PageModel
 
     public async Task<IActionResult> OnPostSaveWarrantyAsync(int id)
     {
-        if (await IsPartnerOrderAsync(id)) return Forbid();
         if (WarrantyMonths < 1 || WarrantyMonths > 120)
         {
             ModelState.AddModelError(nameof(WarrantyMonths), "Warranty period must be between 1 and 120 months.");
@@ -162,37 +156,14 @@ public class OrderTrackingModel : PageModel
         return ModelState.IsValid;
     }
 
-    private async Task<bool> IsPartnerOrderAsync(int id)
-    {
-        if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId) ||
-            (!User.IsInRole("Boss") && !User.IsInRole("Administrator")))
-            return false;
-
-        return await _dbContext.ServiceOrders
-            .IgnoreQueryFilters()
-            .Where(order => order.Id == id && order.CompanyId != _tenantContext.CompanyId)
-            .AnyAsync(order => _dbContext.BusinessPartnerConnections.Any(connection =>
-                connection.Id == order.BusinessPartnerConnectionId &&
-                connection.PartnerCompanyId == _tenantContext.CompanyId &&
-                connection.Status == BusinessPartnerConnectionStatus.Accepted));
-    }
-
     private async Task<bool> LoadOrderAsync(int id)
     {
         Order = await _dbContext.ServiceOrders
-            .IgnoreQueryFilters()
-            .Where(order => order.CompanyId == _tenantContext.CompanyId ||
-                ((User.IsInRole("Boss") || User.IsInRole("Administrator")) &&
-                 _dbContext.BusinessPartnerConnections.Any(connection =>
-                     connection.Id == order.BusinessPartnerConnectionId &&
-                     connection.PartnerCompanyId == _tenantContext.CompanyId &&
-                     connection.Status == BusinessPartnerConnectionStatus.Accepted)))
             .Include(order => order.Customer)
             .Include(order => order.Lines)
                 .ThenInclude(line => line.WarehouseItem)
             .Include(order => order.Stages.OrderBy(stage => stage.SortOrder))
             .FirstOrDefaultAsync(order => order.Id == id);
-        IsPartnerOrder = Order != null && !string.Equals(Order.CompanyId, _tenantContext.CompanyId, StringComparison.Ordinal);
         Company = Order == null
             ? null
             : await _dbContext.Companies.FirstOrDefaultAsync(company => company.Id == Order.CompanyId);

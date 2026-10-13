@@ -31,8 +31,6 @@ public class OrdersModel : PageModel
     public List<ApplicationUser> Customers { get; private set; } = [];
     public List<WarehouseItem> WarehouseItems { get; private set; } = [];
     public List<CustomerDevice> CustomerDevices { get; private set; } = [];
-    public List<BusinessPartnerConnection> BusinessPartners { get; private set; } = [];
-    public string? CurrentCompanyId { get; private set; }
     public List<WarrantyNotice> ActiveWarranties { get; private set; } = [];
     public string? AdbScanError { get; private set; }
     public AdbDiagnosticDetails? AdbReport { get; private set; }
@@ -136,18 +134,6 @@ public class OrdersModel : PageModel
             }
         }
 
-        BusinessPartnerConnection? businessPartner = null;
-        if (Input.BusinessPartnerConnectionId.HasValue)
-        {
-            businessPartner = await _dbContext.BusinessPartnerConnections
-                .IgnoreQueryFilters()
-                .FirstOrDefaultAsync(connection => connection.Id == Input.BusinessPartnerConnectionId.Value &&
-                    (connection.OwnerCompanyId == _tenantContext.CompanyId || connection.PartnerCompanyId == _tenantContext.CompanyId) &&
-                    connection.Status == BusinessPartnerConnectionStatus.Accepted);
-            if (businessPartner == null)
-                ModelState.AddModelError("Input.BusinessPartnerConnectionId", "Select a valid accepted partner.");
-        }
-
         if (!ModelState.IsValid)
         {
             return Page();
@@ -218,8 +204,6 @@ public class OrdersModel : PageModel
         var order = new ServiceOrder
         {
             CompanyId = _tenantContext.CompanyId,
-            BusinessPartnerConnection = businessPartner,
-            BusinessPartnerConnectionId = businessPartner?.Id,
             CustomerId = customer?.Id,
             CustomerDevice = device,
             Device = device?.DeviceType ?? Input.NewDeviceType?.Trim(),
@@ -288,7 +272,6 @@ public class OrdersModel : PageModel
     private async Task LoadOptionsAsync()
     {
         var companyId = _tenantContext.CompanyId;
-        CurrentCompanyId = companyId;
         if (string.IsNullOrWhiteSpace(companyId))
         {
             Customers = [];
@@ -334,13 +317,6 @@ public class OrdersModel : PageModel
             .OrderBy(user => user.CustomerName ?? user.Email)
             .ToListAsync();
         WarehouseItems = await _dbContext.WarehouseItems.OrderBy(item => item.PartName).ToListAsync();
-        BusinessPartners = await _dbContext.BusinessPartnerConnections
-            .IgnoreQueryFilters()
-            .Include(connection => connection.OwnerCompany)
-            .Include(connection => connection.PartnerCompany)
-            .Where(connection => (connection.OwnerCompanyId == companyId || connection.PartnerCompanyId == companyId) && connection.Status == BusinessPartnerConnectionStatus.Accepted)
-            .OrderBy(connection => connection.PartnerCompany!.Name)
-            .ToListAsync();
         CustomerDevices = await _dbContext.CustomerDevices
             .Include(item => item.Photos)
             .OrderBy(item => item.DeviceType)
@@ -450,7 +426,6 @@ public class OrdersModel : PageModel
 
     public class OrderInput
     {
-        public int? BusinessPartnerConnectionId { get; set; }
         public string? CustomerId { get; set; }
         public int? CustomerDeviceId { get; set; }
         public string? NewDeviceType { get; set; }

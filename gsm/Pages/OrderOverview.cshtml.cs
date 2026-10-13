@@ -1,5 +1,4 @@
 using gsm.Data;
-using gsm.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -11,13 +10,8 @@ namespace gsm.Pages;
 public class OrderOverviewModel : PageModel
 {
     private readonly ApplicationDbContext _dbContext;
-    private readonly TenantContext _tenantContext;
 
-    public OrderOverviewModel(ApplicationDbContext dbContext, TenantContext tenantContext)
-    {
-        _dbContext = dbContext;
-        _tenantContext = tenantContext;
-    }
+    public OrderOverviewModel(ApplicationDbContext dbContext) => _dbContext = dbContext;
 
     public string StatusFilter { get; private set; } = "all";
     public string? OrderNumber { get; private set; }
@@ -34,15 +28,7 @@ public class OrderOverviewModel : PageModel
 
         OrderNumber = orderNumber?.Trim();
         var today = DateOnly.FromDateTime(DateTime.Now);
-        var companyId = _tenantContext.CompanyId;
-        var canSeePartnerOrders = User.IsInRole("Boss") || User.IsInRole("Administrator");
         var query = _dbContext.ServiceOrders
-            .IgnoreQueryFilters()
-            .Where(order => order.CompanyId == companyId ||
-                (canSeePartnerOrders && _dbContext.BusinessPartnerConnections.Any(connection =>
-                    connection.Id == order.BusinessPartnerConnectionId &&
-                    connection.PartnerCompanyId == companyId &&
-                    connection.Status == BusinessPartnerConnectionStatus.Accepted)))
             .Include(order => order.Customer)
             .Include(order => order.Stages)
             .OrderByDescending(order => order.CreatedAt)
@@ -54,7 +40,7 @@ public class OrderOverviewModel : PageModel
             var hasOrderId = int.TryParse(searchTerm, out var orderId);
             query = query.Where(order =>
                 (hasOrderId && order.Id == orderId) ||
-                (order.CompanyId == companyId && order.Customer != null &&
+                (order.Customer != null &&
                  (EF.Functions.ILike(order.Customer.CustomerName ?? string.Empty, $"%{searchTerm}%") ||
                   EF.Functions.ILike(order.Customer.Email ?? string.Empty, $"%{searchTerm}%") ||
                   EF.Functions.ILike(order.Customer.PhoneNumber ?? string.Empty, $"%{searchTerm}%"))));
@@ -72,9 +58,7 @@ public class OrderOverviewModel : PageModel
         Orders = await query.Select(order => new OrderListItem
         {
             Id = order.Id,
-            CustomerName = order.CompanyId == companyId
-                ? order.Customer == null ? "No customer" : order.Customer.CustomerName ?? order.Customer.Email ?? "Unknown customer"
-                : "Partner order",
+            CustomerName = order.Customer == null ? "No customer" : order.Customer.CustomerName ?? order.Customer.Email ?? "Unknown customer",
             Device = order.Device ?? "Device",
             DeviceDetails = order.DeviceModelAndSerialNumber,
             CreatedAt = order.CreatedAt,

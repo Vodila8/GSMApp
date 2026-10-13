@@ -42,24 +42,9 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser>
 
     public DbSet<UserCompanyMembership> UserCompanyMemberships => Set<UserCompanyMembership>();
 
-    public DbSet<BusinessPartnerConnection> BusinessPartnerConnections => Set<BusinessPartnerConnection>();
-
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
-        builder.Entity<BusinessPartnerConnection>()
-            .HasOne(connection => connection.OwnerCompany)
-            .WithMany()
-            .HasForeignKey(connection => connection.OwnerCompanyId)
-            .OnDelete(DeleteBehavior.Restrict);
-        builder.Entity<BusinessPartnerConnection>()
-            .HasOne(connection => connection.PartnerCompany)
-            .WithMany()
-            .HasForeignKey(connection => connection.PartnerCompanyId)
-            .OnDelete(DeleteBehavior.Restrict);
-        builder.Entity<BusinessPartnerConnection>()
-            .HasIndex(connection => new { connection.OwnerCompanyId, connection.PartnerCompanyId })
-            .IsUnique();
         builder.Entity<WarehouseItem>().HasQueryFilter(item => !_tenantContext.IsAuthenticated || item.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehouseItemPhoto>().HasQueryFilter(photo => !_tenantContext.IsAuthenticated || photo.CompanyId == _tenantContext.CompanyId);
         builder.Entity<WarehousePartner>().HasQueryFilter(partner => !_tenantContext.IsAuthenticated || partner.CompanyId == _tenantContext.CompanyId);

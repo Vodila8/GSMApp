@@ -8,18 +8,14 @@
     var warrantyOnly = Model.OpenWarranty && Request.Query["embedded"].Count > 0;
 }
 <div class="user-form-page @(warrantyOnly ? "warranty-only-page" : string.Empty)">
-    <form class="warehouse-list tracking-form @(Model.IsPartnerOrder ? "partner-readonly-tracking" : string.Empty)" method="post" asp-page-handler="Save">
+    <form class="warehouse-list tracking-form" method="post" asp-page-handler="Save">
         <div class="tracking-heading">
             <h1 class="warehouse-title">Order Tracking</h1>
-            @if (Model.FinalEndDate.HasValue && !Model.IsPartnerOrder)
+            @if (Model.FinalEndDate.HasValue)
             {
                 <button class="btn btn-outline-primary" type="button" id="open-warranty-card">Create warranty card</button>
             }
         </div>
-        @if (Model.IsPartnerOrder)
-        {
-            <div class="alert alert-info" role="status">This partner order is read-only. Stage and warranty changes are managed by the owning company.</div>
-        }
         <p class="tracking-order-details">
             <strong>Order #@Model.Order!.Id</strong><br />
             Customer: @(Model.Order.Customer == null ? "No customer" : Model.Order.Customer.CustomerName ?? Model.Order.Customer.Email)<br />
@@ -78,15 +74,12 @@
                 </tbody>
             </table>
         </div>
-        @if (!Model.IsPartnerOrder)
-        {
-            <button class="btn btn-outline-secondary btn-sm" id="add-stage" type="button">+ Add Stage</button>
-            <button class="btn btn-primary" type="submit">Save Stages</button>
-        }
+        <button class="btn btn-outline-secondary btn-sm" id="add-stage" type="button">+ Add Stage</button>
+        <button class="btn btn-primary" type="submit">Save Stages</button>
     </form>
 </div>
 
-@if (Model.FinalEndDate.HasValue && !Model.IsPartnerOrder)
+@if (Model.FinalEndDate.HasValue)
 {
     <dialog class="warranty-card-dialog" id="warranty-card-dialog">
         <form method="post" asp-page-handler="SaveWarranty" asp-route-id="@Model.Order!.Id" id="warranty-card-form">
