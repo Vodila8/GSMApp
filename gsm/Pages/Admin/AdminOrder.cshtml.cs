@@ -57,8 +57,6 @@ public class AdminOrderModel : PageModel
             Input.CustomerDeviceId = order.CustomerDeviceId;
             Input.NewDeviceType = null;
             Input.NewDeviceModelAndSerialNumber = null;
-            Input.DevicePhotos = [];
-            Input.DeletedDevicePhotoIds = [];
             Input.Accessories = order.Accessories;
             Input.DevicePassword = order.DevicePassword;
         }

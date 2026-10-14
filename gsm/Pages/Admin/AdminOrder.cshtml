@@ -98,7 +98,7 @@
                     <div><label asp-for="Input.NewDeviceType">New Device</label><select asp-for="Input.NewDeviceType"><option value="">Select device type</option><option>Computer</option><option>Laptop</option><option>Printer</option><option>Phone</option><option>Tablet</option><option>Other</option></select></div>
                     <div><label asp-for="Input.NewDeviceModelAndSerialNumber">Model and Serial Number (SN)</label><input asp-for="Input.NewDeviceModelAndSerialNumber" /></div>
                 </div>
-                <div class="user-form-row @(User.IsInRole("Technician") ? "technician-locked" : string.Empty)"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
+                <div class="user-form-row"><label for="edit-device-photos">Device photos</label><div class="warehouse-photo-picker" id="edit-device-photo-picker"><label class="warehouse-photo-add">Choose photos<input id="edit-device-photos" name="Input.DevicePhotos" class="warehouse-photo-input" type="file" accept="image/jpeg,image/png,image/gif,image/webp" multiple /></label><div class="warehouse-photo-list warehouse-edit-photo-list" id="edit-device-photo-preview"></div></div></div>
             </section>
             <section class="repair-section">
                 <h2 class="repair-section-title"><span>2</span> Device acceptance</h2>
