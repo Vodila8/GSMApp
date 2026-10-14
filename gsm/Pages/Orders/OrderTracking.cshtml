@@ -90,19 +90,20 @@
             <div class="warranty-card-company">@(Model.Company?.Name ?? "Company")</div>
             <h3>Warranty card</h3>
             <p><strong>Order #@Model.Order!.Id</strong></p>
+            <div class="warranty-card-row-toolbar"><button type="button" class="btn btn-outline-secondary btn-sm" id="add-warranty-row">+ Add row</button></div>
             <table>
-                <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Qty.</th><th>Serial number</th><th>Warranty</th></tr></thead>
-                <tbody>
+                <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Qty.</th><th>Serial number</th><th>Warranty</th><th class="warranty-row-actions"></th></tr></thead>
+                <tbody id="warranty-lines-body">
                 @if (Model.Order.Lines.Count == 0)
                 {
-                    <tr><td>1</td><td><input class="warranty-editable" type="text" value="" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.ProblemOrRepair ?? "Repair service")" /></td><td>1</td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td></tr>
+                    <tr class="warranty-line-row"><td class="warranty-row-number">1</td><td><input class="warranty-editable" type="text" value="" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.ProblemOrRepair ?? "Repair service")" /></td><td><input class="warranty-editable warranty-quantity" type="number" value="1" min="1" step="1" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td><td class="warranty-row-actions"><button type="button" class="warranty-remove-row" aria-label="Remove row">×</button></td></tr>
                 }
                 else
                 {
                     @for (var index = 0; index < Model.Order.Lines.Count; index++)
                     {
                         var line = Model.Order.Lines[index];
-                        <tr><td>@(index + 1)</td><td><input class="warranty-editable" type="text" value="@(line.WarehouseItem?.ProductNumber ?? "")" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@line.Description" /></td><td>@line.Quantity.ToString("0.000")</td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td></tr>
+                        <tr class="warranty-line-row"><td class="warranty-row-number">@(index + 1)</td><td><input class="warranty-editable" type="text" value="@(line.WarehouseItem?.ProductNumber ?? "")" placeholder="Code" /></td><td><input class="warranty-editable" type="text" value="@line.Description" /></td><td><input class="warranty-editable warranty-quantity" type="number" value="@line.Quantity" min="1" step="1" /></td><td><input class="warranty-editable" type="text" value="@(Model.Order.DeviceModelAndSerialNumber ?? "")" placeholder="Serial number" /></td><td class="warranty-months-value"></td><td class="warranty-row-actions"><button type="button" class="warranty-remove-row" aria-label="Remove row">×</button></td></tr>
                     }
                 }
                 </tbody>
@@ -269,6 +270,21 @@
                 warrantyEnd.value = toIsoDate(date);
                 document.querySelectorAll('.warranty-months-value').forEach(cell => cell.textContent = `${months} months`);
             };
+            const warrantyLinesBody = document.getElementById('warranty-lines-body');
+            const renumberWarrantyRows = () => warrantyLinesBody.querySelectorAll('.warranty-line-row').forEach((row, index) => row.querySelector('.warranty-row-number').textContent = index + 1);
+            const addWarrantyRow = () => {
+                warrantyLinesBody.insertAdjacentHTML('beforeend', '<tr class="warranty-line-row"><td class="warranty-row-number"></td><td><input class="warranty-editable" type="text" placeholder="Code" /></td><td><input class="warranty-editable" type="text" placeholder="Service / repair" /></td><td><input class="warranty-editable warranty-quantity" type="number" value="1" min="1" step="1" /></td><td><input class="warranty-editable" type="text" placeholder="Serial number" /></td><td class="warranty-months-value"></td><td class="warranty-row-actions"><button type="button" class="warranty-remove-row" aria-label="Remove row">×</button></td></tr>');
+                renumberWarrantyRows();
+                updateWarrantyCard();
+            };
+            warrantyLinesBody.addEventListener('click', event => {
+                const button = event.target.closest('.warranty-remove-row');
+                if (!button) return;
+                button.closest('.warranty-line-row').remove();
+                renumberWarrantyRows();
+            });
+            document.getElementById('add-warranty-row').addEventListener('click', addWarrantyRow);
+            renumberWarrantyRows();
             const embeddedWarranty = new URLSearchParams(window.location.search).get('embedded') !== null;
             const closeWarranty = () => {
                 if (embeddedWarranty && window.parent !== window) window.parent.postMessage({ type: 'close-warranty-card' }, '*');
@@ -284,7 +300,7 @@
                 document.querySelectorAll('#warranty-card-document input').forEach(input => input.setAttribute('value', input.value));
                 const printWindow = window.open('', '_blank', 'width=1000,height=800');
                 if (!printWindow) return;
-                printWindow.document.write(`<html><head><title>Warranty card</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}.warranty-card-document{max-width:1000px;margin:auto}.warranty-card-company{text-align:center;font-size:22px;font-weight:700;margin-bottom:12px}.warranty-card-document h3{text-align:center}.warranty-card-document table{width:100%;border-collapse:collapse}.warranty-card-document th,.warranty-card-document td{border:1px solid #111;padding:8px;text-align:center}.warranty-card-text{margin-top:18px;line-height:1.45}.warranty-card-signatures{display:flex;justify-content:space-between;margin-top:55px}</style></head><body>${document.getElementById('warranty-card-document').outerHTML}</body></html>`);
+                printWindow.document.write(`<html><head><title>Warranty card</title><style>body{font-family:Arial,sans-serif;padding:24px;color:#111}.warranty-card-document{max-width:1000px;margin:auto}.warranty-card-company{text-align:center;font-size:22px;font-weight:700;margin-bottom:12px}.warranty-card-document h3{text-align:center}.warranty-card-document table{width:100%;border-collapse:collapse}.warranty-card-document th,.warranty-card-document td{border:1px solid #111;padding:8px;text-align:center}.warranty-row-actions,.warranty-card-row-toolbar{display:none}.warranty-card-text{margin-top:18px;line-height:1.45}.warranty-card-signatures{display:flex;justify-content:space-between;margin-top:55px}</style></head><body>${document.getElementById('warranty-card-document').outerHTML}</body></html>`);
                 printWindow.onafterprint = () => printWindow.close();
                 printWindow.document.close(); printWindow.focus(); printWindow.print();
             });
