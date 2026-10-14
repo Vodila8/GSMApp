@@ -21,7 +21,6 @@
             <div class="alert alert-success admin-order-warranty-status">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</div>
         }
         <dialog class="admin-warranty-dialog" id="admin-warranty-dialog">
-            <div class="admin-warranty-dialog-header"><strong>Warranty card</strong><button type="button" class="create-user-close" id="close-admin-warranty" aria-label="Close">×</button></div>
             <iframe src="/OrderTracking/@Model.Order.Id?embedded=1&amp;openWarranty=1" title="Warranty card" class="admin-warranty-frame"></iframe>
         </dialog>
 
