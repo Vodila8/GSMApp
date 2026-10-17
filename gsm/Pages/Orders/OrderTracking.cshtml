@@ -6,6 +6,15 @@
 
 @{
     var warrantyOnly = Model.OpenWarranty && Request.Query["embedded"].Count > 0;
+    var warrantySaved = Model.Order?.WarrantyEndDate.HasValue == true;
+    var closeEmbeddedWarranty = Request.Query["embedded"].Count > 0 &&
+        string.Equals(Request.Query["savedWarranty"].ToString(), "true", StringComparison.OrdinalIgnoreCase);
+}
+@if (closeEmbeddedWarranty)
+{
+    <script>
+        window.parent?.postMessage({ type: 'warranty-saved' }, '*');
+    </script>
 }
 <div class="user-form-page @(warrantyOnly ? "warranty-only-page" : string.Empty)">
     <form class="warehouse-list tracking-form" method="post" asp-page-handler="Save">
@@ -13,7 +22,7 @@
             <h1 class="warehouse-title">Order Tracking</h1>
             @if (Model.FinalEndDate.HasValue)
             {
-                <button class="btn btn-outline-primary" type="button" id="open-warranty-card">Create warranty card</button>
+                <button class="btn btn-outline-primary" type="button" id="open-warranty-card">@(warrantySaved ? "Open warranty card" : "Create warranty card")</button>
             }
         </div>
         <p class="tracking-order-details">
@@ -25,6 +34,10 @@
         @if (TempData["StatusMessage"] is string statusMessage)
         {
             <div class="alert alert-success" role="alert">@statusMessage</div>
+        }
+        @if (TempData["StockWarning"] is string stockWarning)
+        {
+            <div class="alert alert-warning" role="alert">@stockWarning</div>
         }
         <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
@@ -77,20 +90,27 @@
 {
     <dialog class="warranty-card-dialog" id="warranty-card-dialog">
         <form method="post" asp-page-handler="SaveWarranty" asp-route-id="@Model.Order!.Id" id="warranty-card-form">
+        @if (Request.Query["embedded"].Count > 0)
+        {
+            <input type="hidden" name="embedded" value="true" />
+        }
         <div class="create-user-modal-header">
             <h2>Warranty card</h2>
             <button type="button" class="create-user-close" id="close-warranty-card" aria-label="Close">×</button>
         </div>
         <div class="warranty-card-controls">
             <label>Warranty start date<input id="warranty-start-date" type="date" value="@Model.FinalEndDate.Value.ToString("yyyy-MM-dd")" readonly /></label>
-            <label>Warranty period (months)<input id="warranty-period-months" name="WarrantyMonths" type="number" min="1" max="120" step="1" value="@(Model.Order.WarrantyMonths ?? 12)" /></label>
+            <label>Warranty period (months)<input id="warranty-period-months" name="WarrantyMonths" type="number" min="1" max="120" step="1" value="@(Model.Order.WarrantyMonths ?? 12)" readonly="@(warrantySaved ? "readonly" : null)" /></label>
             <label>Warranty expiration date<input id="warranty-end-date" type="date" readonly /></label>
         </div>
-        <div class="warranty-card-document" id="warranty-card-document">
+        <div class="warranty-card-document @(warrantySaved ? "warranty-readonly" : string.Empty)" id="warranty-card-document">
             <div class="warranty-card-company">@(Model.Company?.Name ?? "Company")</div>
             <h3>Warranty card</h3>
             <p><strong>Order #@Model.Order!.Id</strong></p>
-            <div class="warranty-card-row-toolbar"><button type="button" class="btn btn-outline-secondary btn-sm" id="add-warranty-row">+ Add row</button></div>
+            @if (!warrantySaved)
+            {
+                <div class="warranty-card-row-toolbar"><button type="button" class="btn btn-outline-secondary btn-sm" id="add-warranty-row">+ Add row</button></div>
+            }
             <table>
                 <thead><tr><th>No.</th><th>Code</th><th>Service / repair</th><th>Qty.</th><th>Serial number</th><th>Warranty</th><th class="warranty-row-actions"></th></tr></thead>
                 <tbody id="warranty-lines-body">
@@ -114,7 +134,10 @@
         <div class="create-user-modal-actions">
             <button type="button" class="btn btn-outline-secondary" id="print-warranty-card">Print</button>
             <button type="button" class="btn btn-outline-secondary" id="close-warranty-card-bottom">Close</button>
-            <button type="submit" class="btn btn-primary">Save warranty</button>
+            @if (!warrantySaved)
+            {
+                <button type="submit" class="btn btn-primary">Save warranty</button>
+            }
         </div>
         </form>
     </dialog>
@@ -283,12 +306,12 @@
                 button.closest('.warranty-line-row').remove();
                 renumberWarrantyRows();
             });
-            document.getElementById('add-warranty-row').addEventListener('click', addWarrantyRow);
+            document.getElementById('add-warranty-row')?.addEventListener('click', addWarrantyRow);
             renumberWarrantyRows();
             const embeddedWarranty = new URLSearchParams(window.location.search).get('embedded') !== null;
             const closeWarranty = () => {
+                if (warrantyDialog.open) warrantyDialog.close();
                 if (embeddedWarranty && window.parent !== window) window.parent.postMessage({ type: 'close-warranty-card' }, '*');
-                else warrantyDialog.close();
             };
             document.getElementById('open-warranty-card').addEventListener('click', () => { updateWarrantyCard(); warrantyDialog.showModal(); });
             document.getElementById('close-warranty-card').addEventListener('click', closeWarranty);

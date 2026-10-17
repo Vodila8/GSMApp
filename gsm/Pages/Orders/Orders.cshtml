@@ -162,6 +162,7 @@
         <button id="add-service" class="btn btn-outline-secondary btn-sm" type="button">+ Add Service</button>
 
         <div class="order-total"><span>Repair total</span><strong id="order-total">0.00 EUR</strong></div>
+        <div id="stock-availability-warning" class="alert alert-warning" role="status" hidden></div>
         <div id="order-client-error" class="alert alert-danger" role="alert" hidden></div>
         <div class="repair-form-actions">
             <button class="btn btn-primary" type="submit">Create Repair</button>
@@ -241,6 +242,24 @@
             });
             document.querySelectorAll('.service-price').forEach(input => total += parseFloat(input.value) || 0);
             document.getElementById('order-total').textContent = total.toFixed(2) + ' EUR';
+            updateStockAvailabilityWarning();
+        }
+
+        function updateStockAvailabilityWarning() {
+            const shortages = [];
+            document.querySelectorAll('#parts-body tr').forEach(row => {
+                const select = row.querySelector('.part-select');
+                const option = select?.selectedOptions[0];
+                if (!option?.value) return;
+                const requested = Number(row.querySelector('.line-quantity')?.value || 0);
+                const available = Number(option.dataset.stock || 0);
+                if (requested > available) shortages.push(`${option.textContent.trim()}: available ${available}, requested ${requested}`);
+            });
+            const warning = document.getElementById('stock-availability-warning');
+            warning.textContent = shortages.length
+                ? `The repair can still be created. These parts will not be deducted until stock is available: ${shortages.join('; ')}`
+                : '';
+            warning.hidden = shortages.length === 0;
         }
 
         document.getElementById('add-part').addEventListener('click', () => { addRow('part-template', partsBody, partIndex++); updateTotal(); });
@@ -339,7 +358,10 @@
         const devicePhotoInput = document.getElementById('device-photos');
         const devicePhotoPreview = document.getElementById('device-photo-preview');
         const activeWarrantyDialog = document.getElementById('active-warranty-dialog');
-        window.addEventListener('message', event => { if (event.data?.type === 'close-warranty-card') activeWarrantyDialog.close(); });
+        window.addEventListener('message', event => {
+            if (event.data?.type === 'close-warranty-card') activeWarrantyDialog.close();
+            if (event.data?.type === 'warranty-saved') { activeWarrantyDialog.close(); window.location.reload(); }
+        });
         document.getElementById('close-active-warranty').addEventListener('click', () => activeWarrantyDialog.close());
         let devicePhotoFiles = [];
         const deletedDevicePhotoIds = new Set();

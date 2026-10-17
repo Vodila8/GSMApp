@@ -514,6 +514,8 @@ body {
 .warranty-card-controls input, .warranty-card-controls select { display: block; width: 100%; min-height: 40px; margin-top: .3rem; padding: .5rem .65rem; color: var(--ops-text); background: #fff; border: 1px solid var(--ops-border); border-radius: .45rem; box-sizing: border-box; }
 .warranty-card-document { margin: 1rem 1.25rem; padding: 1rem; overflow-x: auto; color: #111; background: #fff; border: 1px solid #111; }
 .warranty-card-row-toolbar { display: flex; justify-content: flex-end; margin: .5rem 0; }
+.warranty-readonly input { pointer-events: none; color: #475569; background: #f2f6fa; }
+.warranty-readonly .warranty-row-actions, .warranty-readonly .warranty-card-row-toolbar { display: none; }
 .warranty-row-actions { width: 34px; }
 .warranty-remove-row { width: 24px; height: 24px; padding: 0; color: #b42318; background: #fff4f2; border: 1px solid #f4b4aa; border-radius: .35rem; cursor: pointer; }
 .warranty-remove-row:hover { color: #fff; background: #b42318; }

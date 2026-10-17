@@ -81,7 +81,7 @@
                 <form method="post" action="/Warehouse?handler=SaveDelivery&amp;globalDelivery=1" enctype="multipart/form-data" class="warehouse-edit-form" id="global-delivery-form">
                     @Html.AntiForgeryToken()
                     <div class="create-user-modal-header global-window-header"><h2>Warehouse delivery</h2><div class="global-window-controls"><button type="button" class="global-window-minimize" data-minimize-global aria-label="Minimize">−</button><button type="button" class="global-window-maximize" data-maximize-global aria-label="Maximize">□</button><button type="button" class="create-user-close" data-close-global-delivery aria-label="Close">×</button></div></div>
-                    <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner</label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search or choose partner" autocomplete="off" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div></div>
+                    <div class="user-form-row global-delivery-partner"><label for="global-delivery-partner-input">Partner <span class="text-danger" aria-hidden="true">*</span></label><div class="global-partner-combobox" data-partner-combobox><input id="global-delivery-partner-input" type="search" placeholder="Search and choose a partner" autocomplete="off" aria-required="true" aria-describedby="global-delivery-partner-error" /><input type="hidden" id="global-delivery-partner-id" /><div class="global-partner-options" id="global-delivery-partner-options" hidden></div></div><small id="global-delivery-partner-error" class="text-danger" role="alert" hidden>Select a partner from the list to save this delivery.</small></div>
                     <div class="user-form-row global-delivery-search"><label for="global-delivery-search">Search parts in delivery</label><input id="global-delivery-search" type="search" placeholder="Part name, product number or barcode" autocomplete="off" /></div>
                     <div class="table-responsive"><table class="table warehouse-table warehouse-delivery-table"><thead><tr><th>No.</th><th>Delivery date</th><th>Product number</th><th>Quantity</th><th>Part name</th><th>Barcode</th><th>Unit price</th><th>Delivery price</th><th></th></tr></thead><tbody id="global-delivery-items"></tbody></table></div>
                     <div class="global-modal-total">Total: <strong id="global-delivery-total">0.00 EUR</strong></div>
@@ -117,6 +117,8 @@
                     const salePartnerOptions = document.getElementById('global-sale-partner-options');
                     const deliveryPartnerInput = document.getElementById('global-delivery-partner-input');
                     const deliveryPartnerOptions = document.getElementById('global-delivery-partner-options');
+                    const deliveryPartnerId = document.getElementById('global-delivery-partner-id');
+                    const deliveryPartnerError = document.getElementById('global-delivery-partner-error');
                     const deliveryItemsBody = document.getElementById('global-delivery-items');
                     const deliverySearch = document.getElementById('global-delivery-search');
                     const deliveryTotal = document.getElementById('global-delivery-total');
@@ -248,7 +250,12 @@
                     salePartnerId.addEventListener('change', updateSalePartnerState);
                     salePartnerInput.addEventListener('input', () => { salePartnerId.value = ''; updateSalePartnerState(); });
                     setupPartnerCombobox(salePartnerInput, salePartnerOptions, salePartnerId);
-                    setupPartnerCombobox(deliveryPartnerInput, deliveryPartnerOptions, document.getElementById('global-delivery-partner-id'));
+                    setupPartnerCombobox(deliveryPartnerInput, deliveryPartnerOptions, deliveryPartnerId);
+                    deliveryPartnerInput.addEventListener('input', () => {
+                        deliveryPartnerId.value = '';
+                        deliveryPartnerError.hidden = true;
+                    });
+                    deliveryPartnerId.addEventListener('change', () => { deliveryPartnerError.hidden = true; });
                     updateSalePartnerState();
                     document.addEventListener('click', event => {
                         document.querySelectorAll('[data-partner-combobox]').forEach(combo => {
@@ -363,8 +370,14 @@
                         let selectedIndex = 0;
                         saleItemsBody.querySelectorAll('tr').forEach(row => { if (row.querySelector('.global-sale-select').checked) { ['WarehouseItemId', 'Quantity', 'DiscountPercent', 'Note'].forEach(field => { const input = document.createElement('input'); input.type = 'hidden'; input.name = `SaleItems[${selectedIndex}].${field}`; input.value = field === 'WarehouseItemId' ? row.dataset.id : field === 'Quantity' ? row.querySelector('.global-sale-quantity').value : field === 'DiscountPercent' ? row.querySelector('.global-sale-discount').value : row.querySelector('.global-sale-note').value; document.getElementById('global-sale-form').appendChild(input); }); selectedIndex++; } });
                     });
-                    document.getElementById('global-delivery-form').addEventListener('submit', () => {
-                        const partner = document.getElementById('global-delivery-partner');
+                    document.getElementById('global-delivery-form').addEventListener('submit', event => {
+                        const partner = document.getElementById('global-delivery-partner-id');
+                        if (!partner.value) {
+                            event.preventDefault();
+                            deliveryPartnerError.hidden = false;
+                            deliveryPartnerInput.focus();
+                            return;
+                        }
                         deliveryItemsBody.querySelectorAll('tr').forEach((row, index) => {
                             row.querySelectorAll('input[name]').forEach(input => { input.name = input.name.replace(/DeliveryItems\[\d+\]/, `DeliveryItems[${index}]`); });
                             const partnerId = document.createElement('input'); partnerId.type = 'hidden'; partnerId.name = `DeliveryItems[${index}].PartnerId`; partnerId.value = partner.value; document.getElementById('global-delivery-form').appendChild(partnerId);
