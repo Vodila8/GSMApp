@@ -21,7 +21,6 @@
             <div class="alert alert-success admin-order-warranty-status">Warranty active until <strong>@Model.Order.WarrantyEndDate.Value.ToString("dd MMM yyyy")</strong>.</div>
         }
         <dialog class="admin-warranty-dialog" id="admin-warranty-dialog">
-            <div class="admin-warranty-dialog-header"><strong>Warranty card</strong><button type="button" class="create-user-close" id="close-admin-warranty" aria-label="Close">×</button></div>
             <iframe src="/OrderTracking/@Model.Order.Id?embedded=1&amp;openWarranty=1" title="Warranty card" class="admin-warranty-frame"></iframe>
         </dialog>
 
@@ -162,7 +161,10 @@
 const adminWarrantyDialog = document.getElementById('admin-warranty-dialog');
 document.getElementById('open-admin-warranty')?.addEventListener('click', () => adminWarrantyDialog.showModal());
 document.getElementById('close-admin-warranty')?.addEventListener('click', () => adminWarrantyDialog.close());
-window.addEventListener('message', event => { if (event.data?.type === 'close-warranty-card') adminWarrantyDialog.close(); });
+window.addEventListener('message', event => {
+    if (event.data?.type === 'close-warranty-card') adminWarrantyDialog.close();
+    if (event.data?.type === 'warranty-saved') { adminWarrantyDialog.close(); window.location.reload(); }
+});
 let partIndex = @Model.Parts.Count, serviceIndex = @Model.Services.Count;
 const partsBody = document.getElementById('parts-body'), servicesBody = document.getElementById('services-body');
 function total() { let value = 0; document.querySelectorAll('.part-row').forEach(r => value += (parseFloat(r.querySelector('.line-price').value) || 0) * (parseInt(r.querySelector('.line-quantity').value) || 0)); document.querySelectorAll('.service-price').forEach(i => value += parseFloat(i.value) || 0); document.getElementById('edit-order-total').textContent = value.toFixed(2) + ' EUR'; }

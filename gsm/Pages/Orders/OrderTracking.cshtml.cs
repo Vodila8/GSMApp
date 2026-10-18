@@ -110,7 +110,7 @@ public class OrderTrackingModel : PageModel
         return RedirectToPage(new { id });
     }
 
-    public async Task<IActionResult> OnPostSaveWarrantyAsync(int id)
+    public async Task<IActionResult> OnPostSaveWarrantyAsync(int id, bool embedded = false)
     {
         if (WarrantyMonths < 1 || WarrantyMonths > 120)
         {
@@ -121,12 +121,17 @@ public class OrderTrackingModel : PageModel
 
         if (!await LoadOrderAsync(id) || !FinalEndDate.HasValue)
             return NotFound();
-
-        Order!.WarrantyStartDate = FinalEndDate.Value;
+        Order.WarrantyStartDate = FinalEndDate.Value;
         Order.WarrantyMonths = WarrantyMonths;
         Order.WarrantyEndDate = FinalEndDate.Value.AddMonths(WarrantyMonths);
         await _dbContext.SaveChangesAsync();
         TempData["StatusMessage"] = "Warranty information has been saved.";
+
+        if (embedded)
+        {
+            return RedirectToPage(new { id, embedded = true, savedWarranty = true });
+        }
+
         return RedirectToPage(new { id });
     }
 

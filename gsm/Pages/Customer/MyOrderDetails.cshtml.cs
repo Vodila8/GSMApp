@@ -41,29 +41,27 @@ public class MyOrderDetailsModel : PageModel
             return Forbid();
         }
 
-        var bossContact = await _dbContext.Users
-            .IgnoreQueryFilters()
-            .Where(user => user.CompanyId == Order.CompanyId &&
-                           user.Email != null &&
-                           _dbContext.UserRoles.Any(userRole => userRole.UserId == user.Id &&
-                               _dbContext.Roles.Any(role => role.Id == userRole.RoleId && role.Name == "Boss")))
-            .OrderByDescending(user => user.PhoneNumber != null)
-            .Select(user => new { user.Email, user.PhoneNumber })
-            .FirstOrDefaultAsync();
-        if (bossContact == null || string.IsNullOrWhiteSpace(bossContact.PhoneNumber))
-        {
-            bossContact = await _dbContext.Users
-                .IgnoreQueryFilters()
-                .Where(user => user.CompanyId == Order.CompanyId &&
-                               user.Email != null &&
-                               _dbContext.UserRoles.Any(userRole => userRole.UserId == user.Id &&
-                                   _dbContext.Roles.Any(role => role.Id == userRole.RoleId && role.Name == "Administrator")))
-                .OrderByDescending(user => user.PhoneNumber != null)
-                .Select(user => new { user.Email, user.PhoneNumber })
-                .FirstOrDefaultAsync();
-        }
-        BossEmail = bossContact?.Email ?? "support unavailable";
-        BossPhone = bossContact?.PhoneNumber ?? "support unavailable";
+        var staffContacts = await (
+            from user in _dbContext.Users.IgnoreQueryFilters()
+            join userRole in _dbContext.UserRoles on user.Id equals userRole.UserId
+            join role in _dbContext.Roles on userRole.RoleId equals role.Id
+            where (user.CompanyId == Order.CompanyId ||
+                   _dbContext.UserCompanyMemberships.IgnoreQueryFilters().Any(membership =>
+                       membership.UserId == user.Id && membership.CompanyId == Order.CompanyId)) &&
+                  (role.NormalizedName == "BOSS" || role.NormalizedName == "ADMINISTRATOR" || role.NormalizedName == "TECHNICIAN" ||
+                   role.Name == "Boss" || role.Name == "Administrator" || role.Name == "Technician")
+            select new { user.Email, user.PhoneNumber, Role = role.NormalizedName ?? role.Name }
+        ).ToListAsync();
+
+        var orderedContacts = staffContacts
+            .OrderBy(contact => string.Equals(contact.Role, "BOSS", StringComparison.OrdinalIgnoreCase) ? 0 :
+                                string.Equals(contact.Role, "ADMINISTRATOR", StringComparison.OrdinalIgnoreCase) ? 1 : 2)
+            .ToList();
+
+        BossEmail = orderedContacts.FirstOrDefault(contact => !string.IsNullOrWhiteSpace(contact.Email))?.Email
+            ?? "support unavailable";
+        BossPhone = orderedContacts.FirstOrDefault(contact => !string.IsNullOrWhiteSpace(contact.PhoneNumber))?.PhoneNumber
+            ?? "support unavailable";
 
         return Page();
     }

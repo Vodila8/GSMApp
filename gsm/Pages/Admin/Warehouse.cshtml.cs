@@ -17,12 +17,18 @@ public class WarehouseModel : PageModel
     private readonly ApplicationDbContext _dbContext;
     private readonly TenantContext _tenantContext;
     private readonly IWebHostEnvironment _environment;
+    private readonly ILogger<WarehouseModel> _logger;
 
-    public WarehouseModel(ApplicationDbContext dbContext, TenantContext tenantContext, IWebHostEnvironment environment)
+    public WarehouseModel(
+        ApplicationDbContext dbContext,
+        TenantContext tenantContext,
+        IWebHostEnvironment environment,
+        ILogger<WarehouseModel> logger)
     {
         _dbContext = dbContext;
         _tenantContext = tenantContext;
         _environment = environment;
+        _logger = logger;
     }
 
     [BindProperty]
@@ -36,6 +42,9 @@ public class WarehouseModel : PageModel
 
     [BindProperty]
     public List<NewWarehouseItemInput> DeliveryItems { get; set; } = [new()];
+
+    [BindProperty]
+    public int? DeliveryPartnerId { get; set; }
 
     [BindProperty]
     public int? BatchPartnerId { get; set; }
@@ -257,6 +266,14 @@ public class WarehouseModel : PageModel
 
         if (!ModelState.IsValid)
         {
+            _logger.LogWarning(
+                "Delivery rejected. PartnerId={PartnerId}; Items={Items}; Errors={Errors}",
+                DeliveryPartnerId,
+                DeliveryItems.Count,
+                string.Join(" | ", ModelState
+                    .Where(entry => entry.Value?.Errors.Count > 0)
+                    .SelectMany(entry => entry.Value!.Errors.Select(error =>
+                        $"{entry.Key}: {error.ErrorMessage ?? error.Exception?.Message}"))));
             await LoadItemsAsync();
             return Page();
         }
@@ -424,16 +441,28 @@ public class WarehouseModel : PageModel
         return RedirectToPage();
     }
 
-    public async Task<IActionResult> OnPostSaveDeliveryAsync(bool globalDelivery = false)
+    public async Task<IActionResult> OnPostSaveDeliveryAsync(string? globalDelivery = null)
     {
+        var isGlobalDelivery = string.Equals(globalDelivery, "true", StringComparison.OrdinalIgnoreCase) ||
+                               string.Equals(globalDelivery, "1", StringComparison.OrdinalIgnoreCase);
+        _logger.LogInformation(
+            "Save delivery started. Global={GlobalDelivery}; PartnerId={PartnerId}; Items={Items}",
+            isGlobalDelivery,
+            DeliveryPartnerId,
+            DeliveryItems.Count);
         if (!User.IsInRole("Boss") && !User.IsInRole("Administrator")) return Forbid();
-        ShowDeliveryModal = !globalDelivery;
+        ShowDeliveryModal = !isGlobalDelivery;
         if (string.IsNullOrWhiteSpace(_tenantContext.CompanyId)) return Forbid();
 
         DeliveryItems = DeliveryItems.Where(item =>
             !string.IsNullOrWhiteSpace(item.PartName) ||
             !string.IsNullOrWhiteSpace(item.ProductNumber) ||
             item.Quantity.HasValue).ToList();
+        if (DeliveryPartnerId.HasValue)
+        {
+            foreach (var item in DeliveryItems.Where(item => !item.PartnerId.HasValue))
+                item.PartnerId = DeliveryPartnerId;
+        }
         if (DeliveryItems.Count == 0)
         {
             DeliveryItems.Add(new NewWarehouseItemInput());
@@ -514,6 +543,10 @@ public class WarehouseModel : PageModel
 
         _dbContext.WarehouseAuditEntries.AddRange(auditEntries);
         await _dbContext.SaveChangesAsync();
+        _logger.LogInformation(
+            "Delivery saved. ItemIds={ItemIds}; ProductNumbers={ProductNumbers}",
+            string.Join(",", createdItems.Select(item => item.Id)),
+            string.Join(",", createdItems.Select(item => item.ProductNumber)));
 
         TempData["StatusMessage"] = $"Delivered {createdItems.Count} item(s).";
         return RedirectToPage();

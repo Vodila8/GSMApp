@@ -109,10 +109,12 @@
                             <article class="diagnostic-card"><h2>Hardware telemetry</h2>${renderRows(telemetryRows)}</article>
                         </div>`;
                     if (canCreateRepair) {
+                        const serialNumber = diagnosticValue(data, 'serialNumber');
+                        const deviceModelAndSerialNumber = `${details} — SN: ${serialNumber}`;
                         const link = document.createElement('a');
                         link.className = 'btn btn-primary diagnostics-create-button';
                         link.textContent = 'Create Repair with this device';
-                        link.href = `/CreateRepair?deviceType=${encodeURIComponent('Phone')}&deviceDetails=${encodeURIComponent(details)}&adbReport=${encodeURIComponent(diagnosticValue(data, 'report'))}`;
+                        link.href = `/CreateRepair?deviceType=${encodeURIComponent('Phone')}&deviceModel=${encodeURIComponent(deviceModelAndSerialNumber)}&adbReport=${encodeURIComponent(diagnosticValue(data, 'report'))}`;
                         browserResult.appendChild(link);
                     }
                     return;

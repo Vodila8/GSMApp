@@ -36,14 +36,16 @@ public class OrdersModel : PageModel
     public AdbDiagnosticDetails? AdbReport { get; private set; }
     public bool HasAdbScan => !string.IsNullOrWhiteSpace(Input.AdbDiagnosticReport);
 
-    public async Task OnGetAsync(string? deviceType = null, string? deviceDetails = null, string? adbReport = null)
+    public async Task OnGetAsync(string? deviceType = null, string? deviceDetails = null, string? deviceModel = null, string? adbReport = null)
     {
         await LoadOptionsAsync();
 
-        if (!string.IsNullOrWhiteSpace(deviceType) || !string.IsNullOrWhiteSpace(deviceDetails) || !string.IsNullOrWhiteSpace(adbReport))
+        var scannedDeviceName = deviceModel ?? deviceDetails;
+        if (!string.IsNullOrWhiteSpace(deviceType) || !string.IsNullOrWhiteSpace(scannedDeviceName) || !string.IsNullOrWhiteSpace(adbReport))
         {
             Input.NewDeviceType = deviceType ?? "Phone";
-            Input.NewDeviceModelAndSerialNumber = deviceDetails;
+            Input.NewDeviceModelAndSerialNumber = scannedDeviceName;
+            Input.CustomerDeviceId = null;
             Input.AdbDiagnosticReport = adbReport;
             Input.Services[0].Description = "Device diagnostics";
             Input.Services[0].UnitPrice = 0;
@@ -161,6 +163,7 @@ public class OrdersModel : PageModel
             .Where(item => requiredQuantities.Keys.Contains(item.Id))
             .ToDictionaryAsync(item => item.Id);
 
+        var unavailableParts = new List<string>();
         foreach (var (itemId, requiredQuantity) in requiredQuantities)
         {
             if (!stock.TryGetValue(itemId, out var item))
@@ -169,7 +172,7 @@ public class OrdersModel : PageModel
             }
             else if (item.Quantity < requiredQuantity)
             {
-                ModelState.AddModelError(string.Empty, $"Not enough stock for {item.PartName}. Available: {item.Quantity}; requested: {requiredQuantity}.");
+                unavailableParts.Add($"{item.PartName} (available: {item.Quantity}; required: {requiredQuantity})");
             }
         }
 
@@ -182,6 +185,11 @@ public class OrdersModel : PageModel
         foreach (var (itemId, requiredQuantity) in requiredQuantities)
         {
             var item = stock[itemId];
+            if (item.Quantity < requiredQuantity)
+            {
+                continue;
+            }
+
             var quantityBefore = item.Quantity;
             item.Quantity -= requiredQuantity;
             _dbContext.WarehouseAuditEntries.Add(new WarehouseAuditEntry
@@ -264,6 +272,11 @@ public class OrdersModel : PageModel
         foreach (var path in deletedPhotoPaths)
         {
             if (System.IO.File.Exists(path)) System.IO.File.Delete(path);
+        }
+
+        if (unavailableParts.Count > 0)
+        {
+            TempData["StockWarning"] = $"Repair was created, but these parts were not deducted because they are out of stock: {string.Join("; ", unavailableParts)}.";
         }
 
         return Redirect($"/OrderTracking/{order.Id}");
