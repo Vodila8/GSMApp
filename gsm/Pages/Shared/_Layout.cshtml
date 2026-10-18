@@ -399,6 +399,20 @@
                             row.querySelectorAll('input[name]').forEach(input => { input.name = input.name.replace(/DeliveryItems\[\d+\]/, `DeliveryItems[${index}]`); });
                         });
                     });
+                    document.getElementById('global-delivery-form').addEventListener('keydown', event => {
+                        if (event.key !== 'Enter' || event.target.matches('textarea, button')) return;
+                        const fields = [...deliveryItemsBody.querySelectorAll('input:not([type="hidden"]):not([disabled]), select:not([disabled])')];
+                        const currentIndex = fields.indexOf(event.target);
+                        if (currentIndex < 0) return;
+                        event.preventDefault();
+                        if (currentIndex === fields.length - 1) {
+                            event.currentTarget.requestSubmit();
+                            return;
+                        }
+                        const nextField = fields[currentIndex + 1];
+                        nextField.focus();
+                        if (typeof nextField.select === 'function') nextField.select();
+                    });
                     document.querySelectorAll('[data-close-global-sale]').forEach(button => button.addEventListener('click', () => { clearWindowState('sale'); saleDialog.close(); }));
                     document.querySelectorAll('[data-close-global-delivery]').forEach(button => button.addEventListener('click', () => { clearWindowState('delivery'); deliveryDialog.close(); }));
                     document.querySelectorAll('[data-close-global-partner]').forEach(button => button.addEventListener('click', () => { clearWindowState('partner'); partnerDialog.close(); }));
